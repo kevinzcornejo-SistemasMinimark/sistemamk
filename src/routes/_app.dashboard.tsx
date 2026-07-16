@@ -41,7 +41,7 @@ function Dashboard() {
       setVentas30((v ?? []) as any);
 
       const desdeMes = new Date(); desdeMes.setDate(desdeMes.getDate() - 30);
-      const { data: d } = await supabase.from("detalle_ventas")
+      const { data: d } = await supabase.from("venta_items")
         .select("cantidad,total,producto_id,productos(nombre),ventas!inner(creada_en,estado)")
         .gte("ventas.creada_en", desdeMes.toISOString())
         .neq("ventas.estado", "ANULADA")

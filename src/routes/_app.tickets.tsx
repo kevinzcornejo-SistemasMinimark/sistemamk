@@ -540,7 +540,7 @@ function TicketsPage() {
     try {
       setReprintingId(v.id);
       const { data: det, error } = await supabase
-        .from("detalle_ventas")
+        .from("venta_items")
         .select("cantidad,precio_unitario,descuento,total,producto_id,productos(id,nombre,precio_venta,igv)")
         .eq("venta_id", v.id);
       if (error) throw error;
