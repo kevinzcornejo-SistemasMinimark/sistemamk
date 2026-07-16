@@ -101,41 +101,28 @@ function ComprasPage() {
     const { error: dErr } = await supabase.from("compra_items").insert(detalles);
     if (dErr) return toast.error(dErr.message);
 
-    // Aumentar stock de cada producto según las cantidades compradas
+    // Aumentar stock y actualizar último precio de compra
     const stockErrors: string[] = [];
     await Promise.all(
       lineas.map(async (l) => {
         const prod = productos.find((p) => p.id === l.producto_id);
         if (!prod) return;
         const nuevoStock = Number(prod.stock ?? 0) + Number(l.cantidad ?? 0);
+        const patch: Record<string, number> = { stock: nuevoStock };
+        if (l.precio_unitario > 0) patch.precio_compra = l.precio_unitario;
         const { error: upErr } = await supabase
           .from("productos")
-          .update({ stock: nuevoStock })
+          .update(patch)
           .eq("id", l.producto_id);
         if (upErr) stockErrors.push(`${prod.nombre}: ${upErr.message}`);
       }),
     );
     if (stockErrors.length > 0) {
-      toast.error(`Error actualizando stock: ${stockErrors.join(" | ")}`);
+      toast.error(`Error actualizando productos: ${stockErrors.join(" | ")}`);
     } else {
-      toast.success("Compra registrada y stock actualizado");
+      toast.success("Compra registrada, stock y precio actualizados");
     }
 
-    // Sugerir actualizar precio de venta de productos donde el costo subió por encima del precio actual
-    const necesitanAjuste = lineas
-      .map((l) => {
-        const prod = productos.find((p) => p.id === l.producto_id);
-        if (!prod || l.precio_unitario <= 0) return null;
-        if (l.precio_unitario >= prod.precio_venta) return prod.nombre;
-        return null;
-      })
-      .filter(Boolean) as string[];
-    if (necesitanAjuste.length > 0) {
-      toast.warning(
-        `⚠ El precio de compra no debe ser mayor o igual al precio de venta. Actualiza el precio de venta en: ${necesitanAjuste.join(", ")}`,
-        { duration: 10000 },
-      );
-    }
     setOpen(false); setLineas([]); setF({ tipo_comprobante: "FACTURA", fecha_emision: new Date().toISOString().slice(0, 10), metodo_pago: "EFECTIVO" });
     refresh();
     void load();
