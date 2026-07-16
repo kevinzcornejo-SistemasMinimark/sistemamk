@@ -17,6 +17,8 @@ import { useCatalog } from "@/hooks/useCatalog";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { RefreshCw } from "lucide-react";
+
 
 export const Route = createFileRoute("/_app/lotes")({
   head: () => ({ meta: [{ title: "Lotes — POS Minimarket" }] }),
