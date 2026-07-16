@@ -38,7 +38,7 @@ function KardexPage() {
       setLoading(true);
       const { data, error } = await supabase
         .from("kardex")
-        .select("id,tipo_movimiento,cantidad,stock_anterior,stock_nuevo,motivo,creado_en,productos(nombre)")
+        .select("id,tipo,cantidad,saldo,costo_unitario,documento,motivo,creado_en,productos(nombre)")
         .order("creado_en", { ascending: false })
         .limit(500);
       if (error) toast.error(error.message);
@@ -52,14 +52,16 @@ function KardexPage() {
     const k = q.toLowerCase();
     return rows.filter((r) =>
       (r.productos?.nombre ?? "").toLowerCase().includes(k) ||
-      r.tipo_movimiento.toLowerCase().includes(k),
+      r.tipo.toLowerCase().includes(k) ||
+      (r.documento ?? "").toLowerCase().includes(k),
     );
   }, [rows, q]);
 
   const tipoColor = (t: string) =>
-    t.includes("ENTRADA") || t.includes("POSITIVO") ? "bg-emerald-500" :
-    t.includes("SALIDA") || t.includes("NEGATIVO") || t === "MERMA" ? "bg-destructive" :
+    t === "COMPRA" || t === "ENTRADA" || t === "DEVOLUCION" ? "bg-emerald-500" :
+    t === "VENTA" || t === "SALIDA" || t === "ANULACION" ? "bg-destructive" :
     "bg-muted-foreground";
+
 
   return (
     <div className="p-6 space-y-4">
