@@ -32,7 +32,7 @@ function ComprasPage() {
   const [open, setOpen] = useState(false);
   const [f, setF] = useState<any>({ tipo_comprobante: "FACTURA", fecha_emision: new Date().toISOString().slice(0, 10), metodo_pago: "EFECTIVO" });
   const [lineas, setLineas] = useState<Linea[]>([]);
-  const [alertas, setAlertas] = useState<{ i: number; nombre: string; compra: number; venta: number }[]>([]);
+  const [alertas, setAlertas] = useState<{ i: number; nombre: string; tipo: "venta" | "menor"; nuevo: number; anterior: number }[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const load = async () => {
