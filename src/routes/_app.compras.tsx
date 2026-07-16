@@ -32,7 +32,7 @@ function ComprasPage() {
   const [open, setOpen] = useState(false);
   const [f, setF] = useState<any>({ tipo_comprobante: "FACTURA", fecha_emision: new Date().toISOString().slice(0, 10), metodo_pago: "EFECTIVO" });
   const [lineas, setLineas] = useState<Linea[]>([]);
-  const [alertas, setAlertas] = useState<{ i: number; nombre: string; compra: number; venta: number }[]>([]);
+  const [alertas, setAlertas] = useState<{ i: number; nombre: string; tipo: "venta" | "menor"; nuevo: number; anterior: number }[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const load = async () => {
@@ -57,16 +57,17 @@ function ComprasPage() {
   const save = async () => {
     if (!f.proveedor_id) return toast.error("Selecciona proveedor");
     if (lineas.length === 0) return toast.error("Agrega productos");
-    const problemas = lineas
-      .map((l, i) => {
-        const prod = productos.find((p) => p.id === l.producto_id);
-        if (!prod || l.precio_unitario <= 0) return null;
-        if (l.precio_unitario >= prod.precio_venta) {
-          return { i: i + 1, nombre: prod.nombre, compra: l.precio_unitario, venta: prod.precio_venta };
-        }
-        return null;
-      })
-      .filter(Boolean) as { i: number; nombre: string; compra: number; venta: number }[];
+    type Alerta = { i: number; nombre: string; tipo: "venta" | "menor"; nuevo: number; anterior: number };
+    const problemas: Alerta[] = [];
+    lineas.forEach((l, i) => {
+      const prod = productos.find((p) => p.id === l.producto_id);
+      if (!prod || l.precio_unitario <= 0) return;
+      if (l.precio_unitario >= prod.precio_venta) {
+        problemas.push({ i: i + 1, nombre: prod.nombre, tipo: "venta", nuevo: l.precio_unitario, anterior: prod.precio_venta });
+      } else if (prod.precio_compra > 0 && l.precio_unitario < prod.precio_compra) {
+        problemas.push({ i: i + 1, nombre: prod.nombre, tipo: "menor", nuevo: l.precio_unitario, anterior: prod.precio_compra });
+      }
+    });
     if (problemas.length > 0) {
       setAlertas(problemas);
       setConfirmOpen(true);
@@ -100,41 +101,28 @@ function ComprasPage() {
     const { error: dErr } = await supabase.from("compra_items").insert(detalles);
     if (dErr) return toast.error(dErr.message);
 
-    // Aumentar stock de cada producto según las cantidades compradas
+    // Aumentar stock y actualizar último precio de compra
     const stockErrors: string[] = [];
     await Promise.all(
       lineas.map(async (l) => {
         const prod = productos.find((p) => p.id === l.producto_id);
         if (!prod) return;
         const nuevoStock = Number(prod.stock ?? 0) + Number(l.cantidad ?? 0);
+        const patch: Record<string, number> = { stock: nuevoStock };
+        if (l.precio_unitario > 0) patch.precio_compra = l.precio_unitario;
         const { error: upErr } = await supabase
           .from("productos")
-          .update({ stock: nuevoStock })
+          .update(patch)
           .eq("id", l.producto_id);
         if (upErr) stockErrors.push(`${prod.nombre}: ${upErr.message}`);
       }),
     );
     if (stockErrors.length > 0) {
-      toast.error(`Error actualizando stock: ${stockErrors.join(" | ")}`);
+      toast.error(`Error actualizando productos: ${stockErrors.join(" | ")}`);
     } else {
-      toast.success("Compra registrada y stock actualizado");
+      toast.success("Compra registrada, stock y precio actualizados");
     }
 
-    // Sugerir actualizar precio de venta de productos donde el costo subió por encima del precio actual
-    const necesitanAjuste = lineas
-      .map((l) => {
-        const prod = productos.find((p) => p.id === l.producto_id);
-        if (!prod || l.precio_unitario <= 0) return null;
-        if (l.precio_unitario >= prod.precio_venta) return prod.nombre;
-        return null;
-      })
-      .filter(Boolean) as string[];
-    if (necesitanAjuste.length > 0) {
-      toast.warning(
-        `⚠ El precio de compra no debe ser mayor o igual al precio de venta. Actualiza el precio de venta en: ${necesitanAjuste.join(", ")}`,
-        { duration: 10000 },
-      );
-    }
     setOpen(false); setLineas([]); setF({ tipo_comprobante: "FACTURA", fecha_emision: new Date().toISOString().slice(0, 10), metodo_pago: "EFECTIVO" });
     refresh();
     void load();
@@ -250,24 +238,29 @@ function ComprasPage() {
             <AlertDialogDescription asChild>
               <div className="space-y-3 pt-1">
                 <p>
-                  {alertas.length === 1
-                    ? "Hay 1 producto donde el precio de compra es mayor o igual al precio de venta actual."
-                    : `Hay ${alertas.length} productos donde el precio de compra es mayor o igual al precio de venta actual.`}
-                  {" "}Esto significa que venderías con pérdida.
+                  Se detectaron {alertas.length === 1 ? "1 línea" : `${alertas.length} líneas`} con precios a revisar.
                 </p>
                 <div className="rounded-lg border border-destructive/20 bg-destructive/5 divide-y divide-destructive/10">
-                  {alertas.map((a) => (
-                    <div key={a.i} className="px-3 py-2 text-sm">
+                  {alertas.map((a, idx) => (
+                    <div key={`${a.i}-${idx}`} className="px-3 py-2 text-sm">
                       <div className="font-semibold text-foreground">Línea {a.i} · {a.nombre}</div>
-                      <div className="text-xs text-muted-foreground">
-                        Compra <span className="font-mono text-destructive">{formatPEN(a.compra)}</span>
-                        {" ≥ "}
-                        Venta actual <span className="font-mono">{formatPEN(a.venta)}</span>
-                      </div>
+                      {a.tipo === "venta" ? (
+                        <div className="text-xs text-muted-foreground">
+                          Compra <span className="font-mono text-destructive">{formatPEN(a.nuevo)}</span>
+                          {" ≥ "}
+                          Venta actual <span className="font-mono">{formatPEN(a.anterior)}</span> — venderías con pérdida.
+                        </div>
+                      ) : (
+                        <div className="text-xs text-muted-foreground">
+                          Precio ingresado <span className="font-mono text-destructive">{formatPEN(a.nuevo)}</span>
+                          {" < "}
+                          Último precio de compra <span className="font-mono">{formatPEN(a.anterior)}</span>. ¿Desea continuar?
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
-                <p className="text-xs">Revisa los precios o actualiza el precio de venta en el módulo Productos antes de continuar.</p>
+                <p className="text-xs">Cancela para modificar los precios, o continúa para registrar la compra de todos modos.</p>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
