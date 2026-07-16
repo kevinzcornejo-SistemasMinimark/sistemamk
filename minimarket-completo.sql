@@ -184,8 +184,37 @@ create table if not exists public.clientes (
   activo boolean default true,
   creado_en timestamptz default now()
 );
+-- Compatibilidad con tablas antiguas
+alter table public.clientes add column if not exists tipo_doc text default 'DNI';
+alter table public.clientes add column if not exists documento text;
+alter table public.clientes add column if not exists nombre text;
+alter table public.clientes add column if not exists email text;
+alter table public.clientes add column if not exists telefono text;
+alter table public.clientes add column if not exists direccion text;
+alter table public.clientes add column if not exists puntos int default 0;
+alter table public.clientes add column if not exists activo boolean default true;
+alter table public.clientes add column if not exists creado_en timestamptz default now();
+-- Migrar datos de columnas antiguas si existen
+do $$
+begin
+  if exists (select 1 from information_schema.columns where table_schema='public' and table_name='clientes' and column_name='numero_documento') then
+    update public.clientes set documento = coalesce(documento, numero_documento) where documento is null;
+  end if;
+  if exists (select 1 from information_schema.columns where table_schema='public' and table_name='clientes' and column_name='tipo_documento') then
+    update public.clientes set tipo_doc = coalesce(tipo_doc, tipo_documento) where tipo_doc is null or tipo_doc='DNI';
+  end if;
+  if exists (select 1 from information_schema.columns where table_schema='public' and table_name='clientes' and column_name='razon_social') then
+    update public.clientes set nombre = coalesce(nombre, razon_social, trim(concat_ws(' ', nombres, apellidos))) where nombre is null;
+  end if;
+  if exists (select 1 from information_schema.columns where table_schema='public' and table_name='clientes' and column_name='correo') then
+    update public.clientes set email = coalesce(email, correo) where email is null;
+  end if;
+end $$;
+update public.clientes set nombre = coalesce(nombre, 'Cliente') where nombre is null;
+
 create unique index if not exists uq_clientes_doc on public.clientes(tipo_doc, documento) where documento is not null;
 create index if not exists idx_clientes_nombre_trgm on public.clientes using gin (nombre gin_trgm_ops);
+
 
 -- =====================================================================
 -- 6. VENTAS
