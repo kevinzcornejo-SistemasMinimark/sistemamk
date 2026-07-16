@@ -84,8 +84,8 @@ function KardexPage() {
               <th className="px-4 py-2">Producto</th>
               <th className="px-4 py-2">Tipo</th>
               <th className="px-4 py-2 text-right">Cantidad</th>
-              <th className="px-4 py-2 text-right">Anterior</th>
-              <th className="px-4 py-2 text-right">Nuevo</th>
+              <th className="px-4 py-2 text-right">Saldo</th>
+              <th className="px-4 py-2">Documento</th>
               <th className="px-4 py-2">Motivo</th>
             </tr>
           </thead>
@@ -98,15 +98,16 @@ function KardexPage() {
               <tr key={m.id} className="border-t">
                 <td className="px-4 py-2 whitespace-nowrap text-xs">{new Date(m.creado_en).toLocaleString("es-PE")}</td>
                 <td className="px-4 py-2 font-medium">{m.productos?.nombre ?? "—"}</td>
-                <td className="px-4 py-2"><Badge className={tipoColor(m.tipo_movimiento)}>{m.tipo_movimiento}</Badge></td>
+                <td className="px-4 py-2"><Badge className={tipoColor(m.tipo)}>{m.tipo}</Badge></td>
                 <td className="px-4 py-2 text-right font-mono">{m.cantidad}</td>
-                <td className="px-4 py-2 text-right text-muted-foreground">{m.stock_anterior}</td>
-                <td className="px-4 py-2 text-right font-semibold">{m.stock_nuevo}</td>
+                <td className="px-4 py-2 text-right font-semibold">{m.saldo ?? "—"}</td>
+                <td className="px-4 py-2 text-xs font-mono">{m.documento ?? "—"}</td>
                 <td className="px-4 py-2 text-xs text-muted-foreground">{m.motivo ?? "—"}</td>
               </tr>
             ))}
           </tbody>
         </table>
+
       </Card>
     </div>
   );
