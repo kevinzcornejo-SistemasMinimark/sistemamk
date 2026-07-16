@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_app/compras")({
   component: ComprasPage,
 });
 
-type Compra = { id: string; correlativo: number; numero_documento: string | null; fecha_emision: string; total: number; estado: string; proveedores: { razon_social: string } | null };
+type Compra = { id: string; documento: string | null; creada_en: string; total: number; estado: string; proveedores: { razon_social: string } | null };
 type Linea = { producto_id: string; cantidad: number; precio_unitario: number };
 
 function ComprasPage() {
