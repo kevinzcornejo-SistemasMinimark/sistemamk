@@ -134,10 +134,10 @@ function ComprasPage() {
             : rows.length === 0 ? <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">Sin compras</td></tr>
             : rows.map((c) => (
               <tr key={c.id} className="border-t">
-                <td className="px-4 py-2 font-bold">#{c.correlativo}</td>
-                <td className="px-4 py-2 font-mono text-xs">{c.numero_documento ?? "—"}</td>
+                <td className="px-4 py-2 font-bold font-mono text-xs">{c.id.slice(0, 8)}</td>
+                <td className="px-4 py-2 font-mono text-xs">{c.documento ?? "—"}</td>
                 <td className="px-4 py-2">{c.proveedores?.razon_social ?? "—"}</td>
-                <td className="px-4 py-2 text-xs">{formatDate(c.fecha_emision)}</td>
+                <td className="px-4 py-2 text-xs">{formatDate(c.creada_en)}</td>
                 <td className="px-4 py-2"><Badge variant="secondary">{c.estado}</Badge></td>
                 <td className="px-4 py-2 text-right font-bold">{formatPEN(c.total)}</td>
               </tr>
