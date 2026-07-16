@@ -49,6 +49,7 @@ export async function registrarVenta(input: RegistrarVentaInput) {
     return {
       venta_id: venta.id,
       producto_id: i.producto.id,
+      nombre: i.producto.nombre,
       cantidad: i.cantidad,
       precio_unitario: i.producto.precio_venta,
       descuento: i.descuento,
@@ -58,16 +59,16 @@ export async function registrarVenta(input: RegistrarVentaInput) {
     };
   });
 
-  const { error: dErr } = await supabase.from("detalle_ventas").insert(detalle);
+  const { error: dErr } = await supabase.from("venta_items").insert(detalle);
   if (dErr) throw dErr;
 
   const pagos = input.pagos.map((p) => ({
     venta_id: venta.id,
-    metodo_pago: p.metodo as any,
+    metodo: p.metodo,
     monto: p.monto,
     referencia: p.referencia ?? null,
   }));
-  const { error: pErr } = await supabase.from("pagos_venta").insert(pagos);
+  const { error: pErr } = await supabase.from("venta_pagos").insert(pagos);
   if (pErr) throw pErr;
 
   return venta;
