@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_app/compras")({
   component: ComprasPage,
 });
 
-type Compra = { id: string; correlativo: number; numero_documento: string | null; fecha_emision: string; total: number; estado: string; proveedores: { razon_social: string } | null };
+type Compra = { id: string; documento: string | null; creada_en: string; total: number; estado: string; proveedores: { razon_social: string } | null };
 type Linea = { producto_id: string; cantidad: number; precio_unitario: number };
 
 function ComprasPage() {
@@ -38,7 +38,7 @@ function ComprasPage() {
   const load = async () => {
     if (isDemo || !user) { setRows([]); setLoading(false); return; }
     setLoading(true);
-    const { data } = await supabase.from("compras").select("id,correlativo,numero_documento,fecha_emision,total,estado,proveedores(razon_social)").order("fecha_emision", { ascending: false });
+    const { data } = await supabase.from("compras").select("id,documento,creada_en,total,estado,proveedores(razon_social)").order("creada_en", { ascending: false });
     setRows((data ?? []) as any);
     const { data: p } = await supabase.from("proveedores").select("id,razon_social").eq("activo", true).order("razon_social");
     setProveedores((p ?? []) as any);
@@ -79,21 +79,25 @@ function ComprasPage() {
     setConfirmOpen(false);
     const { data: compra, error } = await supabase.from("compras").insert({
       proveedor_id: f.proveedor_id,
-      tipo_comprobante: f.tipo_comprobante,
-      numero_documento: f.numero_documento || null,
-      fecha_emision: f.fecha_emision,
-      metodo_pago: f.metodo_pago,
+      documento: f.numero_documento || null,
       subtotal, igv, total,
       estado: "RECIBIDA",
       usuario_id: user?.id ?? null,
     }).select("id").single();
     if (error || !compra) return toast.error(error?.message ?? "Error");
     const detalles = lineas.map((l) => {
+      const prod = productos.find((p) => p.id === l.producto_id);
       const ttl = l.cantidad * l.precio_unitario;
-      const stl = ttl / (1 + IGV_RATE);
-      return { compra_id: compra.id, producto_id: l.producto_id, cantidad: l.cantidad, precio_unitario: l.precio_unitario, subtotal: stl, igv: ttl - stl, total: ttl };
+      return {
+        compra_id: compra.id,
+        producto_id: l.producto_id,
+        nombre: prod?.nombre ?? "",
+        cantidad: l.cantidad,
+        costo_unitario: l.precio_unitario,
+        subtotal: ttl,
+      };
     });
-    const { error: dErr } = await supabase.from("detalle_compras").insert(detalles);
+    const { error: dErr } = await supabase.from("compra_items").insert(detalles);
     if (dErr) return toast.error(dErr.message);
     toast.success("Compra registrada");
     // Sugerir actualizar precio de venta de productos donde el costo subió por encima del precio actual
@@ -134,10 +138,10 @@ function ComprasPage() {
             : rows.length === 0 ? <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">Sin compras</td></tr>
             : rows.map((c) => (
               <tr key={c.id} className="border-t">
-                <td className="px-4 py-2 font-bold">#{c.correlativo}</td>
-                <td className="px-4 py-2 font-mono text-xs">{c.numero_documento ?? "—"}</td>
+                <td className="px-4 py-2 font-bold font-mono text-xs">{c.id.slice(0, 8)}</td>
+                <td className="px-4 py-2 font-mono text-xs">{c.documento ?? "—"}</td>
                 <td className="px-4 py-2">{c.proveedores?.razon_social ?? "—"}</td>
-                <td className="px-4 py-2 text-xs">{formatDate(c.fecha_emision)}</td>
+                <td className="px-4 py-2 text-xs">{formatDate(c.creada_en)}</td>
                 <td className="px-4 py-2"><Badge variant="secondary">{c.estado}</Badge></td>
                 <td className="px-4 py-2 text-right font-bold">{formatPEN(c.total)}</td>
               </tr>
