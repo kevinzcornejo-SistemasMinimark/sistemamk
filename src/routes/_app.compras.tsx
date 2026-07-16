@@ -101,8 +101,9 @@ function ComprasPage() {
     const { error: dErr } = await supabase.from("compra_items").insert(detalles);
     if (dErr) return toast.error(dErr.message);
 
-    // Aumentar stock y actualizar último precio de compra
+    // Aumentar stock, actualizar último precio de compra y registrar kardex
     const stockErrors: string[] = [];
+    const movimientos: any[] = [];
     await Promise.all(
       lineas.map(async (l) => {
         const prod = productos.find((p) => p.id === l.producto_id);
@@ -114,14 +115,30 @@ function ComprasPage() {
           .from("productos")
           .update(patch)
           .eq("id", l.producto_id);
-        if (upErr) stockErrors.push(`${prod.nombre}: ${upErr.message}`);
+        if (upErr) { stockErrors.push(`${prod.nombre}: ${upErr.message}`); return; }
+        movimientos.push({
+          producto_id: l.producto_id,
+          tipo: "COMPRA",
+          cantidad: l.cantidad,
+          saldo: nuevoStock,
+          costo_unitario: l.precio_unitario,
+          documento: f.numero_documento || null,
+          motivo: `Compra ${compra.id.slice(0, 8)}`,
+          usuario_id: user?.id ?? null,
+        });
       }),
     );
+    if (movimientos.length > 0) {
+      const { error: kErr } = await supabase.from("kardex").insert(movimientos);
+      if (kErr) stockErrors.push(`kardex: ${kErr.message}`);
+    }
     if (stockErrors.length > 0) {
       toast.error(`Error actualizando productos: ${stockErrors.join(" | ")}`);
     } else {
-      toast.success("Compra registrada, stock y precio actualizados");
+      toast.success("Compra registrada, stock y kardex actualizados");
     }
+
+
 
     setOpen(false); setLineas([]); setF({ tipo_comprobante: "FACTURA", fecha_emision: new Date().toISOString().slice(0, 10), metodo_pago: "EFECTIVO" });
     refresh();

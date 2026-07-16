@@ -14,15 +14,17 @@ export const Route = createFileRoute("/_app/kardex")({
 });
 
 type Mov = {
-  id: string;
-  tipo_movimiento: string;
+  id: number;
+  tipo: string;
   cantidad: number;
-  stock_anterior: number;
-  stock_nuevo: number;
+  saldo: number | null;
+  costo_unitario: number | null;
+  documento: string | null;
   motivo: string | null;
   creado_en: string;
   productos: { nombre: string } | null;
 };
+
 
 function KardexPage() {
   const { user, isDemo } = useAuth();
@@ -36,7 +38,7 @@ function KardexPage() {
       setLoading(true);
       const { data, error } = await supabase
         .from("kardex")
-        .select("id,tipo_movimiento,cantidad,stock_anterior,stock_nuevo,motivo,creado_en,productos(nombre)")
+        .select("id,tipo,cantidad,saldo,costo_unitario,documento,motivo,creado_en,productos(nombre)")
         .order("creado_en", { ascending: false })
         .limit(500);
       if (error) toast.error(error.message);
@@ -50,14 +52,16 @@ function KardexPage() {
     const k = q.toLowerCase();
     return rows.filter((r) =>
       (r.productos?.nombre ?? "").toLowerCase().includes(k) ||
-      r.tipo_movimiento.toLowerCase().includes(k),
+      r.tipo.toLowerCase().includes(k) ||
+      (r.documento ?? "").toLowerCase().includes(k),
     );
   }, [rows, q]);
 
   const tipoColor = (t: string) =>
-    t.includes("ENTRADA") || t.includes("POSITIVO") ? "bg-emerald-500" :
-    t.includes("SALIDA") || t.includes("NEGATIVO") || t === "MERMA" ? "bg-destructive" :
+    t === "COMPRA" || t === "ENTRADA" || t === "DEVOLUCION" ? "bg-emerald-500" :
+    t === "VENTA" || t === "SALIDA" || t === "ANULACION" ? "bg-destructive" :
     "bg-muted-foreground";
+
 
   return (
     <div className="p-6 space-y-4">
@@ -80,8 +84,8 @@ function KardexPage() {
               <th className="px-4 py-2">Producto</th>
               <th className="px-4 py-2">Tipo</th>
               <th className="px-4 py-2 text-right">Cantidad</th>
-              <th className="px-4 py-2 text-right">Anterior</th>
-              <th className="px-4 py-2 text-right">Nuevo</th>
+              <th className="px-4 py-2 text-right">Saldo</th>
+              <th className="px-4 py-2">Documento</th>
               <th className="px-4 py-2">Motivo</th>
             </tr>
           </thead>
@@ -94,15 +98,16 @@ function KardexPage() {
               <tr key={m.id} className="border-t">
                 <td className="px-4 py-2 whitespace-nowrap text-xs">{new Date(m.creado_en).toLocaleString("es-PE")}</td>
                 <td className="px-4 py-2 font-medium">{m.productos?.nombre ?? "—"}</td>
-                <td className="px-4 py-2"><Badge className={tipoColor(m.tipo_movimiento)}>{m.tipo_movimiento}</Badge></td>
+                <td className="px-4 py-2"><Badge className={tipoColor(m.tipo)}>{m.tipo}</Badge></td>
                 <td className="px-4 py-2 text-right font-mono">{m.cantidad}</td>
-                <td className="px-4 py-2 text-right text-muted-foreground">{m.stock_anterior}</td>
-                <td className="px-4 py-2 text-right font-semibold">{m.stock_nuevo}</td>
+                <td className="px-4 py-2 text-right font-semibold">{m.saldo ?? "—"}</td>
+                <td className="px-4 py-2 text-xs font-mono">{m.documento ?? "—"}</td>
                 <td className="px-4 py-2 text-xs text-muted-foreground">{m.motivo ?? "—"}</td>
               </tr>
             ))}
           </tbody>
         </table>
+
       </Card>
     </div>
   );
