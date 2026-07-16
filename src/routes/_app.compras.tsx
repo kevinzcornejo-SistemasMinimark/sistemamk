@@ -25,7 +25,7 @@ type Linea = { producto_id: string; cantidad: number; precio_unitario: number };
 
 function ComprasPage() {
   const { user, isDemo } = useAuth();
-  const { productos } = useCatalog();
+  const { productos, refresh } = useCatalog();
   const [rows, setRows] = useState<Compra[]>([]);
   const [proveedores, setProveedores] = useState<{ id: string; razon_social: string }[]>([]);
   const [loading, setLoading] = useState(true);
