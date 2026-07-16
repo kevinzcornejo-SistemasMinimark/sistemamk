@@ -275,7 +275,6 @@ function ComprasPage() {
                 </div>
                 <p className="text-xs">Cancela para modificar los precios, o continúa para registrar la compra de todos modos.</p>
               </div>
-              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
