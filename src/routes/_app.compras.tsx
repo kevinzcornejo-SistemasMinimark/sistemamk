@@ -57,16 +57,17 @@ function ComprasPage() {
   const save = async () => {
     if (!f.proveedor_id) return toast.error("Selecciona proveedor");
     if (lineas.length === 0) return toast.error("Agrega productos");
-    const problemas = lineas
-      .map((l, i) => {
-        const prod = productos.find((p) => p.id === l.producto_id);
-        if (!prod || l.precio_unitario <= 0) return null;
-        if (l.precio_unitario >= prod.precio_venta) {
-          return { i: i + 1, nombre: prod.nombre, compra: l.precio_unitario, venta: prod.precio_venta };
-        }
-        return null;
-      })
-      .filter(Boolean) as { i: number; nombre: string; compra: number; venta: number }[];
+    type Alerta = { i: number; nombre: string; tipo: "venta" | "menor"; nuevo: number; anterior: number };
+    const problemas: Alerta[] = [];
+    lineas.forEach((l, i) => {
+      const prod = productos.find((p) => p.id === l.producto_id);
+      if (!prod || l.precio_unitario <= 0) return;
+      if (l.precio_unitario >= prod.precio_venta) {
+        problemas.push({ i: i + 1, nombre: prod.nombre, tipo: "venta", nuevo: l.precio_unitario, anterior: prod.precio_venta });
+      } else if (prod.precio_compra > 0 && l.precio_unitario < prod.precio_compra) {
+        problemas.push({ i: i + 1, nombre: prod.nombre, tipo: "menor", nuevo: l.precio_unitario, anterior: prod.precio_compra });
+      }
+    });
     if (problemas.length > 0) {
       setAlertas(problemas);
       setConfirmOpen(true);
