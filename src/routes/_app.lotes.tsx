@@ -260,9 +260,16 @@ function LotesPage() {
             </p>
           </div>
         </div>
-        <Button onClick={() => setOpen(true)} className="bg-emerald-600 hover:bg-emerald-700">
-          <Plus className="h-4 w-4 mr-1" />Registrar lote
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => void sincronizarStock()} disabled={syncing || isDemo || !user}>
+            <RefreshCw className={cn("h-4 w-4 mr-1", syncing && "animate-spin")} />
+            {syncing ? "Sincronizando…" : "Sincronizar stock"}
+          </Button>
+          <Button onClick={() => setOpen(true)} className="bg-emerald-600 hover:bg-emerald-700">
+            <Plus className="h-4 w-4 mr-1" />Registrar lote
+          </Button>
+        </div>
+
       </div>
 
       {/* KPIs */}
