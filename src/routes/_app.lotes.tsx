@@ -79,7 +79,9 @@ function iconoCategoria(nombre: string) {
 
 function LotesPage() {
   const { user, isDemo } = useAuth();
-  const { productos, categorias } = useCatalog();
+  const { productos, categorias, refresh } = useCatalog();
+  const [syncing, setSyncing] = useState(false);
+
   const [rows, setRows] = useState<Lote[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
