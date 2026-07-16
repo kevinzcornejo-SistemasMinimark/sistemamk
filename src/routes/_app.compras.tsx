@@ -251,24 +251,30 @@ function ComprasPage() {
             <AlertDialogDescription asChild>
               <div className="space-y-3 pt-1">
                 <p>
-                  {alertas.length === 1
-                    ? "Hay 1 producto donde el precio de compra es mayor o igual al precio de venta actual."
-                    : `Hay ${alertas.length} productos donde el precio de compra es mayor o igual al precio de venta actual.`}
-                  {" "}Esto significa que venderías con pérdida.
+                  Se detectaron {alertas.length === 1 ? "1 línea" : `${alertas.length} líneas`} con precios a revisar.
                 </p>
                 <div className="rounded-lg border border-destructive/20 bg-destructive/5 divide-y divide-destructive/10">
-                  {alertas.map((a) => (
-                    <div key={a.i} className="px-3 py-2 text-sm">
+                  {alertas.map((a, idx) => (
+                    <div key={`${a.i}-${idx}`} className="px-3 py-2 text-sm">
                       <div className="font-semibold text-foreground">Línea {a.i} · {a.nombre}</div>
-                      <div className="text-xs text-muted-foreground">
-                        Compra <span className="font-mono text-destructive">{formatPEN(a.compra)}</span>
-                        {" ≥ "}
-                        Venta actual <span className="font-mono">{formatPEN(a.venta)}</span>
-                      </div>
+                      {a.tipo === "venta" ? (
+                        <div className="text-xs text-muted-foreground">
+                          Compra <span className="font-mono text-destructive">{formatPEN(a.nuevo)}</span>
+                          {" ≥ "}
+                          Venta actual <span className="font-mono">{formatPEN(a.anterior)}</span> — venderías con pérdida.
+                        </div>
+                      ) : (
+                        <div className="text-xs text-muted-foreground">
+                          Precio ingresado <span className="font-mono text-destructive">{formatPEN(a.nuevo)}</span>
+                          {" < "}
+                          Último precio de compra <span className="font-mono">{formatPEN(a.anterior)}</span>. ¿Desea continuar?
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
-                <p className="text-xs">Revisa los precios o actualiza el precio de venta en el módulo Productos antes de continuar.</p>
+                <p className="text-xs">Cancela para modificar los precios, o continúa para registrar la compra de todos modos.</p>
+              </div>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
