@@ -14,15 +14,17 @@ export const Route = createFileRoute("/_app/kardex")({
 });
 
 type Mov = {
-  id: string;
-  tipo_movimiento: string;
+  id: number;
+  tipo: string;
   cantidad: number;
-  stock_anterior: number;
-  stock_nuevo: number;
+  saldo: number | null;
+  costo_unitario: number | null;
+  documento: string | null;
   motivo: string | null;
   creado_en: string;
   productos: { nombre: string } | null;
 };
+
 
 function KardexPage() {
   const { user, isDemo } = useAuth();
