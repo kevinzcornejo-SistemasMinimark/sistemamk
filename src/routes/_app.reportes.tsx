@@ -62,7 +62,7 @@ function ReportesPage() {
       const ids = (v ?? []).map((x: any) => x.id);
       if (ids.length) {
         const { data: det, error: dErr } = await supabase
-          .from("detalle_ventas")
+          .from("venta_items")
           .select("cantidad,total,productos(nombre)")
           .in("venta_id", ids);
         if (dErr) throw dErr;
