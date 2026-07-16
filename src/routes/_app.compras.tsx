@@ -25,7 +25,7 @@ type Linea = { producto_id: string; cantidad: number; precio_unitario: number };
 
 function ComprasPage() {
   const { user, isDemo } = useAuth();
-  const { productos } = useCatalog();
+  const { productos, refresh } = useCatalog();
   const [rows, setRows] = useState<Compra[]>([]);
   const [proveedores, setProveedores] = useState<{ id: string; razon_social: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,7 +99,27 @@ function ComprasPage() {
     });
     const { error: dErr } = await supabase.from("compra_items").insert(detalles);
     if (dErr) return toast.error(dErr.message);
-    toast.success("Compra registrada");
+
+    // Aumentar stock de cada producto según las cantidades compradas
+    const stockErrors: string[] = [];
+    await Promise.all(
+      lineas.map(async (l) => {
+        const prod = productos.find((p) => p.id === l.producto_id);
+        if (!prod) return;
+        const nuevoStock = Number(prod.stock ?? 0) + Number(l.cantidad ?? 0);
+        const { error: upErr } = await supabase
+          .from("productos")
+          .update({ stock: nuevoStock })
+          .eq("id", l.producto_id);
+        if (upErr) stockErrors.push(`${prod.nombre}: ${upErr.message}`);
+      }),
+    );
+    if (stockErrors.length > 0) {
+      toast.error(`Error actualizando stock: ${stockErrors.join(" | ")}`);
+    } else {
+      toast.success("Compra registrada y stock actualizado");
+    }
+
     // Sugerir actualizar precio de venta de productos donde el costo subió por encima del precio actual
     const necesitanAjuste = lineas
       .map((l) => {
@@ -111,11 +131,12 @@ function ComprasPage() {
       .filter(Boolean) as string[];
     if (necesitanAjuste.length > 0) {
       toast.warning(
-        `Actualiza el precio de venta en: ${necesitanAjuste.join(", ")}`,
-        { duration: 8000 },
+        `⚠ El precio de compra no debe ser mayor o igual al precio de venta. Actualiza el precio de venta en: ${necesitanAjuste.join(", ")}`,
+        { duration: 10000 },
       );
     }
     setOpen(false); setLineas([]); setF({ tipo_comprobante: "FACTURA", fecha_emision: new Date().toISOString().slice(0, 10), metodo_pago: "EFECTIVO" });
+    refresh();
     void load();
   };
 
