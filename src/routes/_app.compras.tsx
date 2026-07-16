@@ -79,21 +79,25 @@ function ComprasPage() {
     setConfirmOpen(false);
     const { data: compra, error } = await supabase.from("compras").insert({
       proveedor_id: f.proveedor_id,
-      tipo_comprobante: f.tipo_comprobante,
-      numero_documento: f.numero_documento || null,
-      fecha_emision: f.fecha_emision,
-      metodo_pago: f.metodo_pago,
+      documento: f.numero_documento || null,
       subtotal, igv, total,
       estado: "RECIBIDA",
       usuario_id: user?.id ?? null,
     }).select("id").single();
     if (error || !compra) return toast.error(error?.message ?? "Error");
     const detalles = lineas.map((l) => {
+      const prod = productos.find((p) => p.id === l.producto_id);
       const ttl = l.cantidad * l.precio_unitario;
-      const stl = ttl / (1 + IGV_RATE);
-      return { compra_id: compra.id, producto_id: l.producto_id, cantidad: l.cantidad, precio_unitario: l.precio_unitario, subtotal: stl, igv: ttl - stl, total: ttl };
+      return {
+        compra_id: compra.id,
+        producto_id: l.producto_id,
+        nombre: prod?.nombre ?? "",
+        cantidad: l.cantidad,
+        costo_unitario: l.precio_unitario,
+        subtotal: ttl,
+      };
     });
-    const { error: dErr } = await supabase.from("detalle_compras").insert(detalles);
+    const { error: dErr } = await supabase.from("compra_items").insert(detalles);
     if (dErr) return toast.error(dErr.message);
     toast.success("Compra registrada");
     // Sugerir actualizar precio de venta de productos donde el costo subió por encima del precio actual
