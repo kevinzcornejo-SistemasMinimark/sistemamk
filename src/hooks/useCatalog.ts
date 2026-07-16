@@ -15,9 +15,9 @@ function mapProducto(p: any): MockProducto {
     nombre: p.nombre,
     precio_venta: Number(p.precio_venta ?? 0),
     precio_compra: Number(p.precio_compra ?? 0),
-    stock: Number(p.stock_actual ?? 0),
+    stock: Number(p.stock ?? 0),
     stock_minimo: Number(p.stock_minimo ?? 0),
-    unidad: String(p.unidad_medida ?? "UNIDAD").slice(0, 3),
+    unidad: String(p.unidad ?? "UNIDAD").slice(0, 3),
     categoria_id: p.categoria_id ?? "",
     igv: !!p.afecto_igv,
     imagen: p.imagen_url ?? undefined,
@@ -68,7 +68,7 @@ export function useCatalog() {
         supabase
           .from("productos")
           .select(
-            "id,codigo_barras,nombre,precio_venta,precio_compra,stock_actual,stock_minimo,unidad_medida,categoria_id,afecto_igv,imagen_url,activo",
+            "id,codigo_barras,nombre,precio_venta,precio_compra,stock,stock_minimo,unidad,categoria_id,afecto_igv,imagen_url,activo",
           )
           .eq("activo", true)
           .order("nombre", { ascending: true }),

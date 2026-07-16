@@ -38,9 +38,9 @@ type Producto = {
   nombre: string;
   precio_venta: number;
   precio_compra: number;
-  stock_actual: number;
+  stock: number;
   stock_minimo: number;
-  unidad_medida: string;
+  unidad: string;
   categoria_id: string | null;
   afecto_igv: boolean;
   activo: boolean;
@@ -81,7 +81,7 @@ function ProductosPage() {
       supabase
         .from("productos")
         .select(
-          "id,codigo_barras,nombre,precio_venta,precio_compra,stock_actual,stock_minimo,unidad_medida,categoria_id,afecto_igv,activo,imagen_url",
+          "id,codigo_barras,nombre,precio_venta,precio_compra,stock,stock_minimo,unidad,categoria_id,afecto_igv,activo,imagen_url",
         )
         .order("nombre"),
       supabase.from("categorias").select("id,nombre").order("nombre"),
@@ -122,9 +122,9 @@ function ProductosPage() {
       nombre: p.nombre,
       precio_venta: p.precio_venta ?? 0,
       precio_compra: p.precio_compra ?? 0,
-      stock_actual: p.stock_actual ?? 0,
+      stock: p.stock ?? 0,
       stock_minimo: p.stock_minimo ?? 0,
-      unidad_medida: p.unidad_medida ?? "UNIDAD",
+      unidad: p.unidad ?? "UNIDAD",
       categoria_id: p.categoria_id || null,
       afecto_igv: p.afecto_igv ?? true,
       activo: p.activo ?? true,
@@ -248,7 +248,7 @@ function ProductosPage() {
                     {formatPEN(Number(p.precio_venta))}
                   </td>
                   <td className="px-4 py-2 text-right">
-                    {Number(p.stock_actual)} {p.unidad_medida.slice(0, 3)}
+                    {Number(p.stock)} {p.unidad.slice(0, 3)}
                   </td>
                   <td className="px-4 py-2 text-right space-x-1">
                     <Button
@@ -315,9 +315,9 @@ function ProductoModal({
           codigo_barras: "",
           precio_compra: 0,
           precio_venta: 0,
-          stock_actual: 0,
+          stock: 0,
           stock_minimo: 0,
-          unidad_medida: "UNIDAD",
+          unidad: "UNIDAD",
           afecto_igv: true,
           activo: true,
         },
@@ -415,8 +415,8 @@ function ProductoModal({
           <div>
             <Label>Unidad</Label>
             <Select
-              value={f.unidad_medida ?? "UNIDAD"}
-              onValueChange={(v) => set({ unidad_medida: v })}
+              value={f.unidad ?? "UNIDAD"}
+              onValueChange={(v) => set({ unidad: v })}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -499,9 +499,9 @@ function ProductoModal({
             <Input
               type="number"
               step="0.001"
-              value={f.stock_actual ?? 0}
+              value={f.stock ?? 0}
               onChange={(e) =>
-                set({ stock_actual: parseFloat(e.target.value) || 0 })
+                set({ stock: parseFloat(e.target.value) || 0 })
               }
             />
           </div>
