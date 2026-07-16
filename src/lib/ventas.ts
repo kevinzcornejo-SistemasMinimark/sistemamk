@@ -71,5 +71,32 @@ export async function registrarVenta(input: RegistrarVentaInput) {
   const { error: pErr } = await supabase.from("venta_pagos").insert(pagos);
   if (pErr) throw pErr;
 
+  // Descontar stock y registrar kardex
+  const movimientos: any[] = [];
+  await Promise.all(
+    input.items.map(async (i) => {
+      const stockActual = Number(i.producto.stock ?? 0);
+      const nuevoStock = stockActual - Number(i.cantidad ?? 0);
+      const { error: upErr } = await supabase
+        .from("productos")
+        .update({ stock: nuevoStock })
+        .eq("id", i.producto.id);
+      if (upErr) return;
+      movimientos.push({
+        producto_id: i.producto.id,
+        tipo: "VENTA",
+        cantidad: -i.cantidad,
+        saldo: nuevoStock,
+        costo_unitario: i.producto.precio_compra ?? null,
+        documento: `${venta.serie}-${venta.correlativo ?? ""}`,
+        motivo: `Venta ${venta.id.slice(0, 8)}`,
+        usuario_id: input.cajero_id ?? null,
+      });
+    }),
+  );
+  if (movimientos.length > 0) {
+    await supabase.from("kardex").insert(movimientos);
+  }
+
   return venta;
 }
