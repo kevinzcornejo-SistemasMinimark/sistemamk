@@ -191,6 +191,60 @@ function LotesPage() {
     toast.success("Lote eliminado"); void load();
   };
 
+  const sincronizarStock = async () => {
+    if (isDemo || !user) return;
+    setSyncing(true);
+    try {
+      // Suma cantidad_actual por producto de lotes no bloqueados
+      const totales = new Map<string, number>();
+      rows.forEach((l) => {
+        if (l.bloqueado) return;
+        totales.set(l.producto_id, (totales.get(l.producto_id) ?? 0) + Number(l.cantidad_actual ?? 0));
+      });
+      if (totales.size === 0) {
+        toast.info("No hay lotes para sincronizar");
+        return;
+      }
+      const movimientos: any[] = [];
+      const errores: string[] = [];
+      let actualizados = 0;
+      await Promise.all(
+        Array.from(totales.entries()).map(async ([pid, total]) => {
+          const prod = productos.find((p) => p.id === pid);
+          const anterior = Number(prod?.stock ?? 0);
+          if (anterior === total) return;
+          const { error } = await supabase
+            .from("productos")
+            .update({ stock: total })
+            .eq("id", pid);
+          if (error) { errores.push(`${prod?.nombre ?? pid}: ${error.message}`); return; }
+          actualizados++;
+          movimientos.push({
+            producto_id: pid,
+            tipo: "AJUSTE",
+            cantidad: total - anterior,
+            saldo: total,
+            costo_unitario: prod?.precio_compra ?? null,
+            documento: null,
+            motivo: `Sincronización con lotes (antes ${anterior})`,
+            usuario_id: user?.id ?? null,
+          });
+        }),
+      );
+      if (movimientos.length > 0) {
+        const { error: kErr } = await supabase.from("kardex").insert(movimientos);
+        if (kErr) errores.push(`kardex: ${kErr.message}`);
+      }
+      if (errores.length > 0) toast.error(errores.join(" | "));
+      if (actualizados === 0 && errores.length === 0) toast.success("Stock ya estaba sincronizado");
+      else if (actualizados > 0) toast.success(`Stock sincronizado en ${actualizados} producto(s)`);
+      refresh();
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+
   return (
     <div className="p-6 space-y-5 max-w-[1400px] mx-auto">
       {/* Header */}
