@@ -38,7 +38,7 @@ function ComprasPage() {
   const load = async () => {
     if (isDemo || !user) { setRows([]); setLoading(false); return; }
     setLoading(true);
-    const { data } = await supabase.from("compras").select("id,correlativo,numero_documento,fecha_emision,total,estado,proveedores(razon_social)").order("fecha_emision", { ascending: false });
+    const { data } = await supabase.from("compras").select("id,documento,creada_en,total,estado,proveedores(razon_social)").order("creada_en", { ascending: false });
     setRows((data ?? []) as any);
     const { data: p } = await supabase.from("proveedores").select("id,razon_social").eq("activo", true).order("razon_social");
     setProveedores((p ?? []) as any);
