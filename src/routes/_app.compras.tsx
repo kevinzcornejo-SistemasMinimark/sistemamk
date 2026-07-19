@@ -394,10 +394,12 @@ function ComprasPage() {
                   <span className="w-9" />
                 </div>
               )}
-              {lineas.map((l, i) => (
+              {lineas.map((l, i) => {
+                const lotesProd = lotesActivos.filter((lt) => lt.producto_id === l.producto_id);
+                return (
                 <div key={i} className="space-y-1 border-b pb-2">
                   <div className="flex gap-2 items-center">
-                    <Select value={l.producto_id} onValueChange={(v) => updLinea(i, { producto_id: v })}>
+                    <Select value={l.producto_id} onValueChange={(v) => updLinea(i, { producto_id: v, lote_id: undefined })}>
                       <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
                       <SelectContent>{productos.map((p) => <SelectItem key={p.id} value={p.id}>{p.nombre}</SelectItem>)}</SelectContent>
                     </Select>
@@ -406,14 +408,44 @@ function ComprasPage() {
                     <span className="w-24 text-right text-sm font-semibold">{formatPEN(l.cantidad * l.precio_unitario)}</span>
                     <Button size="icon" variant="ghost" onClick={() => delLinea(i)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                   </div>
-                  <div className="flex gap-2 items-center pl-1">
-                    <span className="text-xs text-muted-foreground w-12">Lote:</span>
-                    <Input value={l.numero_lote ?? ""} onChange={(e) => updLinea(i, { numero_lote: e.target.value })} className="flex-1 h-8 text-xs" placeholder="N° de lote (vacío = no crear)" />
-                    <span className="text-xs text-muted-foreground">Vence:</span>
-                    <Input type="date" value={l.fecha_vencimiento ?? ""} onChange={(e) => updLinea(i, { fecha_vencimiento: e.target.value })} className="w-36 h-8 text-xs" />
+                  <div className="flex gap-2 items-center pl-1 flex-wrap">
+                    <span className="text-xs text-muted-foreground w-14">Modo lote:</span>
+                    <Select value={l.modo_lote} onValueChange={(v) => updLinea(i, { modo_lote: v as any, lote_id: undefined })}>
+                      <SelectTrigger className="h-8 w-32 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="nuevo">Nuevo lote</SelectItem>
+                        <SelectItem value="existente">Lote existente</SelectItem>
+                        <SelectItem value="ninguno">Sin lote</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {l.modo_lote === "nuevo" && (
+                      <>
+                        <Input value={l.numero_lote ?? ""} onChange={(e) => updLinea(i, { numero_lote: e.target.value })} className="flex-1 h-8 text-xs min-w-40" placeholder="N° de lote" />
+                        <span className="text-xs text-muted-foreground">Vence:</span>
+                        <Input type="date" value={l.fecha_vencimiento ?? ""} onChange={(e) => updLinea(i, { fecha_vencimiento: e.target.value })} className="w-36 h-8 text-xs" />
+                      </>
+                    )}
+                    {l.modo_lote === "existente" && (
+                      <Select value={l.lote_id ?? ""} onValueChange={(v) => updLinea(i, { lote_id: v })}>
+                        <SelectTrigger className="h-8 flex-1 text-xs min-w-60"><SelectValue placeholder={lotesProd.length === 0 ? "Sin lotes activos" : "Elegir lote…"} /></SelectTrigger>
+                        <SelectContent>
+                          {lotesProd.map((lt) => (
+                            <SelectItem key={lt.id} value={lt.id}>
+                              {lt.numero_lote} · {lt.fecha_vencimiento ? `vence ${formatDate(lt.fecha_vencimiento)}` : "sin venc."} · stock {lt.cantidad_actual}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
+                  {l.producto_id && lotesProd.length > 0 && (
+                    <div className="pl-1 text-[11px] text-muted-foreground">
+                      Lotes activos: {lotesProd.map((lt) => `${lt.numero_lote} (${lt.cantidad_actual}${lt.fecha_vencimiento ? `, vence ${formatDate(lt.fecha_vencimiento)}` : ""})`).join(" · ")}
+                    </div>
+                  )}
                 </div>
-              ))}
+                );
+              })}
               {lineas.map((l, i) => {
                 const prod = productos.find((p) => p.id === l.producto_id);
                 if (!prod || l.precio_unitario <= 0) return null;
