@@ -80,6 +80,17 @@ function ComprasPage() {
   const save = async () => {
     if (!f.proveedor_id) return toast.error("Selecciona proveedor");
     if (lineas.length === 0) return toast.error("Agrega productos");
+    // Validaciones de lote
+    for (let i = 0; i < lineas.length; i++) {
+      const l = lineas[i];
+      if (l.cantidad <= 0) return toast.error(`Línea ${i + 1}: cantidad debe ser mayor a 0`);
+      if (l.modo_lote === "nuevo" && (!l.numero_lote || !l.numero_lote.trim())) {
+        return toast.error(`Línea ${i + 1}: ingresa el número de lote o cambia a "Sin lote"`);
+      }
+      if (l.modo_lote === "existente" && !l.lote_id) {
+        return toast.error(`Línea ${i + 1}: selecciona el lote existente`);
+      }
+    }
     type Alerta = { i: number; nombre: string; tipo: "venta" | "menor"; nuevo: number; anterior: number };
     const problemas: Alerta[] = [];
     lineas.forEach((l, i) => {
