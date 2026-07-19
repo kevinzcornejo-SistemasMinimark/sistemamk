@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_app/compras")({
 });
 
 type Compra = { id: string; documento: string | null; creada_en: string; total: number; estado: string; proveedores: { razon_social: string } | null };
-type Linea = { producto_id: string; cantidad: number; precio_unitario: number };
+type Linea = { producto_id: string; cantidad: number; precio_unitario: number; numero_lote?: string; fecha_vencimiento?: string };
 
 function ComprasPage() {
   const { user, isDemo } = useAuth();
@@ -55,7 +55,11 @@ function ComprasPage() {
   const igv = lineas.reduce((s, l) => s + (l.cantidad * l.precio_unitario) - (l.cantidad * l.precio_unitario) / (1 + IGV_RATE), 0);
   const total = lineas.reduce((s, l) => s + l.cantidad * l.precio_unitario, 0);
 
-  const addLinea = () => setLineas([...lineas, { producto_id: productos[0]?.id ?? "", cantidad: 1, precio_unitario: 0 }]);
+  const addLinea = () => {
+    const d = new Date();
+    const lote = `L${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}-${String(lineas.length + 1).padStart(3, "0")}`;
+    setLineas([...lineas, { producto_id: productos[0]?.id ?? "", cantidad: 1, precio_unitario: 0, numero_lote: lote, fecha_vencimiento: "" }]);
+  };
   const updLinea = (i: number, patch: Partial<Linea>) => setLineas(lineas.map((l, idx) => idx === i ? { ...l, ...patch } : l));
   const delLinea = (i: number) => setLineas(lineas.filter((_, idx) => idx !== i));
 
@@ -109,6 +113,7 @@ function ComprasPage() {
     // Aumentar stock, actualizar último precio de compra y registrar kardex
     const stockErrors: string[] = [];
     const movimientos: any[] = [];
+    const lotesNuevos: any[] = [];
     await Promise.all(
       lineas.map(async (l) => {
         const prod = productos.find((p) => p.id === l.producto_id);
@@ -131,11 +136,25 @@ function ComprasPage() {
           motivo: `Compra ${compra.id.slice(0, 8)}`,
           usuario_id: user?.id ?? null,
         });
+        if (l.numero_lote && l.numero_lote.trim()) {
+          lotesNuevos.push({
+            producto_id: l.producto_id,
+            numero_lote: l.numero_lote.trim(),
+            fecha_vencimiento: l.fecha_vencimiento || null,
+            cantidad_inicial: l.cantidad,
+            cantidad_actual: l.cantidad,
+            costo_unitario: l.precio_unitario,
+          });
+        }
       }),
     );
     if (movimientos.length > 0) {
       const { error: kErr } = await supabase.from("kardex").insert(movimientos);
       if (kErr) stockErrors.push(`kardex: ${kErr.message}`);
+    }
+    if (lotesNuevos.length > 0) {
+      const { error: lErr } = await supabase.from("lotes").insert(lotesNuevos);
+      if (lErr) stockErrors.push(`lotes: ${lErr.message}`);
     }
     if (stockErrors.length > 0) {
       toast.error(`Error actualizando productos: ${stockErrors.join(" | ")}`);
@@ -335,15 +354,23 @@ function ComprasPage() {
                 </div>
               )}
               {lineas.map((l, i) => (
-                <div key={i} className="flex gap-2 items-center">
-                  <Select value={l.producto_id} onValueChange={(v) => updLinea(i, { producto_id: v })}>
-                    <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
-                    <SelectContent>{productos.map((p) => <SelectItem key={p.id} value={p.id}>{p.nombre}</SelectItem>)}</SelectContent>
-                  </Select>
-                  <Input type="number" value={l.cantidad} onChange={(e) => updLinea(i, { cantidad: Number(e.target.value) })} className="w-20" placeholder="Cant" />
-                  <Input type="number" step="0.01" value={l.precio_unitario} onChange={(e) => updLinea(i, { precio_unitario: Number(e.target.value) })} className="w-28" placeholder="Precio" />
-                  <span className="w-24 text-right text-sm font-semibold">{formatPEN(l.cantidad * l.precio_unitario)}</span>
-                  <Button size="icon" variant="ghost" onClick={() => delLinea(i)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                <div key={i} className="space-y-1 border-b pb-2">
+                  <div className="flex gap-2 items-center">
+                    <Select value={l.producto_id} onValueChange={(v) => updLinea(i, { producto_id: v })}>
+                      <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                      <SelectContent>{productos.map((p) => <SelectItem key={p.id} value={p.id}>{p.nombre}</SelectItem>)}</SelectContent>
+                    </Select>
+                    <Input type="number" value={l.cantidad} onChange={(e) => updLinea(i, { cantidad: Number(e.target.value) })} className="w-20" placeholder="Cant" />
+                    <Input type="number" step="0.01" value={l.precio_unitario} onChange={(e) => updLinea(i, { precio_unitario: Number(e.target.value) })} className="w-28" placeholder="Precio" />
+                    <span className="w-24 text-right text-sm font-semibold">{formatPEN(l.cantidad * l.precio_unitario)}</span>
+                    <Button size="icon" variant="ghost" onClick={() => delLinea(i)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                  </div>
+                  <div className="flex gap-2 items-center pl-1">
+                    <span className="text-xs text-muted-foreground w-12">Lote:</span>
+                    <Input value={l.numero_lote ?? ""} onChange={(e) => updLinea(i, { numero_lote: e.target.value })} className="flex-1 h-8 text-xs" placeholder="N° de lote (vacío = no crear)" />
+                    <span className="text-xs text-muted-foreground">Vence:</span>
+                    <Input type="date" value={l.fecha_vencimiento ?? ""} onChange={(e) => updLinea(i, { fecha_vencimiento: e.target.value })} className="w-36 h-8 text-xs" />
+                  </div>
                 </div>
               ))}
               {lineas.map((l, i) => {
