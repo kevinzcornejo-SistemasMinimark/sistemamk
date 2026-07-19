@@ -392,17 +392,30 @@ function ProductoModal({
               <p className="text-xs text-muted-foreground">
                 Se convierte automáticamente a icono 128×128 (≈ 5 KB) para no pesar en la base de datos.
               </p>
-              <div className="flex gap-2 pt-1">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={procesando}
-                  onClick={() => fileRef.current?.click()}
+              <div className="flex gap-2 pt-1 items-center">
+                <label
+                  className={`inline-flex items-center gap-1 h-8 px-3 rounded-md border text-sm font-medium cursor-pointer bg-background hover:bg-muted transition ${
+                    procesando ? "opacity-60 pointer-events-none" : ""
+                  }`}
                 >
-                  <Upload className="h-4 w-4 mr-1" />
+                  <Upload className="h-4 w-4" />
                   {procesando ? "Procesando…" : f.imagen_url ? "Cambiar" : "Subir foto"}
-                </Button>
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,image/bmp,image/*"
+                    className="hidden"
+                    onClick={(e) => {
+                      // permite volver a elegir el mismo archivo
+                      (e.currentTarget as HTMLInputElement).value = "";
+                    }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] ?? null;
+                      console.log("[foto] archivo seleccionado:", file?.name, file?.type, file?.size);
+                      void onPickFile(file);
+                    }}
+                  />
+                </label>
                 {f.imagen_url && (
                   <Button
                     type="button"
@@ -414,13 +427,7 @@ function ProductoModal({
                   </Button>
                 )}
               </div>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => onPickFile(e.target.files?.[0] ?? null)}
-              />
+
             </div>
           </div>
           <div className="col-span-2">
