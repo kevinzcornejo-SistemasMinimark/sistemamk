@@ -40,6 +40,19 @@ function ComprasPage() {
   const [detalleCompra, setDetalleCompra] = useState<Compra | null>(null);
   const [detalleItems, setDetalleItems] = useState<any[]>([]);
   const [detalleLoading, setDetalleLoading] = useState(false);
+  const [lotesActivos, setLotesActivos] = useState<LoteActivo[]>([]);
+
+  const loadLotes = async () => {
+    if (isDemo || !user) return;
+    const { data } = await supabase
+      .from("lotes")
+      .select("id,producto_id,numero_lote,fecha_vencimiento,cantidad_actual")
+      .eq("bloqueado", false)
+      .gt("cantidad_actual", 0)
+      .order("fecha_vencimiento", { ascending: true, nullsFirst: false });
+    setLotesActivos((data ?? []) as LoteActivo[]);
+  };
+  useEffect(() => { if (open) void loadLotes(); }, [open, user?.id, isDemo]);
 
   const load = async () => {
     if (isDemo || !user) { setRows([]); setLoading(false); return; }
