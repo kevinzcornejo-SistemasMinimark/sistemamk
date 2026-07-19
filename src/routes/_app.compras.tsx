@@ -240,7 +240,11 @@ function ComprasPage() {
           <h1 className="text-2xl font-extrabold tracking-tight flex items-center gap-2"><ShoppingCart className="h-6 w-6 text-primary" /> Compras</h1>
           <p className="text-muted-foreground">Órdenes de compra y recepciones</p>
         </div>
-        <Button onClick={() => setOpen(true)} disabled={isDemo || !user}><Plus className="h-4 w-4 mr-1" />Nueva compra</Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={exportarCompras} disabled={rows.length === 0}><FileSpreadsheet className="h-4 w-4 mr-1" />Excel</Button>
+          <Button variant="outline" size="sm" onClick={imprimirCompras} disabled={rows.length === 0}><Printer className="h-4 w-4 mr-1" />PDF</Button>
+          <Button onClick={() => setOpen(true)} disabled={isDemo || !user}><Plus className="h-4 w-4 mr-1" />Nueva compra</Button>
+        </div>
       </div>
       <Card className="overflow-hidden">
         <table className="w-full text-sm">
