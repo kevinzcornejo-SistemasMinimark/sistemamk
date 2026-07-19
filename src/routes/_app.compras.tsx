@@ -249,19 +249,22 @@ function ComprasPage() {
       <Card className="overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs uppercase">
-            <tr><th className="px-4 py-2">N°</th><th className="px-4 py-2">Documento</th><th className="px-4 py-2">Proveedor</th><th className="px-4 py-2">Fecha</th><th className="px-4 py-2">Estado</th><th className="px-4 py-2 text-right">Total</th></tr>
+            <tr><th className="px-4 py-2">N°</th><th className="px-4 py-2">Documento</th><th className="px-4 py-2">Proveedor</th><th className="px-4 py-2">Fecha</th><th className="px-4 py-2">Estado</th><th className="px-4 py-2 text-right">Total</th><th className="px-4 py-2 text-center">Acciones</th></tr>
           </thead>
           <tbody>
-            {loading ? <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">Cargando…</td></tr>
-            : rows.length === 0 ? <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">Sin compras</td></tr>
+            {loading ? <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">Cargando…</td></tr>
+            : rows.length === 0 ? <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">Sin compras</td></tr>
             : rows.map((c) => (
-              <tr key={c.id} className="border-t">
+              <tr key={c.id} className="border-t hover:bg-muted/30">
                 <td className="px-4 py-2 font-bold font-mono text-xs">{c.id.slice(0, 8)}</td>
                 <td className="px-4 py-2 font-mono text-xs">{c.documento ?? "—"}</td>
                 <td className="px-4 py-2">{c.proveedores?.razon_social ?? "—"}</td>
                 <td className="px-4 py-2 text-xs">{formatDate(c.creada_en)}</td>
                 <td className="px-4 py-2"><Badge variant="secondary">{c.estado}</Badge></td>
                 <td className="px-4 py-2 text-right font-bold">{formatPEN(c.total)}</td>
+                <td className="px-4 py-2 text-center">
+                  <Button size="sm" variant="ghost" onClick={() => void verDetalle(c)}><Eye className="h-4 w-4 mr-1" />Ver</Button>
+                </td>
               </tr>
             ))}
           </tbody>
