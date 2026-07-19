@@ -14,7 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCatalog } from "@/hooks/useCatalog";
 import { toast } from "sonner";
 import { formatPEN, formatDate, IGV_RATE } from "@/lib/format";
-import { exportToCSV, printHTML } from "@/lib/exporters";
+import { exportToCSV, printHTML, printTicket } from "@/lib/exporters";
 
 export const Route = createFileRoute("/_app/compras")({
   head: () => ({ meta: [{ title: "Compras — POS Minimarket" }] }),
