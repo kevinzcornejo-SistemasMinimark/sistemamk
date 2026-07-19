@@ -4,7 +4,9 @@ import { Header } from "./Header";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(
+    typeof window !== "undefined" ? window.innerWidth < 1280 : true,
+  );
 
   return (
     <div className="h-screen overflow-hidden bg-background flex">

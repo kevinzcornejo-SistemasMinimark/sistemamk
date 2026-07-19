@@ -171,7 +171,7 @@ export function Sidebar({
       <aside
         className={cn(
           "hidden md:block bg-sidebar border-r border-sidebar-border shrink-0 transition-all",
-          collapsed ? "w-16" : "w-60",
+          collapsed ? "w-14" : "w-52",
         )}
       >
         {content}
