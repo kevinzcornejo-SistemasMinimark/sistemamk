@@ -8,12 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { ShoppingCart, Plus, Trash2, AlertTriangle } from "lucide-react";
+import { ShoppingCart, Plus, Trash2, AlertTriangle, Eye, FileSpreadsheet, Printer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCatalog } from "@/hooks/useCatalog";
 import { toast } from "sonner";
 import { formatPEN, formatDate, IGV_RATE } from "@/lib/format";
+import { exportToCSV, printHTML } from "@/lib/exporters";
 
 export const Route = createFileRoute("/_app/compras")({
   head: () => ({ meta: [{ title: "Compras — POS Minimarket" }] }),
