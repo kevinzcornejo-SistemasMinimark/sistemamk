@@ -133,7 +133,18 @@ function ProductosPage() {
     const { error } = editing?.id
       ? await supabase.from("productos").update(payload).eq("id", editing.id)
       : await supabase.from("productos").insert(payload);
-    if (error) return toast.error(error.message);
+    if (error) {
+      const msg = error.message ?? "";
+      if (/imagen_url/i.test(msg)) {
+        toast.error(
+          "Falta la columna imagen_url en la tabla productos. Ejecuta en Supabase: ALTER TABLE public.productos ADD COLUMN IF NOT EXISTS imagen_url text; NOTIFY pgrst, 'reload schema';",
+          { duration: 10000 },
+        );
+      } else {
+        toast.error(msg);
+      }
+      return;
+    }
     toast.success("Producto guardado");
     setOpen(false);
     setEditing(null);
