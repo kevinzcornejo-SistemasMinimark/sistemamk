@@ -541,7 +541,7 @@ function TicketsPage() {
       setReprintingId(v.id);
       const { data: det, error } = await supabase
         .from("venta_items")
-        .select("cantidad,precio_unitario,descuento,total,producto_id,productos(id,nombre,precio_venta,igv)")
+        .select("cantidad,precio_unitario,descuento,total,producto_id,productos(id,nombre,precio_venta,afecto_igv)")
         .eq("venta_id", v.id);
       if (error) throw error;
       const items = (det ?? []).map((d: any) => ({
@@ -549,7 +549,7 @@ function TicketsPage() {
           id: d.productos?.id ?? d.producto_id,
           nombre: d.productos?.nombre ?? "Producto",
           precio_venta: Number(d.precio_unitario),
-          igv: d.productos?.igv ?? true,
+          igv: d.productos?.afecto_igv ?? true,
         } as any,
         cantidad: Number(d.cantidad),
         descuento: Number(d.descuento ?? 0),
