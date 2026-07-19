@@ -130,19 +130,36 @@ function ProductosPage() {
       activo: p.activo ?? true,
       imagen_url: p.imagen_url ?? null,
     };
-    const { error } = editing?.id
-      ? await supabase.from("productos").update(payload).eq("id", editing.id)
-      : await supabase.from("productos").insert(payload);
+    const res = editing?.id
+      ? await supabase
+          .from("productos")
+          .update(payload)
+          .eq("id", editing.id)
+          .select("id,imagen_url")
+          .single()
+      : await supabase
+          .from("productos")
+          .insert(payload)
+          .select("id,imagen_url")
+          .single();
+    const { data: saved, error } = res as any;
     if (error) {
       const msg = error.message ?? "";
       if (/imagen_url/i.test(msg)) {
         toast.error(
-          "Falta la columna imagen_url en la tabla productos. Ejecuta en Supabase: ALTER TABLE public.productos ADD COLUMN IF NOT EXISTS imagen_url text; NOTIFY pgrst, 'reload schema';",
-          { duration: 10000 },
+          "Falta la columna imagen_url. Ejecuta en Supabase: ALTER TABLE public.productos ADD COLUMN IF NOT EXISTS imagen_url text; NOTIFY pgrst, 'reload schema';",
+          { duration: 12000 },
         );
       } else {
         toast.error(msg);
       }
+      return;
+    }
+    if (payload.imagen_url && saved && !saved.imagen_url) {
+      toast.error(
+        "La BD borró la imagen al guardar. Hay un TRIGGER en 'productos' reseteando imagen_url. En Supabase ejecuta: SELECT tgname, pg_get_triggerdef(oid) FROM pg_trigger WHERE tgrelid='public.productos'::regclass AND NOT tgisinternal;",
+        { duration: 15000 },
+      );
       return;
     }
     toast.success("Producto guardado");
