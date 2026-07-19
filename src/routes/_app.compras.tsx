@@ -22,7 +22,8 @@ export const Route = createFileRoute("/_app/compras")({
 });
 
 type Compra = { id: string; documento: string | null; creada_en: string; total: number; estado: string; proveedores: { razon_social: string } | null };
-type Linea = { producto_id: string; cantidad: number; precio_unitario: number; numero_lote?: string; fecha_vencimiento?: string };
+type LoteActivo = { id: string; producto_id: string; numero_lote: string; fecha_vencimiento: string | null; cantidad_actual: number };
+type Linea = { producto_id: string; cantidad: number; precio_unitario: number; modo_lote: "nuevo" | "existente" | "ninguno"; numero_lote?: string; fecha_vencimiento?: string; lote_id?: string };
 
 function ComprasPage() {
   const { user, isDemo } = useAuth();
@@ -39,6 +40,19 @@ function ComprasPage() {
   const [detalleCompra, setDetalleCompra] = useState<Compra | null>(null);
   const [detalleItems, setDetalleItems] = useState<any[]>([]);
   const [detalleLoading, setDetalleLoading] = useState(false);
+  const [lotesActivos, setLotesActivos] = useState<LoteActivo[]>([]);
+
+  const loadLotes = async () => {
+    if (isDemo || !user) return;
+    const { data } = await supabase
+      .from("lotes")
+      .select("id,producto_id,numero_lote,fecha_vencimiento,cantidad_actual")
+      .eq("bloqueado", false)
+      .gt("cantidad_actual", 0)
+      .order("fecha_vencimiento", { ascending: true, nullsFirst: false });
+    setLotesActivos((data ?? []) as LoteActivo[]);
+  };
+  useEffect(() => { if (open) void loadLotes(); }, [open, user?.id, isDemo]);
 
   const load = async () => {
     if (isDemo || !user) { setRows([]); setLoading(false); return; }
@@ -58,7 +72,7 @@ function ComprasPage() {
   const addLinea = () => {
     const d = new Date();
     const lote = `L${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}-${String(lineas.length + 1).padStart(3, "0")}`;
-    setLineas([...lineas, { producto_id: productos[0]?.id ?? "", cantidad: 1, precio_unitario: 0, numero_lote: lote, fecha_vencimiento: "" }]);
+    setLineas([...lineas, { producto_id: productos[0]?.id ?? "", cantidad: 1, precio_unitario: 0, modo_lote: "nuevo", numero_lote: lote, fecha_vencimiento: "" }]);
   };
   const updLinea = (i: number, patch: Partial<Linea>) => setLineas(lineas.map((l, idx) => idx === i ? { ...l, ...patch } : l));
   const delLinea = (i: number) => setLineas(lineas.filter((_, idx) => idx !== i));
@@ -66,6 +80,17 @@ function ComprasPage() {
   const save = async () => {
     if (!f.proveedor_id) return toast.error("Selecciona proveedor");
     if (lineas.length === 0) return toast.error("Agrega productos");
+    // Validaciones de lote
+    for (let i = 0; i < lineas.length; i++) {
+      const l = lineas[i];
+      if (l.cantidad <= 0) return toast.error(`Línea ${i + 1}: cantidad debe ser mayor a 0`);
+      if (l.modo_lote === "nuevo" && (!l.numero_lote || !l.numero_lote.trim())) {
+        return toast.error(`Línea ${i + 1}: ingresa el número de lote o cambia a "Sin lote"`);
+      }
+      if (l.modo_lote === "existente" && !l.lote_id) {
+        return toast.error(`Línea ${i + 1}: selecciona el lote existente`);
+      }
+    }
     type Alerta = { i: number; nombre: string; tipo: "venta" | "menor"; nuevo: number; anterior: number };
     const problemas: Alerta[] = [];
     lineas.forEach((l, i) => {
@@ -114,59 +139,75 @@ function ComprasPage() {
     const stockErrors: string[] = [];
     const movimientos: any[] = [];
     const lotesNuevos: any[] = [];
-    await Promise.all(
-      lineas.map(async (l) => {
-        const prod = productos.find((p) => p.id === l.producto_id);
-        if (!prod) return;
-        const nuevoStock = Number(prod.stock ?? 0) + Number(l.cantidad ?? 0);
-        const patch: Record<string, number> = { stock: nuevoStock };
-        if (l.precio_unitario > 0) patch.precio_compra = l.precio_unitario;
-        const { error: upErr } = await supabase
-          .from("productos")
-          .update(patch)
-          .eq("id", l.producto_id);
-        if (upErr) { stockErrors.push(`${prod.nombre}: ${upErr.message}`); return; }
-        movimientos.push({
+    const lotesActualizar: { id: string; nueva_cant: number; nueva_inicial: number }[] = [];
+    for (const l of lineas) {
+      const prod = productos.find((p) => p.id === l.producto_id);
+      if (!prod) continue;
+      const nuevoStock = Number(prod.stock ?? 0) + Number(l.cantidad ?? 0);
+      const patch: Record<string, number> = { stock: nuevoStock };
+      if (l.precio_unitario > 0) patch.precio_compra = l.precio_unitario;
+      const { error: upErr } = await supabase.from("productos").update(patch).eq("id", l.producto_id);
+      if (upErr) { stockErrors.push(`${prod.nombre}: ${upErr.message}`); continue; }
+
+      let refLote = "";
+      if (l.modo_lote === "nuevo" && l.numero_lote?.trim()) {
+        lotesNuevos.push({
           producto_id: l.producto_id,
-          tipo: "COMPRA",
-          cantidad: l.cantidad,
-          saldo: nuevoStock,
+          numero_lote: l.numero_lote.trim(),
+          fecha_vencimiento: l.fecha_vencimiento || null,
+          cantidad_inicial: l.cantidad,
+          cantidad_actual: l.cantidad,
           costo_unitario: l.precio_unitario,
-          documento: f.numero_documento || null,
-          motivo: `Compra ${compra.id.slice(0, 8)}`,
-          usuario_id: user?.id ?? null,
         });
-        if (l.numero_lote && l.numero_lote.trim()) {
-          lotesNuevos.push({
-            producto_id: l.producto_id,
-            numero_lote: l.numero_lote.trim(),
-            fecha_vencimiento: l.fecha_vencimiento || null,
-            cantidad_inicial: l.cantidad,
-            cantidad_actual: l.cantidad,
-            costo_unitario: l.precio_unitario,
+        refLote = l.numero_lote.trim();
+      } else if (l.modo_lote === "existente" && l.lote_id) {
+        const lt = lotesActivos.find((x) => x.id === l.lote_id);
+        if (lt) {
+          lotesActualizar.push({
+            id: lt.id,
+            nueva_cant: Number(lt.cantidad_actual) + Number(l.cantidad),
+            nueva_inicial: Number(lt.cantidad_actual) + Number(l.cantidad),
           });
+          refLote = lt.numero_lote;
         }
-      }),
-    );
-    if (movimientos.length > 0) {
-      const { error: kErr } = await supabase.from("kardex").insert(movimientos);
-      if (kErr) stockErrors.push(`kardex: ${kErr.message}`);
+      }
+
+      movimientos.push({
+        producto_id: l.producto_id,
+        tipo: "COMPRA",
+        cantidad: l.cantidad,
+        saldo: nuevoStock,
+        costo_unitario: l.precio_unitario,
+        documento: f.numero_documento || null,
+        motivo: `Compra ${compra.id.slice(0, 8)}${refLote ? ` · Lote ${refLote}` : ""}`,
+        usuario_id: user?.id ?? null,
+      });
+    }
+    for (const lu of lotesActualizar) {
+      const { error: ulErr } = await supabase
+        .from("lotes")
+        .update({ cantidad_actual: lu.nueva_cant, cantidad_inicial: lu.nueva_inicial })
+        .eq("id", lu.id);
+      if (ulErr) stockErrors.push(`lote: ${ulErr.message}`);
     }
     if (lotesNuevos.length > 0) {
       const { error: lErr } = await supabase.from("lotes").insert(lotesNuevos);
       if (lErr) stockErrors.push(`lotes: ${lErr.message}`);
     }
-    if (stockErrors.length > 0) {
-      toast.error(`Error actualizando productos: ${stockErrors.join(" | ")}`);
-    } else {
-      toast.success("Compra registrada, stock y kardex actualizados");
+    if (movimientos.length > 0) {
+      const { error: kErr } = await supabase.from("kardex").insert(movimientos);
+      if (kErr) stockErrors.push(`kardex: ${kErr.message}`);
     }
-
-
+    if (stockErrors.length > 0) {
+      toast.error(`Errores: ${stockErrors.join(" | ")}`);
+    } else {
+      toast.success("Compra registrada. Stock, lotes y kardex actualizados");
+    }
 
     setOpen(false); setLineas([]); setF({ tipo_comprobante: "FACTURA", fecha_emision: new Date().toISOString().slice(0, 10), metodo_pago: "EFECTIVO" });
     refresh();
     void load();
+    void loadLotes();
   };
 
   const verDetalle = async (c: Compra) => {
@@ -353,10 +394,12 @@ function ComprasPage() {
                   <span className="w-9" />
                 </div>
               )}
-              {lineas.map((l, i) => (
+              {lineas.map((l, i) => {
+                const lotesProd = lotesActivos.filter((lt) => lt.producto_id === l.producto_id);
+                return (
                 <div key={i} className="space-y-1 border-b pb-2">
                   <div className="flex gap-2 items-center">
-                    <Select value={l.producto_id} onValueChange={(v) => updLinea(i, { producto_id: v })}>
+                    <Select value={l.producto_id} onValueChange={(v) => updLinea(i, { producto_id: v, lote_id: undefined })}>
                       <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
                       <SelectContent>{productos.map((p) => <SelectItem key={p.id} value={p.id}>{p.nombre}</SelectItem>)}</SelectContent>
                     </Select>
@@ -365,14 +408,44 @@ function ComprasPage() {
                     <span className="w-24 text-right text-sm font-semibold">{formatPEN(l.cantidad * l.precio_unitario)}</span>
                     <Button size="icon" variant="ghost" onClick={() => delLinea(i)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                   </div>
-                  <div className="flex gap-2 items-center pl-1">
-                    <span className="text-xs text-muted-foreground w-12">Lote:</span>
-                    <Input value={l.numero_lote ?? ""} onChange={(e) => updLinea(i, { numero_lote: e.target.value })} className="flex-1 h-8 text-xs" placeholder="N° de lote (vacío = no crear)" />
-                    <span className="text-xs text-muted-foreground">Vence:</span>
-                    <Input type="date" value={l.fecha_vencimiento ?? ""} onChange={(e) => updLinea(i, { fecha_vencimiento: e.target.value })} className="w-36 h-8 text-xs" />
+                  <div className="flex gap-2 items-center pl-1 flex-wrap">
+                    <span className="text-xs text-muted-foreground w-14">Modo lote:</span>
+                    <Select value={l.modo_lote} onValueChange={(v) => updLinea(i, { modo_lote: v as any, lote_id: undefined })}>
+                      <SelectTrigger className="h-8 w-32 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="nuevo">Nuevo lote</SelectItem>
+                        <SelectItem value="existente">Lote existente</SelectItem>
+                        <SelectItem value="ninguno">Sin lote</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {l.modo_lote === "nuevo" && (
+                      <>
+                        <Input value={l.numero_lote ?? ""} onChange={(e) => updLinea(i, { numero_lote: e.target.value })} className="flex-1 h-8 text-xs min-w-40" placeholder="N° de lote" />
+                        <span className="text-xs text-muted-foreground">Vence:</span>
+                        <Input type="date" value={l.fecha_vencimiento ?? ""} onChange={(e) => updLinea(i, { fecha_vencimiento: e.target.value })} className="w-36 h-8 text-xs" />
+                      </>
+                    )}
+                    {l.modo_lote === "existente" && (
+                      <Select value={l.lote_id ?? ""} onValueChange={(v) => updLinea(i, { lote_id: v })}>
+                        <SelectTrigger className="h-8 flex-1 text-xs min-w-60"><SelectValue placeholder={lotesProd.length === 0 ? "Sin lotes activos" : "Elegir lote…"} /></SelectTrigger>
+                        <SelectContent>
+                          {lotesProd.map((lt) => (
+                            <SelectItem key={lt.id} value={lt.id}>
+                              {lt.numero_lote} · {lt.fecha_vencimiento ? `vence ${formatDate(lt.fecha_vencimiento)}` : "sin venc."} · stock {lt.cantidad_actual}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
+                  {l.producto_id && lotesProd.length > 0 && (
+                    <div className="pl-1 text-[11px] text-muted-foreground">
+                      Lotes activos: {lotesProd.map((lt) => `${lt.numero_lote} (${lt.cantidad_actual}${lt.fecha_vencimiento ? `, vence ${formatDate(lt.fecha_vencimiento)}` : ""})`).join(" · ")}
+                    </div>
+                  )}
                 </div>
-              ))}
+                );
+              })}
               {lineas.map((l, i) => {
                 const prod = productos.find((p) => p.id === l.producto_id);
                 if (!prod || l.precio_unitario <= 0) return null;
