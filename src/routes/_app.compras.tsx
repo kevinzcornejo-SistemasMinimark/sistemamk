@@ -418,6 +418,7 @@ function ComprasPage() {
           <DialogFooter>
             <Button variant="outline" onClick={exportarDetalle} disabled={detalleItems.length === 0}><FileSpreadsheet className="h-4 w-4 mr-1" />Excel</Button>
             <Button variant="outline" onClick={imprimirDetalle} disabled={detalleItems.length === 0}><Printer className="h-4 w-4 mr-1" />PDF</Button>
+            <Button variant="outline" onClick={imprimirTicket} disabled={detalleItems.length === 0}><Printer className="h-4 w-4 mr-1" />Ticket</Button>
             <Button onClick={() => setDetalleOpen(false)}>Cerrar</Button>
           </DialogFooter>
         </DialogContent>
