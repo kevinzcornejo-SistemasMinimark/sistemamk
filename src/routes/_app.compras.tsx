@@ -59,7 +59,7 @@ function ComprasPage() {
   const addLinea = () => {
     const d = new Date();
     const lote = `L${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}-${String(lineas.length + 1).padStart(3, "0")}`;
-    setLineas([...lineas, { producto_id: productos[0]?.id ?? "", cantidad: 1, precio_unitario: 0, numero_lote: lote, fecha_vencimiento: "" }]);
+    setLineas([...lineas, { producto_id: productos[0]?.id ?? "", cantidad: 1, precio_unitario: 0, modo_lote: "nuevo", numero_lote: lote, fecha_vencimiento: "" }]);
   };
   const updLinea = (i: number, patch: Partial<Linea>) => setLineas(lineas.map((l, idx) => idx === i ? { ...l, ...patch } : l));
   const delLinea = (i: number) => setLineas(lineas.filter((_, idx) => idx !== i));
