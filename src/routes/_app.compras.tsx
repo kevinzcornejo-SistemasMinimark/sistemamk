@@ -233,6 +233,38 @@ function ComprasPage() {
     printHTML(`Compra ${c.id.slice(0, 8)}`, html);
   };
 
+  const imprimirTicket = () => {
+    if (!detalleCompra) return;
+    const c = detalleCompra;
+    const html = `
+      <h1>COMPRA</h1>
+      <div class="meta">
+        N° ${c.id.slice(0, 8)}<br/>
+        ${formatDate(c.creada_en)}
+      </div>
+      <div class="sep"></div>
+      <div>Doc: ${c.documento ?? "—"}</div>
+      <div>Prov: ${c.proveedores?.razon_social ?? "—"}</div>
+      <div>Estado: ${c.estado}</div>
+      <div class="sep"></div>
+      <table><thead><tr>
+        <th>Producto</th><th class="right">Cant</th><th class="right">Total</th>
+      </tr></thead><tbody>
+        ${detalleItems.map((d) => `<tr>
+          <td colspan="3">${d.nombre}</td></tr><tr>
+          <td>${Number(d.cantidad)} x ${formatPEN(d.costo_unitario)}</td>
+          <td></td>
+          <td class="right">${formatPEN(d.subtotal)}</td>
+        </tr>`).join("")}
+      </tbody></table>
+      <div class="sep"></div>
+      <div class="total right">TOTAL: ${formatPEN(c.total)}</div>
+      <div class="sep"></div>
+      <div class="center" style="margin-top:6px">¡Gracias!</div>
+    `;
+    printTicket(`Ticket ${c.id.slice(0, 8)}`, html);
+  };
+
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
