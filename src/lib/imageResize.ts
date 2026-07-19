@@ -6,10 +6,11 @@ export async function fileToThumbDataUrl(
   size = 128,
   quality = 0.78,
 ): Promise<string> {
-  if (!file.type.startsWith("image/")) {
+  const extensionOk = /\.(jpe?g|png|webp|gif|bmp)$/i.test(file.name);
+  if (file.type && !file.type.startsWith("image/") && !extensionOk) {
     throw new Error("El archivo no es una imagen");
   }
-  const bitmap = await createImageBitmap(file);
+  const bitmap = await loadImageBitmap(file);
   const canvas = document.createElement("canvas");
   canvas.width = size;
   canvas.height = size;
@@ -33,4 +34,28 @@ export async function fileToThumbDataUrl(
     url = canvas.toDataURL("image/jpeg", quality);
   }
   return url;
+}
+
+async function loadImageBitmap(file: File): Promise<ImageBitmap | HTMLImageElement> {
+  if ("createImageBitmap" in window) {
+    try {
+      return await createImageBitmap(file);
+    } catch {
+      // Algunos navegadores fallan con PNG/GIF específicos; usamos <img> como respaldo.
+    }
+  }
+
+  return await new Promise<HTMLImageElement>((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(img);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("No se pudo leer la imagen"));
+    };
+    img.src = url;
+  });
 }
