@@ -499,7 +499,7 @@ function POSPage() {
       </div>
 
       {/* Columna carrito */}
-      <div className="w-full lg:w-[420px] shrink-0 border-t lg:border-t-0 lg:border-l">
+      <div className="w-full lg:w-[340px] shrink-0 border-t lg:border-t-0 lg:border-l">
       <Cart
         items={cart.items}
         onInc={(id) => {

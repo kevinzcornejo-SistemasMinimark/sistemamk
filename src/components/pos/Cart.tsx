@@ -25,12 +25,12 @@ export function Cart({
   return (
     <div className="flex flex-col h-full bg-card border-l">
       {/* Header */}
-      <div className="p-5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <ShoppingCart className="h-7 w-7 text-primary" />
-          <span className="font-extrabold text-2xl">Carrito</span>
+      <div className="p-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <ShoppingCart className="h-5 w-5 text-primary" />
+          <span className="font-extrabold text-lg">Carrito</span>
           {totales.cantidadItems > 0 && (
-            <span className="h-7 min-w-7 px-2 rounded-full bg-primary text-primary-foreground text-sm font-extrabold grid place-items-center">
+            <span className="h-6 min-w-6 px-2 rounded-full bg-primary text-primary-foreground text-xs font-extrabold grid place-items-center">
               {totales.cantidadItems}
             </span>
           )}
@@ -38,40 +38,40 @@ export function Cart({
         {items.length > 0 && (
           <button
             onClick={onClear}
-            className="flex items-center gap-1.5 text-sm font-semibold text-destructive hover:bg-destructive/10 px-3 py-1.5 rounded-lg"
+            className="flex items-center gap-1 text-xs font-semibold text-destructive hover:bg-destructive/10 px-2 py-1 rounded-lg"
           >
-            <Trash2 className="h-4 w-4" /> Vaciar
+            <Trash2 className="h-3.5 w-3.5" /> Vaciar
           </button>
         )}
       </div>
 
       {/* Totales (arriba, como la foto) */}
-      <div className="px-5 pb-4 border-b space-y-3">
-        <div className="flex items-center justify-between text-base">
+      <div className="px-3 pb-3 border-b space-y-2">
+        <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground font-medium">Subtotal</span>
           <span className="font-extrabold tabular-nums">{formatPEN(totales.subtotal + totales.igv)}</span>
         </div>
         <div className="flex items-baseline justify-between">
-          <span className="text-3xl font-black">TOTAL</span>
-          <span className="text-3xl font-black text-primary tabular-nums">
+          <span className="text-2xl font-black">TOTAL</span>
+          <span className="text-2xl font-black text-primary tabular-nums">
             {formatPEN(totales.total)}
           </span>
         </div>
         <Button
-          className="w-full h-16 text-xl font-extrabold rounded-xl shadow-md bg-primary hover:bg-primary/90"
+          className="w-full h-12 text-base font-extrabold rounded-xl shadow-md bg-primary hover:bg-primary/90"
           disabled={items.length === 0}
           onClick={onCheckout}
         >
-          <CreditCard className="h-6 w-6 mr-2" />
+          <CreditCard className="h-5 w-5 mr-2" />
           Cobrar
         </Button>
         <Button
           variant="outline"
-          className="w-full h-12 text-base font-bold rounded-xl border-2"
+          className="w-full h-10 text-sm font-bold rounded-xl border-2"
           disabled={items.length === 0}
           onClick={onDescuento}
         >
-          <Percent className="h-5 w-5 mr-2" />
+          <Percent className="h-4 w-4 mr-2" />
           Descuento
         </Button>
       </div>
