@@ -354,15 +354,23 @@ function ComprasPage() {
                 </div>
               )}
               {lineas.map((l, i) => (
-                <div key={i} className="flex gap-2 items-center">
-                  <Select value={l.producto_id} onValueChange={(v) => updLinea(i, { producto_id: v })}>
-                    <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
-                    <SelectContent>{productos.map((p) => <SelectItem key={p.id} value={p.id}>{p.nombre}</SelectItem>)}</SelectContent>
-                  </Select>
-                  <Input type="number" value={l.cantidad} onChange={(e) => updLinea(i, { cantidad: Number(e.target.value) })} className="w-20" placeholder="Cant" />
-                  <Input type="number" step="0.01" value={l.precio_unitario} onChange={(e) => updLinea(i, { precio_unitario: Number(e.target.value) })} className="w-28" placeholder="Precio" />
-                  <span className="w-24 text-right text-sm font-semibold">{formatPEN(l.cantidad * l.precio_unitario)}</span>
-                  <Button size="icon" variant="ghost" onClick={() => delLinea(i)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                <div key={i} className="space-y-1 border-b pb-2">
+                  <div className="flex gap-2 items-center">
+                    <Select value={l.producto_id} onValueChange={(v) => updLinea(i, { producto_id: v })}>
+                      <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                      <SelectContent>{productos.map((p) => <SelectItem key={p.id} value={p.id}>{p.nombre}</SelectItem>)}</SelectContent>
+                    </Select>
+                    <Input type="number" value={l.cantidad} onChange={(e) => updLinea(i, { cantidad: Number(e.target.value) })} className="w-20" placeholder="Cant" />
+                    <Input type="number" step="0.01" value={l.precio_unitario} onChange={(e) => updLinea(i, { precio_unitario: Number(e.target.value) })} className="w-28" placeholder="Precio" />
+                    <span className="w-24 text-right text-sm font-semibold">{formatPEN(l.cantidad * l.precio_unitario)}</span>
+                    <Button size="icon" variant="ghost" onClick={() => delLinea(i)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                  </div>
+                  <div className="flex gap-2 items-center pl-1">
+                    <span className="text-xs text-muted-foreground w-12">Lote:</span>
+                    <Input value={l.numero_lote ?? ""} onChange={(e) => updLinea(i, { numero_lote: e.target.value })} className="flex-1 h-8 text-xs" placeholder="N° de lote (vacío = no crear)" />
+                    <span className="text-xs text-muted-foreground">Vence:</span>
+                    <Input type="date" value={l.fecha_vencimiento ?? ""} onChange={(e) => updLinea(i, { fecha_vencimiento: e.target.value })} className="w-36 h-8 text-xs" />
+                  </div>
                 </div>
               ))}
               {lineas.map((l, i) => {
