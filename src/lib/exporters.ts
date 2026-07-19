@@ -40,3 +40,28 @@ export function printHTML(title: string, bodyHTML: string) {
     </body></html>`);
   w.document.close();
 }
+
+// Imprime en formato ticket 80mm (ticketera térmica)
+export function printTicket(title: string, bodyHTML: string) {
+  const w = window.open("", "_blank", "width=380,height=700");
+  if (!w) return;
+  w.document.write(`<!doctype html><html><head><title>${title}</title>
+    <style>
+      @page{size:80mm auto;margin:0}
+      *{box-sizing:border-box}
+      body{font-family:'Courier New',monospace;font-size:11px;padding:6px 8px;color:#000;width:80mm}
+      h1{font-size:14px;margin:0 0 2px;text-align:center}
+      .meta{font-size:10px;margin-bottom:6px;text-align:center}
+      .sep{border-top:1px dashed #000;margin:4px 0}
+      table{width:100%;border-collapse:collapse}
+      th,td{padding:2px 0;font-size:10px;text-align:left;vertical-align:top}
+      th{border-bottom:1px dashed #000;text-transform:uppercase}
+      .right{text-align:right}
+      .total{font-weight:700;font-size:12px}
+      .center{text-align:center}
+      @media print{button{display:none}}
+    </style></head><body>${bodyHTML}
+    <script>setTimeout(()=>window.print(),300);</script>
+    </body></html>`);
+  w.document.close();
+}
