@@ -329,12 +329,26 @@ function ProductoModal({
 
   const onPickFile = async (file: File | null) => {
     if (!file) return;
+    // Validar formato
+    const formatosOk = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/bmp"];
+    if (!formatosOk.includes(file.type)) {
+      toast.error(`Formato no soportado (${file.type || "desconocido"}). Usa JPG, PNG, WEBP, GIF o BMP.`);
+      if (fileRef.current) fileRef.current.value = "";
+      return;
+    }
+    // Validar tamaño (máx 8 MB del archivo original)
+    const MAX_MB = 8;
+    if (file.size > MAX_MB * 1024 * 1024) {
+      toast.error(`La imagen pesa ${(file.size / 1024 / 1024).toFixed(1)} MB. Máximo permitido: ${MAX_MB} MB.`);
+      if (fileRef.current) fileRef.current.value = "";
+      return;
+    }
     try {
       setProcesando(true);
       const url = await fileToThumbDataUrl(file, 128, 0.78);
       const kb = Math.round((url.length * 0.75) / 1024);
       set({ imagen_url: url });
-      toast.success(`Imagen optimizada a 128×128 (~${kb} KB)`);
+      toast.success(`Imagen lista · 128×128 (~${kb} KB)`);
     } catch (e: any) {
       toast.error(e?.message ?? "No se pudo procesar la imagen");
     } finally {
