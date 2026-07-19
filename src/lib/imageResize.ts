@@ -26,7 +26,7 @@ export async function fileToThumbDataUrl(
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, size, size);
   ctx.drawImage(bitmap, dx, dy, w, h);
-  bitmap.close?.();
+  if ("close" in bitmap) bitmap.close();
 
   // Intenta WebP; si el navegador no lo soporta, usa JPEG
   let url = canvas.toDataURL("image/webp", quality);
