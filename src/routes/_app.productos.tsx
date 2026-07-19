@@ -342,7 +342,8 @@ function ProductoModal({
     if (!file) return;
     // Validar formato
     const formatosOk = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/bmp"];
-    if (!formatosOk.includes(file.type)) {
+    const extensionOk = /\.(jpe?g|png|webp|gif|bmp)$/i.test(file.name);
+    if (file.type && !formatosOk.includes(file.type) && !extensionOk) {
       toast.error(`Formato no soportado (${file.type || "desconocido"}). Usa JPG, PNG, WEBP, GIF o BMP.`);
       if (fileRef.current) fileRef.current.value = "";
       return;
@@ -359,7 +360,7 @@ function ProductoModal({
       const url = await fileToThumbDataUrl(file, 128, 0.78);
       const kb = Math.round((url.length * 0.75) / 1024);
       set({ imagen_url: url });
-      toast.success(`Imagen lista · 128×128 (~${kb} KB)`);
+      toast.success(`Imagen lista · 128×128 (~${kb} KB). Ahora presiona Guardar.`);
     } catch (e: any) {
       toast.error(e?.message ?? "No se pudo procesar la imagen");
     } finally {
@@ -411,7 +412,6 @@ function ProductoModal({
                     }}
                     onChange={(e) => {
                       const file = e.target.files?.[0] ?? null;
-                      console.log("[foto] archivo seleccionado:", file?.name, file?.type, file?.size);
                       void onPickFile(file);
                     }}
                   />
@@ -553,8 +553,8 @@ function ProductoModal({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={() => onSave(f)} disabled={!f.nombre?.trim()}>
-            Guardar
+          <Button onClick={() => onSave(f)} disabled={!f.nombre?.trim() || procesando}>
+            {procesando ? "Procesando foto…" : "Guardar"}
           </Button>
         </DialogFooter>
       </DialogContent>
