@@ -549,7 +549,7 @@ function TicketsPage() {
           id: d.productos?.id ?? d.producto_id,
           nombre: d.productos?.nombre ?? "Producto",
           precio_venta: Number(d.precio_unitario),
-          igv: d.productos?.igv ?? true,
+          igv: d.productos?.afecto_igv ?? true,
         } as any,
         cantidad: Number(d.cantidad),
         descuento: Number(d.descuento ?? 0),
