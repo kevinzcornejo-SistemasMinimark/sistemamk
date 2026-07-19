@@ -113,6 +113,7 @@ function ComprasPage() {
     // Aumentar stock, actualizar último precio de compra y registrar kardex
     const stockErrors: string[] = [];
     const movimientos: any[] = [];
+    const lotesNuevos: any[] = [];
     await Promise.all(
       lineas.map(async (l) => {
         const prod = productos.find((p) => p.id === l.producto_id);
@@ -135,11 +136,25 @@ function ComprasPage() {
           motivo: `Compra ${compra.id.slice(0, 8)}`,
           usuario_id: user?.id ?? null,
         });
+        if (l.numero_lote && l.numero_lote.trim()) {
+          lotesNuevos.push({
+            producto_id: l.producto_id,
+            numero_lote: l.numero_lote.trim(),
+            fecha_vencimiento: l.fecha_vencimiento || null,
+            cantidad_inicial: l.cantidad,
+            cantidad_actual: l.cantidad,
+            costo_unitario: l.precio_unitario,
+          });
+        }
       }),
     );
     if (movimientos.length > 0) {
       const { error: kErr } = await supabase.from("kardex").insert(movimientos);
       if (kErr) stockErrors.push(`kardex: ${kErr.message}`);
+    }
+    if (lotesNuevos.length > 0) {
+      const { error: lErr } = await supabase.from("lotes").insert(lotesNuevos);
+      if (lErr) stockErrors.push(`lotes: ${lErr.message}`);
     }
     if (stockErrors.length > 0) {
       toast.error(`Error actualizando productos: ${stockErrors.join(" | ")}`);
