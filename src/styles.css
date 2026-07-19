@@ -148,3 +148,11 @@ html.kiosk aside,
 html.kiosk header {
   display: none !important;
 }
+
+/* Compact mode for 17" monitors at 1024x768 */
+@media (max-width: 1280px) {
+  html { font-size: 14px; }
+}
+@media (max-width: 1024px) {
+  html { font-size: 13px; }
+}

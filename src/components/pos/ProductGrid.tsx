@@ -17,7 +17,7 @@ export function ProductGrid({
     );
   }
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5">
       {productos.map((p) => {
         const agotado = p.stock <= 0;
         const bajo = !agotado && p.stock <= p.stock_minimo;

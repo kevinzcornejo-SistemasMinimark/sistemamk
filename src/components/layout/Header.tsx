@@ -30,7 +30,7 @@ export function Header({
   }, []);
 
   return (
-    <header className="h-14 border-b bg-card/80 backdrop-blur flex items-center px-3 md:px-5 gap-3 sticky top-0 z-30">
+    <header className="h-12 border-b bg-card/80 backdrop-blur flex items-center px-3 md:px-4 gap-2 sticky top-0 z-30">
       <Button
         variant="ghost"
         size="icon"
