@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_app/compras")({
 });
 
 type Compra = { id: string; documento: string | null; creada_en: string; total: number; estado: string; proveedores: { razon_social: string } | null };
-type Linea = { producto_id: string; cantidad: number; precio_unitario: number };
+type Linea = { producto_id: string; cantidad: number; precio_unitario: number; numero_lote?: string; fecha_vencimiento?: string };
 
 function ComprasPage() {
   const { user, isDemo } = useAuth();
