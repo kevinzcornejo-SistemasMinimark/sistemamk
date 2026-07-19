@@ -338,6 +338,60 @@ function ComprasPage() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={detalleOpen} onOpenChange={setDetalleOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detalle de compra {detalleCompra?.id.slice(0, 8)}</DialogTitle>
+          </DialogHeader>
+          {detalleCompra && (
+            <div className="grid grid-cols-2 gap-2 text-sm border-b pb-3">
+              <div><span className="text-muted-foreground">Proveedor:</span> <b>{detalleCompra.proveedores?.razon_social ?? "—"}</b></div>
+              <div><span className="text-muted-foreground">Documento:</span> <b className="font-mono">{detalleCompra.documento ?? "—"}</b></div>
+              <div><span className="text-muted-foreground">Fecha:</span> <b>{formatDate(detalleCompra.creada_en)}</b></div>
+              <div><span className="text-muted-foreground">Estado:</span> <Badge variant="secondary">{detalleCompra.estado}</Badge></div>
+            </div>
+          )}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 text-xs uppercase text-left">
+                <tr>
+                  <th className="px-3 py-2">Producto</th>
+                  <th className="px-3 py-2 text-right">Cant.</th>
+                  <th className="px-3 py-2 text-right">Costo unit.</th>
+                  <th className="px-3 py-2 text-right">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                {detalleLoading ? (
+                  <tr><td colSpan={4} className="p-4 text-center text-muted-foreground">Cargando…</td></tr>
+                ) : detalleItems.length === 0 ? (
+                  <tr><td colSpan={4} className="p-4 text-center text-muted-foreground">Sin items</td></tr>
+                ) : detalleItems.map((d, i) => (
+                  <tr key={i} className="border-t">
+                    <td className="px-3 py-2">{d.nombre}</td>
+                    <td className="px-3 py-2 text-right">{d.cantidad}</td>
+                    <td className="px-3 py-2 text-right font-mono">{formatPEN(d.costo_unitario)}</td>
+                    <td className="px-3 py-2 text-right font-bold">{formatPEN(d.subtotal)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {detalleCompra && (
+            <div className="border-t pt-2 flex justify-between font-bold">
+              <span>Total</span>
+              <span>{formatPEN(detalleCompra.total)}</span>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={exportarDetalle} disabled={detalleItems.length === 0}><FileSpreadsheet className="h-4 w-4 mr-1" />Excel</Button>
+            <Button variant="outline" onClick={imprimirDetalle} disabled={detalleItems.length === 0}><Printer className="h-4 w-4 mr-1" />PDF</Button>
+            <Button onClick={() => setDetalleOpen(false)}>Cerrar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
