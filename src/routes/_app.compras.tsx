@@ -55,7 +55,11 @@ function ComprasPage() {
   const igv = lineas.reduce((s, l) => s + (l.cantidad * l.precio_unitario) - (l.cantidad * l.precio_unitario) / (1 + IGV_RATE), 0);
   const total = lineas.reduce((s, l) => s + l.cantidad * l.precio_unitario, 0);
 
-  const addLinea = () => setLineas([...lineas, { producto_id: productos[0]?.id ?? "", cantidad: 1, precio_unitario: 0 }]);
+  const addLinea = () => {
+    const d = new Date();
+    const lote = `L${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}-${String(lineas.length + 1).padStart(3, "0")}`;
+    setLineas([...lineas, { producto_id: productos[0]?.id ?? "", cantidad: 1, precio_unitario: 0, numero_lote: lote, fecha_vencimiento: "" }]);
+  };
   const updLinea = (i: number, patch: Partial<Linea>) => setLineas(lineas.map((l, idx) => idx === i ? { ...l, ...patch } : l));
   const delLinea = (i: number) => setLineas(lineas.filter((_, idx) => idx !== i));
 
