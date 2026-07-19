@@ -139,59 +139,75 @@ function ComprasPage() {
     const stockErrors: string[] = [];
     const movimientos: any[] = [];
     const lotesNuevos: any[] = [];
-    await Promise.all(
-      lineas.map(async (l) => {
-        const prod = productos.find((p) => p.id === l.producto_id);
-        if (!prod) return;
-        const nuevoStock = Number(prod.stock ?? 0) + Number(l.cantidad ?? 0);
-        const patch: Record<string, number> = { stock: nuevoStock };
-        if (l.precio_unitario > 0) patch.precio_compra = l.precio_unitario;
-        const { error: upErr } = await supabase
-          .from("productos")
-          .update(patch)
-          .eq("id", l.producto_id);
-        if (upErr) { stockErrors.push(`${prod.nombre}: ${upErr.message}`); return; }
-        movimientos.push({
+    const lotesActualizar: { id: string; nueva_cant: number; nueva_inicial: number }[] = [];
+    for (const l of lineas) {
+      const prod = productos.find((p) => p.id === l.producto_id);
+      if (!prod) continue;
+      const nuevoStock = Number(prod.stock ?? 0) + Number(l.cantidad ?? 0);
+      const patch: Record<string, number> = { stock: nuevoStock };
+      if (l.precio_unitario > 0) patch.precio_compra = l.precio_unitario;
+      const { error: upErr } = await supabase.from("productos").update(patch).eq("id", l.producto_id);
+      if (upErr) { stockErrors.push(`${prod.nombre}: ${upErr.message}`); continue; }
+
+      let refLote = "";
+      if (l.modo_lote === "nuevo" && l.numero_lote?.trim()) {
+        lotesNuevos.push({
           producto_id: l.producto_id,
-          tipo: "COMPRA",
-          cantidad: l.cantidad,
-          saldo: nuevoStock,
+          numero_lote: l.numero_lote.trim(),
+          fecha_vencimiento: l.fecha_vencimiento || null,
+          cantidad_inicial: l.cantidad,
+          cantidad_actual: l.cantidad,
           costo_unitario: l.precio_unitario,
-          documento: f.numero_documento || null,
-          motivo: `Compra ${compra.id.slice(0, 8)}`,
-          usuario_id: user?.id ?? null,
         });
-        if (l.numero_lote && l.numero_lote.trim()) {
-          lotesNuevos.push({
-            producto_id: l.producto_id,
-            numero_lote: l.numero_lote.trim(),
-            fecha_vencimiento: l.fecha_vencimiento || null,
-            cantidad_inicial: l.cantidad,
-            cantidad_actual: l.cantidad,
-            costo_unitario: l.precio_unitario,
+        refLote = l.numero_lote.trim();
+      } else if (l.modo_lote === "existente" && l.lote_id) {
+        const lt = lotesActivos.find((x) => x.id === l.lote_id);
+        if (lt) {
+          lotesActualizar.push({
+            id: lt.id,
+            nueva_cant: Number(lt.cantidad_actual) + Number(l.cantidad),
+            nueva_inicial: Number(lt.cantidad_actual) + Number(l.cantidad),
           });
+          refLote = lt.numero_lote;
         }
-      }),
-    );
-    if (movimientos.length > 0) {
-      const { error: kErr } = await supabase.from("kardex").insert(movimientos);
-      if (kErr) stockErrors.push(`kardex: ${kErr.message}`);
+      }
+
+      movimientos.push({
+        producto_id: l.producto_id,
+        tipo: "COMPRA",
+        cantidad: l.cantidad,
+        saldo: nuevoStock,
+        costo_unitario: l.precio_unitario,
+        documento: f.numero_documento || null,
+        motivo: `Compra ${compra.id.slice(0, 8)}${refLote ? ` · Lote ${refLote}` : ""}`,
+        usuario_id: user?.id ?? null,
+      });
+    }
+    for (const lu of lotesActualizar) {
+      const { error: ulErr } = await supabase
+        .from("lotes")
+        .update({ cantidad_actual: lu.nueva_cant, cantidad_inicial: lu.nueva_inicial })
+        .eq("id", lu.id);
+      if (ulErr) stockErrors.push(`lote: ${ulErr.message}`);
     }
     if (lotesNuevos.length > 0) {
       const { error: lErr } = await supabase.from("lotes").insert(lotesNuevos);
       if (lErr) stockErrors.push(`lotes: ${lErr.message}`);
     }
-    if (stockErrors.length > 0) {
-      toast.error(`Error actualizando productos: ${stockErrors.join(" | ")}`);
-    } else {
-      toast.success("Compra registrada, stock y kardex actualizados");
+    if (movimientos.length > 0) {
+      const { error: kErr } = await supabase.from("kardex").insert(movimientos);
+      if (kErr) stockErrors.push(`kardex: ${kErr.message}`);
     }
-
-
+    if (stockErrors.length > 0) {
+      toast.error(`Errores: ${stockErrors.join(" | ")}`);
+    } else {
+      toast.success("Compra registrada. Stock, lotes y kardex actualizados");
+    }
 
     setOpen(false); setLineas([]); setF({ tipo_comprobante: "FACTURA", fecha_emision: new Date().toISOString().slice(0, 10), metodo_pago: "EFECTIVO" });
     refresh();
     void load();
+    void loadLotes();
   };
 
   const verDetalle = async (c: Compra) => {
