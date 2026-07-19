@@ -35,6 +35,10 @@ function ComprasPage() {
   const [lineas, setLineas] = useState<Linea[]>([]);
   const [alertas, setAlertas] = useState<{ i: number; nombre: string; tipo: "venta" | "menor"; nuevo: number; anterior: number }[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [detalleOpen, setDetalleOpen] = useState(false);
+  const [detalleCompra, setDetalleCompra] = useState<Compra | null>(null);
+  const [detalleItems, setDetalleItems] = useState<any[]>([]);
+  const [detalleLoading, setDetalleLoading] = useState(false);
 
   const load = async () => {
     if (isDemo || !user) { setRows([]); setLoading(false); return; }
