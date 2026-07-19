@@ -150,6 +150,89 @@ function ComprasPage() {
     void load();
   };
 
+  const verDetalle = async (c: Compra) => {
+    setDetalleCompra(c);
+    setDetalleOpen(true);
+    setDetalleLoading(true);
+    setDetalleItems([]);
+    const { data, error } = await supabase
+      .from("compra_items")
+      .select("nombre,cantidad,costo_unitario,subtotal,producto_id")
+      .eq("compra_id", c.id);
+    if (error) toast.error(error.message);
+    setDetalleItems(data ?? []);
+    setDetalleLoading(false);
+  };
+
+  const exportarCompras = () => {
+    if (rows.length === 0) return toast.error("Sin compras para exportar");
+    exportToCSV("compras", rows.map((c) => ({
+      N: c.id.slice(0, 8),
+      Documento: c.documento ?? "",
+      Proveedor: c.proveedores?.razon_social ?? "",
+      Fecha: formatDate(c.creada_en),
+      Estado: c.estado,
+      Total: Number(c.total).toFixed(2),
+    })));
+  };
+
+  const imprimirCompras = () => {
+    if (rows.length === 0) return toast.error("Sin compras");
+    const totalGral = rows.reduce((s, c) => s + Number(c.total || 0), 0);
+    const html = `
+      <h1>Listado de Compras</h1>
+      <div class="meta">Generado: ${new Date().toLocaleString("es-PE")} · ${rows.length} compras</div>
+      <table><thead><tr>
+        <th>N°</th><th>Documento</th><th>Proveedor</th><th>Fecha</th><th>Estado</th><th class="right">Total</th>
+      </tr></thead><tbody>
+        ${rows.map((c) => `<tr>
+          <td>${c.id.slice(0, 8)}</td>
+          <td>${c.documento ?? "—"}</td>
+          <td>${c.proveedores?.razon_social ?? "—"}</td>
+          <td>${formatDate(c.creada_en)}</td>
+          <td>${c.estado}</td>
+          <td class="right">${formatPEN(c.total)}</td>
+        </tr>`).join("")}
+      </tbody></table>
+      <p class="right total" style="margin-top:12px">Total general: ${formatPEN(totalGral)}</p>
+    `;
+    printHTML("Compras", html);
+  };
+
+  const exportarDetalle = () => {
+    if (!detalleCompra || detalleItems.length === 0) return;
+    exportToCSV(`compra-${detalleCompra.id.slice(0, 8)}`, detalleItems.map((d) => ({
+      Producto: d.nombre,
+      Cantidad: d.cantidad,
+      "Costo unitario": Number(d.costo_unitario).toFixed(2),
+      Subtotal: Number(d.subtotal).toFixed(2),
+    })));
+  };
+
+  const imprimirDetalle = () => {
+    if (!detalleCompra) return;
+    const c = detalleCompra;
+    const html = `
+      <h1>Compra ${c.id.slice(0, 8)}</h1>
+      <div class="meta">
+        Documento: ${c.documento ?? "—"} · Proveedor: ${c.proveedores?.razon_social ?? "—"}<br/>
+        Fecha: ${formatDate(c.creada_en)} · Estado: ${c.estado}
+      </div>
+      <table><thead><tr>
+        <th>Producto</th><th class="right">Cant.</th><th class="right">Costo unit.</th><th class="right">Subtotal</th>
+      </tr></thead><tbody>
+        ${detalleItems.map((d) => `<tr>
+          <td>${d.nombre}</td>
+          <td class="right">${d.cantidad}</td>
+          <td class="right">${formatPEN(d.costo_unitario)}</td>
+          <td class="right">${formatPEN(d.subtotal)}</td>
+        </tr>`).join("")}
+      </tbody></table>
+      <p class="right total" style="margin-top:12px">Total: ${formatPEN(c.total)}</p>
+    `;
+    printHTML(`Compra ${c.id.slice(0, 8)}`, html);
+  };
+
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
