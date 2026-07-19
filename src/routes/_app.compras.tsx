@@ -8,12 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { ShoppingCart, Plus, Trash2, AlertTriangle } from "lucide-react";
+import { ShoppingCart, Plus, Trash2, AlertTriangle, Eye, FileSpreadsheet, Printer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCatalog } from "@/hooks/useCatalog";
 import { toast } from "sonner";
 import { formatPEN, formatDate, IGV_RATE } from "@/lib/format";
+import { exportToCSV, printHTML } from "@/lib/exporters";
 
 export const Route = createFileRoute("/_app/compras")({
   head: () => ({ meta: [{ title: "Compras — POS Minimarket" }] }),
@@ -34,6 +35,10 @@ function ComprasPage() {
   const [lineas, setLineas] = useState<Linea[]>([]);
   const [alertas, setAlertas] = useState<{ i: number; nombre: string; tipo: "venta" | "menor"; nuevo: number; anterior: number }[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [detalleOpen, setDetalleOpen] = useState(false);
+  const [detalleCompra, setDetalleCompra] = useState<Compra | null>(null);
+  const [detalleItems, setDetalleItems] = useState<any[]>([]);
+  const [detalleLoading, setDetalleLoading] = useState(false);
 
   const load = async () => {
     if (isDemo || !user) { setRows([]); setLoading(false); return; }
@@ -145,6 +150,89 @@ function ComprasPage() {
     void load();
   };
 
+  const verDetalle = async (c: Compra) => {
+    setDetalleCompra(c);
+    setDetalleOpen(true);
+    setDetalleLoading(true);
+    setDetalleItems([]);
+    const { data, error } = await supabase
+      .from("compra_items")
+      .select("nombre,cantidad,costo_unitario,subtotal,producto_id")
+      .eq("compra_id", c.id);
+    if (error) toast.error(error.message);
+    setDetalleItems(data ?? []);
+    setDetalleLoading(false);
+  };
+
+  const exportarCompras = () => {
+    if (rows.length === 0) return toast.error("Sin compras para exportar");
+    exportToCSV("compras", rows.map((c) => ({
+      N: c.id.slice(0, 8),
+      Documento: c.documento ?? "",
+      Proveedor: c.proveedores?.razon_social ?? "",
+      Fecha: formatDate(c.creada_en),
+      Estado: c.estado,
+      Total: Number(c.total).toFixed(2),
+    })));
+  };
+
+  const imprimirCompras = () => {
+    if (rows.length === 0) return toast.error("Sin compras");
+    const totalGral = rows.reduce((s, c) => s + Number(c.total || 0), 0);
+    const html = `
+      <h1>Listado de Compras</h1>
+      <div class="meta">Generado: ${new Date().toLocaleString("es-PE")} · ${rows.length} compras</div>
+      <table><thead><tr>
+        <th>N°</th><th>Documento</th><th>Proveedor</th><th>Fecha</th><th>Estado</th><th class="right">Total</th>
+      </tr></thead><tbody>
+        ${rows.map((c) => `<tr>
+          <td>${c.id.slice(0, 8)}</td>
+          <td>${c.documento ?? "—"}</td>
+          <td>${c.proveedores?.razon_social ?? "—"}</td>
+          <td>${formatDate(c.creada_en)}</td>
+          <td>${c.estado}</td>
+          <td class="right">${formatPEN(c.total)}</td>
+        </tr>`).join("")}
+      </tbody></table>
+      <p class="right total" style="margin-top:12px">Total general: ${formatPEN(totalGral)}</p>
+    `;
+    printHTML("Compras", html);
+  };
+
+  const exportarDetalle = () => {
+    if (!detalleCompra || detalleItems.length === 0) return;
+    exportToCSV(`compra-${detalleCompra.id.slice(0, 8)}`, detalleItems.map((d) => ({
+      Producto: d.nombre,
+      Cantidad: d.cantidad,
+      "Costo unitario": Number(d.costo_unitario).toFixed(2),
+      Subtotal: Number(d.subtotal).toFixed(2),
+    })));
+  };
+
+  const imprimirDetalle = () => {
+    if (!detalleCompra) return;
+    const c = detalleCompra;
+    const html = `
+      <h1>Compra ${c.id.slice(0, 8)}</h1>
+      <div class="meta">
+        Documento: ${c.documento ?? "—"} · Proveedor: ${c.proveedores?.razon_social ?? "—"}<br/>
+        Fecha: ${formatDate(c.creada_en)} · Estado: ${c.estado}
+      </div>
+      <table><thead><tr>
+        <th>Producto</th><th class="right">Cant.</th><th class="right">Costo unit.</th><th class="right">Subtotal</th>
+      </tr></thead><tbody>
+        ${detalleItems.map((d) => `<tr>
+          <td>${d.nombre}</td>
+          <td class="right">${d.cantidad}</td>
+          <td class="right">${formatPEN(d.costo_unitario)}</td>
+          <td class="right">${formatPEN(d.subtotal)}</td>
+        </tr>`).join("")}
+      </tbody></table>
+      <p class="right total" style="margin-top:12px">Total: ${formatPEN(c.total)}</p>
+    `;
+    printHTML(`Compra ${c.id.slice(0, 8)}`, html);
+  };
+
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
@@ -152,24 +240,31 @@ function ComprasPage() {
           <h1 className="text-2xl font-extrabold tracking-tight flex items-center gap-2"><ShoppingCart className="h-6 w-6 text-primary" /> Compras</h1>
           <p className="text-muted-foreground">Órdenes de compra y recepciones</p>
         </div>
-        <Button onClick={() => setOpen(true)} disabled={isDemo || !user}><Plus className="h-4 w-4 mr-1" />Nueva compra</Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={exportarCompras} disabled={rows.length === 0}><FileSpreadsheet className="h-4 w-4 mr-1" />Excel</Button>
+          <Button variant="outline" size="sm" onClick={imprimirCompras} disabled={rows.length === 0}><Printer className="h-4 w-4 mr-1" />PDF</Button>
+          <Button onClick={() => setOpen(true)} disabled={isDemo || !user}><Plus className="h-4 w-4 mr-1" />Nueva compra</Button>
+        </div>
       </div>
       <Card className="overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs uppercase">
-            <tr><th className="px-4 py-2">N°</th><th className="px-4 py-2">Documento</th><th className="px-4 py-2">Proveedor</th><th className="px-4 py-2">Fecha</th><th className="px-4 py-2">Estado</th><th className="px-4 py-2 text-right">Total</th></tr>
+            <tr><th className="px-4 py-2">N°</th><th className="px-4 py-2">Documento</th><th className="px-4 py-2">Proveedor</th><th className="px-4 py-2">Fecha</th><th className="px-4 py-2">Estado</th><th className="px-4 py-2 text-right">Total</th><th className="px-4 py-2 text-center">Acciones</th></tr>
           </thead>
           <tbody>
-            {loading ? <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">Cargando…</td></tr>
-            : rows.length === 0 ? <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">Sin compras</td></tr>
+            {loading ? <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">Cargando…</td></tr>
+            : rows.length === 0 ? <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">Sin compras</td></tr>
             : rows.map((c) => (
-              <tr key={c.id} className="border-t">
+              <tr key={c.id} className="border-t hover:bg-muted/30">
                 <td className="px-4 py-2 font-bold font-mono text-xs">{c.id.slice(0, 8)}</td>
                 <td className="px-4 py-2 font-mono text-xs">{c.documento ?? "—"}</td>
                 <td className="px-4 py-2">{c.proveedores?.razon_social ?? "—"}</td>
                 <td className="px-4 py-2 text-xs">{formatDate(c.creada_en)}</td>
                 <td className="px-4 py-2"><Badge variant="secondary">{c.estado}</Badge></td>
                 <td className="px-4 py-2 text-right font-bold">{formatPEN(c.total)}</td>
+                <td className="px-4 py-2 text-center">
+                  <Button size="sm" variant="ghost" onClick={() => void verDetalle(c)}><Eye className="h-4 w-4 mr-1" />Ver</Button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -242,6 +337,60 @@ function ComprasPage() {
           <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button><Button onClick={save}>Registrar compra</Button></DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={detalleOpen} onOpenChange={setDetalleOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detalle de compra {detalleCompra?.id.slice(0, 8)}</DialogTitle>
+          </DialogHeader>
+          {detalleCompra && (
+            <div className="grid grid-cols-2 gap-2 text-sm border-b pb-3">
+              <div><span className="text-muted-foreground">Proveedor:</span> <b>{detalleCompra.proveedores?.razon_social ?? "—"}</b></div>
+              <div><span className="text-muted-foreground">Documento:</span> <b className="font-mono">{detalleCompra.documento ?? "—"}</b></div>
+              <div><span className="text-muted-foreground">Fecha:</span> <b>{formatDate(detalleCompra.creada_en)}</b></div>
+              <div><span className="text-muted-foreground">Estado:</span> <Badge variant="secondary">{detalleCompra.estado}</Badge></div>
+            </div>
+          )}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 text-xs uppercase text-left">
+                <tr>
+                  <th className="px-3 py-2">Producto</th>
+                  <th className="px-3 py-2 text-right">Cant.</th>
+                  <th className="px-3 py-2 text-right">Costo unit.</th>
+                  <th className="px-3 py-2 text-right">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                {detalleLoading ? (
+                  <tr><td colSpan={4} className="p-4 text-center text-muted-foreground">Cargando…</td></tr>
+                ) : detalleItems.length === 0 ? (
+                  <tr><td colSpan={4} className="p-4 text-center text-muted-foreground">Sin items</td></tr>
+                ) : detalleItems.map((d, i) => (
+                  <tr key={i} className="border-t">
+                    <td className="px-3 py-2">{d.nombre}</td>
+                    <td className="px-3 py-2 text-right">{d.cantidad}</td>
+                    <td className="px-3 py-2 text-right font-mono">{formatPEN(d.costo_unitario)}</td>
+                    <td className="px-3 py-2 text-right font-bold">{formatPEN(d.subtotal)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {detalleCompra && (
+            <div className="border-t pt-2 flex justify-between font-bold">
+              <span>Total</span>
+              <span>{formatPEN(detalleCompra.total)}</span>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={exportarDetalle} disabled={detalleItems.length === 0}><FileSpreadsheet className="h-4 w-4 mr-1" />Excel</Button>
+            <Button variant="outline" onClick={imprimirDetalle} disabled={detalleItems.length === 0}><Printer className="h-4 w-4 mr-1" />PDF</Button>
+            <Button onClick={() => setDetalleOpen(false)}>Cerrar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
