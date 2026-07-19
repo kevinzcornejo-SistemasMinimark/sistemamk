@@ -412,7 +412,6 @@ function ProductoModal({
                     }}
                     onChange={(e) => {
                       const file = e.target.files?.[0] ?? null;
-                      console.log("[foto] archivo seleccionado:", file?.name, file?.type, file?.size);
                       void onPickFile(file);
                     }}
                   />
