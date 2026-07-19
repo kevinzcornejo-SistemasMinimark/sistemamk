@@ -22,7 +22,8 @@ export const Route = createFileRoute("/_app/compras")({
 });
 
 type Compra = { id: string; documento: string | null; creada_en: string; total: number; estado: string; proveedores: { razon_social: string } | null };
-type Linea = { producto_id: string; cantidad: number; precio_unitario: number; numero_lote?: string; fecha_vencimiento?: string };
+type LoteActivo = { id: string; producto_id: string; numero_lote: string; fecha_vencimiento: string | null; cantidad_actual: number };
+type Linea = { producto_id: string; cantidad: number; precio_unitario: number; modo_lote: "nuevo" | "existente" | "ninguno"; numero_lote?: string; fecha_vencimiento?: string; lote_id?: string };
 
 function ComprasPage() {
   const { user, isDemo } = useAuth();
