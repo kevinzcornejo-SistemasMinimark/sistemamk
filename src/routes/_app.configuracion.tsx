@@ -250,6 +250,57 @@ function ConfigPage() {
     return Math.max(0, Math.floor(d));
   }, [licencia]);
 
+  // ===== Licencia: activar/renovar =====
+  const diasSeleccionados = (): number => {
+    if (licDuracion === "custom") return Math.max(1, Math.floor(licAniosCustom * 365));
+    return DURACIONES_LIC.find(d => d.id === licDuracion)?.dias ?? 30;
+  };
+  const nombreTipo = (): string => {
+    if (licDuracion === "custom") return `${licAniosCustom} año${licAniosCustom !== 1 ? "s" : ""}`;
+    return DURACIONES_LIC.find(d => d.id === licDuracion)?.nombre ?? "30 días";
+  };
+  const activarLicencia = async (modo: "nueva" | "renovar") => {
+    if (!isAdmin) return toast.error("Solo administradores");
+    if (isDemo) return toast.info("Modo demo: cambios no persistidos");
+    const dias = diasSeleccionados();
+    const inicio = modo === "renovar" && licencia?.fecha_vencimiento && new Date(licencia.fecha_vencimiento) > new Date()
+      ? new Date(licencia.fecha_vencimiento)
+      : new Date();
+    const vence = new Date(inicio);
+    vence.setDate(vence.getDate() + dias);
+    const clave = `LIC-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+    const payload: any = {
+      tipo: licDuracion === "custom" ? `${licAniosCustom}a` : licDuracion,
+      estado: "activa",
+      duracion_dias: dias,
+      fecha_inicio: (modo === "renovar" ? new Date() : inicio).toISOString().slice(0, 10),
+      fecha_vencimiento: vence.toISOString().slice(0, 10),
+      clave,
+      notas: `${modo === "renovar" ? "Renovación" : "Activación"} — ${nombreTipo()}`,
+    };
+    setLicSaving(true);
+    let error: any = null;
+    if (licencia?.id) {
+      const res = await supabase.from("licencia").update(payload).eq("id", licencia.id);
+      error = res.error;
+    } else {
+      const res = await supabase.from("licencia").insert(payload);
+      error = res.error;
+    }
+    setLicSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success(`Licencia ${modo === "renovar" ? "renovada" : "activada"} por ${nombreTipo()}`);
+    cargar();
+  };
+  const suspenderLicencia = async () => {
+    if (!isAdmin || isDemo || !licencia?.id) return;
+    if (!window.confirm("¿Suspender la licencia?")) return;
+    const { error } = await supabase.from("licencia").update({ estado: "suspendida" }).eq("id", licencia.id);
+    if (error) return toast.error(error.message);
+    toast.success("Licencia suspendida"); cargar();
+  };
+
+
   return (
     <div className="p-6 space-y-6 max-w-6xl">
       {/* Header */}
