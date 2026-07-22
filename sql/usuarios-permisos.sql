@@ -5,8 +5,15 @@
 -- ============================================================
 
 -- 0) Quitar triggers de protección antes de reparar/re-ejecutar el script
-DROP TRIGGER IF EXISTS tr_protege_admin_roles ON public.roles_usuario;
-DROP TRIGGER IF EXISTS tr_protege_admin_permisos ON public.permisos_usuario;
+DO $$
+BEGIN
+  IF to_regclass('public.roles_usuario') IS NOT NULL THEN
+    DROP TRIGGER IF EXISTS tr_protege_admin_roles ON public.roles_usuario;
+  END IF;
+  IF to_regclass('public.permisos_usuario') IS NOT NULL THEN
+    DROP TRIGGER IF EXISTS tr_protege_admin_permisos ON public.permisos_usuario;
+  END IF;
+END $$;
 
 -- 1) Tabla perfiles (por si no existe)
 CREATE TABLE IF NOT EXISTS public.perfiles (
