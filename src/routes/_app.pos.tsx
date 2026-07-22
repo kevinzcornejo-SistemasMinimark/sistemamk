@@ -360,6 +360,10 @@ function POSPage() {
     }
   };
 
+  if (bloqueada && !isDemo) {
+    return <LicenciaBloqueo estado={estado} />;
+  }
+
   return (
     <div className="flex flex-col lg:flex-row h-full overflow-hidden bg-muted/30">
       {/* Columna productos */}
