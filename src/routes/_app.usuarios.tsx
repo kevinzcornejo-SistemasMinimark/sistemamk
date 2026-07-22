@@ -309,10 +309,15 @@ function UsuariosPage() {
             Crea cuentas con correo y contraseña y define a qué módulos pueden acceder.
           </p>
         </div>
-        <Button onClick={() => setOpenNew(true)}>
-          <Plus className="h-4 w-4 mr-2" /> Nuevo usuario
-        </Button>
-      </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={cargar}>
+            Refrescar
+          </Button>
+          <Button onClick={() => setOpenNew(true)}>
+            <Plus className="h-4 w-4 mr-2" /> Nuevo usuario
+          </Button>
+        </div>
+
 
       <Card className="overflow-hidden">
         <table className="w-full text-sm">
