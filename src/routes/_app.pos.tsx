@@ -52,6 +52,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { registrarVenta } from "@/lib/ventas";
 import { broadcastCart, broadcastPagado, openCustomerDisplay } from "@/lib/customerDisplay";
 import { supabase } from "@/integrations/supabase/client";
+import { useLicencia } from "@/hooks/useLicencia";
+import { LicenciaBloqueo } from "@/components/LicenciaBloqueo";
 
 const COMBOS_CAT_ID = "__combos__";
 type ComboRow = {
@@ -75,6 +77,7 @@ function POSPage() {
   const cart = usePOSCart();
   const { productos: allProductos, categorias, refresh } = useCatalog();
   const { user, isDemo } = useAuth();
+  const { bloqueada, estado } = useLicencia();
   const [combos, setCombos] = useState<ComboRow[]>([]);
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState<string | null>(null);
