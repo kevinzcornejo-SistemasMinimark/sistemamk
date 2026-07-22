@@ -194,7 +194,7 @@ function UsuariosPage() {
         );
       }
 
-      toast.success("Usuario creado. Debe confirmar su correo antes de ingresar.");
+      toast.success("Usuario creado. Ya puede ingresar con su correo y contraseña.");
       resetNuevo();
       setOpenNew(false);
       await cargar();
