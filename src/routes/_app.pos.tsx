@@ -302,6 +302,11 @@ function POSPage() {
     nombre_cliente?: string;
     pagos: { metodo: string; monto: number }[];
   }) => {
+    if (bloqueada && !isDemo) {
+      toast.error("Licencia vencida — Llamar al creador Kevin MG Solutions");
+      setCheckoutOpen(false);
+      return;
+    }
     const metodoPrincipal = data.pagos.length > 1
       ? "MIXTO"
       : (data.pagos[0]?.metodo ?? "EFECTIVO");
