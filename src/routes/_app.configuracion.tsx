@@ -566,7 +566,7 @@ function ConfigPage() {
             </ul>
             <div className="rounded-md border border-yellow-300/60 bg-yellow-50/60 p-3 text-sm text-yellow-800">⚠ Se eliminarán: Órdenes, Pagos, Sesiones de caja, Movimientos de stock, Clientes</div>
             <Button variant="outline" className="border-orange-300 text-orange-700" onClick={()=>{
-              setSel({ ventas:true, pagos_venta:true, detalle_ventas:true, sesiones_caja:true, movimientos_caja:true, movimientos_stock:true, clientes:true });
+              setSel({ ventas:true, venta_pagos:true, venta_items:true, cajas:true, movimientos_caja:true, kardex:true, clientes:true, gastos:true });
               toast.info("Selección preparada. Confirma abajo en 'Borrar Datos Seleccionados'.");
             }}><RefreshCcw className="h-4 w-4 mr-1"/> Resetear Sistema</Button>
           </Card>
