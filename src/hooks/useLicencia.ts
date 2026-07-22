@@ -18,12 +18,15 @@ export function useLicencia() {
     return () => { cancel = true; };
   }, []);
 
-  const hoy = new Date();
-  const venc = lic?.fecha_vencimiento ? new Date(lic.fecha_vencimiento) : null;
-  const vencida = venc ? venc.getTime() < new Date(hoy.toDateString()).getTime() : false;
+  const hoyStr = new Date().toISOString().slice(0, 10);
+  const vencStr: string | null = lic?.fecha_vencimiento
+    ? String(lic.fecha_vencimiento).slice(0, 10)
+    : null;
+  const vencidaPorFecha = vencStr ? vencStr < hoyStr : false;
+  const vencida = vencidaPorFecha || lic?.estado === "vencida";
   const suspendida = lic?.estado === "suspendida";
-  const sinLicencia = !lic;
-  const bloqueada = suspendida || vencida || sinLicencia;
+  const sinLicencia = !loading && !lic;
+  const bloqueada = !loading && (suspendida || vencida || sinLicencia);
 
   const estado: LicenciaEstado = sinLicencia
     ? "sin_licencia"
