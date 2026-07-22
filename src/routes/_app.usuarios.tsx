@@ -192,20 +192,25 @@ function UsuariosPage() {
       if (!uid) throw new Error("No se pudo obtener el ID del usuario");
 
       // Perfil
-      await supabase
+      const { error: e1 } = await supabase
         .from("perfiles")
         .upsert({ id: uid, correo: nEmail, nombre: nNombre || nEmail.split("@")[0] });
+      if (e1) throw new Error("Perfil: " + e1.message);
 
-      // Rol (el trigger ya lo creó como 'cajero'; sobreescribimos si difiere)
+      // Rol
       await supabase.from("roles_usuario").delete().eq("usuario_id", uid);
-      await supabase.from("roles_usuario").insert({ usuario_id: uid, rol: nRol });
+      const { error: e2 } = await supabase
+        .from("roles_usuario")
+        .insert({ usuario_id: uid, rol: nRol });
+      if (e2) throw new Error("Rol: " + e2.message);
 
       // Permisos
       await supabase.from("permisos_usuario").delete().eq("usuario_id", uid);
       if (nModulos.length) {
-        await supabase.from("permisos_usuario").insert(
+        const { error: e3 } = await supabase.from("permisos_usuario").insert(
           nModulos.map((m) => ({ usuario_id: uid, modulo: m })),
         );
+        if (e3) throw new Error("Permisos: " + e3.message);
       }
 
       toast.success("Usuario creado. Ya puede ingresar con su correo y contraseña.");
@@ -213,11 +218,13 @@ function UsuariosPage() {
       setOpenNew(false);
       await cargar();
     } catch (e: any) {
+      console.error("[crearUsuario]", e);
       toast.error(e.message ?? String(e));
     } finally {
       setSaving(false);
     }
   };
+
 
   const abrirEditar = (r: UsuarioRow) => {
     setERol((r.rol as AppRole) ?? "cajero");
