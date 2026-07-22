@@ -4,6 +4,10 @@
 -- Ejecutar en Supabase SQL Editor
 -- ============================================================
 
+-- 0) Quitar triggers de protección antes de reparar/re-ejecutar el script
+DROP TRIGGER IF EXISTS tr_protege_admin_roles ON public.roles_usuario;
+DROP TRIGGER IF EXISTS tr_protege_admin_permisos ON public.permisos_usuario;
+
 -- 1) Tabla perfiles (por si no existe)
 CREATE TABLE IF NOT EXISTS public.perfiles (
   id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -11,6 +15,10 @@ CREATE TABLE IF NOT EXISTS public.perfiles (
   correo text,
   creado_en timestamptz NOT NULL DEFAULT now()
 );
+-- Si la tabla ya existía con otra estructura, agregar las columnas que usa el sistema
+ALTER TABLE public.perfiles ADD COLUMN IF NOT EXISTS nombre text;
+ALTER TABLE public.perfiles ADD COLUMN IF NOT EXISTS correo text;
+ALTER TABLE public.perfiles ADD COLUMN IF NOT EXISTS creado_en timestamptz NOT NULL DEFAULT now();
 GRANT SELECT, INSERT, UPDATE ON public.perfiles TO authenticated;
 GRANT ALL ON public.perfiles TO service_role;
 ALTER TABLE public.perfiles ENABLE ROW LEVEL SECURITY;
@@ -18,7 +26,12 @@ DROP POLICY IF EXISTS perfiles_all ON public.perfiles;
 CREATE POLICY perfiles_all ON public.perfiles
   FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
--- 2) Tabla roles_usuario (asumida existente). Aseguramos permisos.
+-- 2) Tabla roles_usuario
+CREATE TABLE IF NOT EXISTS public.roles_usuario (
+  usuario_id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  rol text NOT NULL DEFAULT 'cajero',
+  creado_en timestamptz NOT NULL DEFAULT now()
+);
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.roles_usuario TO authenticated;
 GRANT ALL ON public.roles_usuario TO service_role;
 ALTER TABLE public.roles_usuario ENABLE ROW LEVEL SECURITY;
