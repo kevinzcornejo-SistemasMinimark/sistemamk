@@ -52,6 +52,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { registrarVenta } from "@/lib/ventas";
 import { broadcastCart, broadcastPagado, openCustomerDisplay } from "@/lib/customerDisplay";
 import { supabase } from "@/integrations/supabase/client";
+import { useLicencia } from "@/hooks/useLicencia";
+import { LicenciaBloqueo } from "@/components/LicenciaBloqueo";
 
 const COMBOS_CAT_ID = "__combos__";
 type ComboRow = {
@@ -75,6 +77,7 @@ function POSPage() {
   const cart = usePOSCart();
   const { productos: allProductos, categorias, refresh } = useCatalog();
   const { user, isDemo } = useAuth();
+  const { bloqueada, estado } = useLicencia();
   const [combos, setCombos] = useState<ComboRow[]>([]);
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState<string | null>(null);
@@ -299,6 +302,11 @@ function POSPage() {
     nombre_cliente?: string;
     pagos: { metodo: string; monto: number }[];
   }) => {
+    if (bloqueada && !isDemo) {
+      toast.error("Licencia vencida — Llamar al creador Kevin MG Solutions");
+      setCheckoutOpen(false);
+      return;
+    }
     const metodoPrincipal = data.pagos.length > 1
       ? "MIXTO"
       : (data.pagos[0]?.metodo ?? "EFECTIVO");
@@ -351,6 +359,10 @@ function POSPage() {
       toast.error(e?.message ?? "Error al registrar la venta");
     }
   };
+
+  if (bloqueada && !isDemo) {
+    return <LicenciaBloqueo estado={estado} />;
+  }
 
   return (
     <div className="flex flex-col lg:flex-row h-full overflow-hidden bg-muted/30">
