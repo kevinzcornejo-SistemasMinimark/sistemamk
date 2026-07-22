@@ -89,44 +89,58 @@ function UsuariosPage() {
 
   const cargar = async () => {
     setLoading(true);
-    const { data: roles, error } = await supabase
-      .from("roles_usuario")
-      .select("usuario_id,rol,creado_en")
+    // Base: perfiles (así aparecen todos, incluso sin rol asignado)
+    const { data: perfiles, error: ePerf } = await supabase
+      .from("perfiles")
+      .select("id,nombre,correo,creado_en")
       .order("creado_en", { ascending: false });
-    if (error) toast.error(error.message);
+    if (ePerf) {
+      console.error("[usuarios] perfiles:", ePerf);
+      toast.error("Perfiles: " + ePerf.message);
+    }
 
-    const ids = (roles ?? []).map((r: any) => r.usuario_id);
-    let perfiles: Record<string, any> = {};
-    let permisos: Record<string, string[]> = {};
+    const ids = (perfiles ?? []).map((p: any) => p.id);
+    let rolesMap: Record<string, string> = {};
+    let permisosMap: Record<string, string[]> = {};
+
     if (ids.length) {
-      const { data: p } = await supabase
-        .from("perfiles")
-        .select("id,nombre,correo")
-        .in("id", ids);
-      (p ?? []).forEach((x: any) => (perfiles[x.id] = x));
+      const { data: roles, error: eRoles } = await supabase
+        .from("roles_usuario")
+        .select("usuario_id,rol")
+        .in("usuario_id", ids);
+      if (eRoles) {
+        console.error("[usuarios] roles:", eRoles);
+        toast.error("Roles: " + eRoles.message);
+      }
+      (roles ?? []).forEach((r: any) => (rolesMap[r.usuario_id] = r.rol));
 
-      const { data: pm } = await supabase
+      const { data: perms, error: ePerms } = await supabase
         .from("permisos_usuario")
         .select("usuario_id,modulo")
         .in("usuario_id", ids);
-      (pm ?? []).forEach((x: any) => {
-        permisos[x.usuario_id] = permisos[x.usuario_id] || [];
-        permisos[x.usuario_id].push(x.modulo);
+      if (ePerms) {
+        console.error("[usuarios] permisos:", ePerms);
+        toast.error("Permisos: " + ePerms.message);
+      }
+      (perms ?? []).forEach((x: any) => {
+        permisosMap[x.usuario_id] = permisosMap[x.usuario_id] || [];
+        permisosMap[x.usuario_id].push(x.modulo);
       });
     }
 
     setRows(
-      (roles ?? []).map((r: any) => ({
-        usuario_id: r.usuario_id,
-        rol: r.rol,
-        creado_en: r.creado_en,
-        correo: perfiles[r.usuario_id]?.correo ?? null,
-        nombre: perfiles[r.usuario_id]?.nombre ?? null,
-        permisos: permisos[r.usuario_id] ?? [],
+      (perfiles ?? []).map((p: any) => ({
+        usuario_id: p.id,
+        rol: rolesMap[p.id] ?? null,
+        creado_en: p.creado_en,
+        correo: p.correo,
+        nombre: p.nombre,
+        permisos: permisosMap[p.id] ?? [],
       })),
     );
     setLoading(false);
   };
+
 
   useEffect(() => {
     if (isDemo) {
