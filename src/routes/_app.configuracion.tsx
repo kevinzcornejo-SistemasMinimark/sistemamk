@@ -56,6 +56,8 @@ const TABLAS_BORRAR = [
 
 // Duraciones predefinidas para licencia
 const DURACIONES_LIC = [
+  { id: "1d",   nombre: "1 día (prueba)",  dias: 1 },
+  { id: "3d",   nombre: "3 días (prueba)", dias: 3 },
   { id: "30d",  nombre: "30 días",  dias: 30 },
   { id: "60d",  nombre: "60 días",  dias: 60 },
   { id: "90d",  nombre: "90 días",  dias: 90 },
