@@ -3,6 +3,7 @@ import {
   useContext,
   useEffect,
   useState,
+  useCallback,
   type ReactNode,
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
@@ -17,16 +18,43 @@ export type AppRole =
   | "contador"
   | "supervisor";
 
+export const ADMIN_MAESTRO_EMAIL = "kevincoorporativa@gmail.com";
+
+export const MODULOS: { key: string; label: string }[] = [
+  { key: "dashboard", label: "Dashboard" },
+  { key: "pos", label: "Punto de Venta" },
+  { key: "productos", label: "Productos" },
+  { key: "categorias", label: "Categorías" },
+  { key: "combos", label: "Combos" },
+  { key: "inventario", label: "Inventario" },
+  { key: "lotes", label: "Lotes" },
+  { key: "kardex", label: "Kardex" },
+  { key: "etiquetas", label: "Etiquetas" },
+  { key: "compras", label: "Compras" },
+  { key: "proveedores", label: "Proveedores" },
+  { key: "clientes", label: "Clientes" },
+  { key: "caja", label: "Caja" },
+  { key: "gastos", label: "Gastos" },
+  { key: "tickets", label: "Tickets" },
+  { key: "reportes", label: "Reportes" },
+  { key: "usuarios", label: "Usuarios" },
+  { key: "ajustes", label: "Ajustes" },
+  { key: "configuracion", label: "Configuración" },
+  { key: "guia", label: "Guía" },
+];
+
 interface AuthCtx {
   user: User | null;
   session: Session | null;
   role: AppRole | null;
+  permisos: string[];
   isAdmin: boolean;
+  isAdminMaestro: boolean;
   isDemo: boolean;
   loading: boolean;
+  can: (modulo: string) => boolean;
+  refreshPermisos: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
-  signUp: (email: string, password: string) => Promise<{ error?: string }>;
-  signInWithGoogle: () => Promise<void>;
   enterDemo: () => void;
   signOut: () => Promise<void>;
 }
@@ -39,78 +67,76 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
+  const [permisos, setPermisos] = useState<string[]>([]);
   const [isDemo, setIsDemo] = useState(
     typeof window !== "undefined" &&
       window.localStorage.getItem(DEMO_KEY) === "1",
   );
   const [loading, setLoading] = useState(true);
 
+  const fetchRoleAndPerms = useCallback(async (u: User) => {
+    const esAdminMaestro = (u.email ?? "").toLowerCase() === ADMIN_MAESTRO_EMAIL;
+    try {
+      const { data: r } = await supabase
+        .from("roles_usuario")
+        .select("rol")
+        .eq("usuario_id", u.id)
+        .limit(1)
+        .maybeSingle();
+      setRole(((r?.rol as AppRole) ?? (esAdminMaestro ? "administrador" : "cajero")));
+
+      const { data: p } = await supabase
+        .from("permisos_usuario")
+        .select("modulo")
+        .eq("usuario_id", u.id);
+      const lista = (p ?? []).map((x: any) => x.modulo);
+      if (esAdminMaestro) {
+        setPermisos(MODULOS.map((m) => m.key));
+      } else {
+        setPermisos(lista);
+      }
+    } catch {
+      setRole(esAdminMaestro ? "administrador" : "cajero");
+      setPermisos(esAdminMaestro ? MODULOS.map((m) => m.key) : []);
+    }
+  }, []);
+
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
       setSession(sess);
       setUser(sess?.user ?? null);
       if (sess?.user) {
-        // Defer role fetch
-        setTimeout(() => fetchRole(sess.user.id), 0);
+        setTimeout(() => fetchRoleAndPerms(sess.user), 0);
       } else {
         setRole(null);
+        setPermisos([]);
       }
     });
 
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setUser(data.session?.user ?? null);
-      if (data.session?.user) fetchRole(data.session.user.id);
+      if (data.session?.user) fetchRoleAndPerms(data.session.user);
       setLoading(false);
     });
 
     return () => sub.subscription.unsubscribe();
-  }, []);
+  }, [fetchRoleAndPerms]);
 
-  async function fetchRole(userId: string) {
-    try {
-      const { data, error } = await supabase
-        .from("roles_usuario")
-        .select("rol")
-        .eq("usuario_id", userId)
-        .limit(1)
-        .maybeSingle();
-      if (!error && data?.rol) setRole(data.rol as AppRole);
-      else setRole("cajero");
-    } catch {
-      setRole("cajero");
-    }
-  }
+  const refreshPermisos = useCallback(async () => {
+    if (user) await fetchRoleAndPerms(user);
+  }, [user, fetchRoleAndPerms]);
 
   const signIn: AuthCtx["signIn"] = async (email, password) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return error ? { error: error.message } : {};
   };
 
-  const signUp: AuthCtx["signUp"] = async (email, password) => {
-    const redirect =
-      typeof window !== "undefined" ? `${window.location.origin}/` : undefined;
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: redirect },
-    });
-    return error ? { error: error.message } : {};
-  };
-
-  const signInWithGoogle = async () => {
-    const redirect =
-      typeof window !== "undefined" ? `${window.location.origin}/` : undefined;
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: redirect },
-    });
-  };
-
   const enterDemo = () => {
     if (typeof window !== "undefined") localStorage.setItem(DEMO_KEY, "1");
     setIsDemo(true);
     setRole("administrador");
+    setPermisos(MODULOS.map((m) => m.key));
   };
 
   const signOut = async () => {
@@ -118,6 +144,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsDemo(false);
     await supabase.auth.signOut();
     setRole(null);
+    setPermisos([]);
+  };
+
+  const isAdminMaestro =
+    (user?.email ?? "").toLowerCase() === ADMIN_MAESTRO_EMAIL;
+  const isAdmin = role === "administrador" || isDemo || isAdminMaestro;
+
+  const can = (modulo: string) => {
+    if (isDemo || isAdminMaestro) return true;
+    if (isAdmin) return true;
+    return permisos.includes(modulo);
   };
 
   return (
@@ -126,12 +163,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         session,
         role,
-        isAdmin: role === "administrador" || isDemo,
+        permisos,
+        isAdmin,
+        isAdminMaestro,
         isDemo,
         loading,
+        can,
+        refreshPermisos,
         signIn,
-        signUp,
-        signInWithGoogle,
         enterDemo,
         signOut,
       }}
