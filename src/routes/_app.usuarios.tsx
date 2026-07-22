@@ -317,6 +317,9 @@ function UsuariosPage() {
             <Plus className="h-4 w-4 mr-2" /> Nuevo usuario
           </Button>
         </div>
+      </div>
+
+
 
 
       <Card className="overflow-hidden">
