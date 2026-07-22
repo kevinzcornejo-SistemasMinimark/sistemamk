@@ -212,7 +212,7 @@ function ConfigPage() {
   const generarBackup = async () => {
     if (isDemo) return toast.info("Modo demo");
     toast.message("Generando backup…");
-    const tablas = ["configuracion","tiendas","terminales","licencia","categorias","productos","clientes","proveedores","ventas","detalle_ventas","pagos_venta"];
+    const tablas = ["configuracion","tiendas","terminales","licencia","categorias","productos","proveedores","clientes","combos","lotes","kardex","compras","compra_items","ventas","venta_items","venta_pagos","cajas","movimientos_caja","gastos"];
     const dump: Record<string, any[]> = {};
     for (const t of tablas) {
       const { data } = await supabase.from(t).select("*");
