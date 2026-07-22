@@ -89,44 +89,58 @@ function UsuariosPage() {
 
   const cargar = async () => {
     setLoading(true);
-    const { data: roles, error } = await supabase
-      .from("roles_usuario")
-      .select("usuario_id,rol,creado_en")
+    // Base: perfiles (así aparecen todos, incluso sin rol asignado)
+    const { data: perfiles, error: ePerf } = await supabase
+      .from("perfiles")
+      .select("id,nombre,correo,creado_en")
       .order("creado_en", { ascending: false });
-    if (error) toast.error(error.message);
+    if (ePerf) {
+      console.error("[usuarios] perfiles:", ePerf);
+      toast.error("Perfiles: " + ePerf.message);
+    }
 
-    const ids = (roles ?? []).map((r: any) => r.usuario_id);
-    let perfiles: Record<string, any> = {};
-    let permisos: Record<string, string[]> = {};
+    const ids = (perfiles ?? []).map((p: any) => p.id);
+    let rolesMap: Record<string, string> = {};
+    let permisosMap: Record<string, string[]> = {};
+
     if (ids.length) {
-      const { data: p } = await supabase
-        .from("perfiles")
-        .select("id,nombre,correo")
-        .in("id", ids);
-      (p ?? []).forEach((x: any) => (perfiles[x.id] = x));
+      const { data: roles, error: eRoles } = await supabase
+        .from("roles_usuario")
+        .select("usuario_id,rol")
+        .in("usuario_id", ids);
+      if (eRoles) {
+        console.error("[usuarios] roles:", eRoles);
+        toast.error("Roles: " + eRoles.message);
+      }
+      (roles ?? []).forEach((r: any) => (rolesMap[r.usuario_id] = r.rol));
 
-      const { data: pm } = await supabase
+      const { data: perms, error: ePerms } = await supabase
         .from("permisos_usuario")
         .select("usuario_id,modulo")
         .in("usuario_id", ids);
-      (pm ?? []).forEach((x: any) => {
-        permisos[x.usuario_id] = permisos[x.usuario_id] || [];
-        permisos[x.usuario_id].push(x.modulo);
+      if (ePerms) {
+        console.error("[usuarios] permisos:", ePerms);
+        toast.error("Permisos: " + ePerms.message);
+      }
+      (perms ?? []).forEach((x: any) => {
+        permisosMap[x.usuario_id] = permisosMap[x.usuario_id] || [];
+        permisosMap[x.usuario_id].push(x.modulo);
       });
     }
 
     setRows(
-      (roles ?? []).map((r: any) => ({
-        usuario_id: r.usuario_id,
-        rol: r.rol,
-        creado_en: r.creado_en,
-        correo: perfiles[r.usuario_id]?.correo ?? null,
-        nombre: perfiles[r.usuario_id]?.nombre ?? null,
-        permisos: permisos[r.usuario_id] ?? [],
+      (perfiles ?? []).map((p: any) => ({
+        usuario_id: p.id,
+        rol: rolesMap[p.id] ?? null,
+        creado_en: p.creado_en,
+        correo: p.correo,
+        nombre: p.nombre,
+        permisos: permisosMap[p.id] ?? [],
       })),
     );
     setLoading(false);
   };
+
 
   useEffect(() => {
     if (isDemo) {
@@ -178,20 +192,25 @@ function UsuariosPage() {
       if (!uid) throw new Error("No se pudo obtener el ID del usuario");
 
       // Perfil
-      await supabase
+      const { error: e1 } = await supabase
         .from("perfiles")
         .upsert({ id: uid, correo: nEmail, nombre: nNombre || nEmail.split("@")[0] });
+      if (e1) throw new Error("Perfil: " + e1.message);
 
-      // Rol (el trigger ya lo creó como 'cajero'; sobreescribimos si difiere)
+      // Rol
       await supabase.from("roles_usuario").delete().eq("usuario_id", uid);
-      await supabase.from("roles_usuario").insert({ usuario_id: uid, rol: nRol });
+      const { error: e2 } = await supabase
+        .from("roles_usuario")
+        .insert({ usuario_id: uid, rol: nRol });
+      if (e2) throw new Error("Rol: " + e2.message);
 
       // Permisos
       await supabase.from("permisos_usuario").delete().eq("usuario_id", uid);
       if (nModulos.length) {
-        await supabase.from("permisos_usuario").insert(
+        const { error: e3 } = await supabase.from("permisos_usuario").insert(
           nModulos.map((m) => ({ usuario_id: uid, modulo: m })),
         );
+        if (e3) throw new Error("Permisos: " + e3.message);
       }
 
       toast.success("Usuario creado. Ya puede ingresar con su correo y contraseña.");
@@ -199,11 +218,13 @@ function UsuariosPage() {
       setOpenNew(false);
       await cargar();
     } catch (e: any) {
+      console.error("[crearUsuario]", e);
       toast.error(e.message ?? String(e));
     } finally {
       setSaving(false);
     }
   };
+
 
   const abrirEditar = (r: UsuarioRow) => {
     setERol((r.rol as AppRole) ?? "cajero");
@@ -288,10 +309,18 @@ function UsuariosPage() {
             Crea cuentas con correo y contraseña y define a qué módulos pueden acceder.
           </p>
         </div>
-        <Button onClick={() => setOpenNew(true)}>
-          <Plus className="h-4 w-4 mr-2" /> Nuevo usuario
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={cargar}>
+            Refrescar
+          </Button>
+          <Button onClick={() => setOpenNew(true)}>
+            <Plus className="h-4 w-4 mr-2" /> Nuevo usuario
+          </Button>
+        </div>
       </div>
+
+
+
 
       <Card className="overflow-hidden">
         <table className="w-full text-sm">
