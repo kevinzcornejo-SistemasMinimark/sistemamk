@@ -41,17 +41,27 @@ const SIDEBARS = [
 ];
 
 const TABLAS_BORRAR = [
+  { id: "venta_items", nombre: "Detalle de ventas", desc: "Líneas de cada venta" },
+  { id: "venta_pagos", nombre: "Pagos de ventas", desc: "Pagos recibidos por venta" },
   { id: "ventas", nombre: "Ventas", desc: "Ventas y comprobantes" },
-  { id: "pagos_venta", nombre: "Pagos", desc: "Pagos de ventas" },
-  { id: "detalle_ventas", nombre: "Detalle ventas", desc: "Líneas de venta" },
   { id: "movimientos_caja", nombre: "Movimientos de caja", desc: "Entradas/salidas" },
-  { id: "sesiones_caja", nombre: "Sesiones de caja", desc: "Aperturas/cierres" },
+  { id: "cajas", nombre: "Sesiones de caja", desc: "Aperturas/cierres" },
+  { id: "gastos", nombre: "Gastos", desc: "Registro de gastos" },
   { id: "clientes", nombre: "Clientes", desc: "Base de clientes" },
-  { id: "movimientos_stock", nombre: "Movimientos de stock", desc: "Kardex" },
+  { id: "kardex", nombre: "Kardex", desc: "Movimientos de stock" },
+  { id: "compra_items", nombre: "Detalle de compras", desc: "Líneas de compra" },
   { id: "compras", nombre: "Compras", desc: "Compras a proveedores" },
-  { id: "categorias", nombre: "Categorías", desc: "Categorías de productos" },
-  { id: "combos", nombre: "Combos", desc: "Combos y promociones" },
   { id: "lotes", nombre: "Lotes", desc: "Lotes y vencimientos" },
+];
+
+// Duraciones predefinidas para licencia
+const DURACIONES_LIC = [
+  { id: "30d",  nombre: "30 días",  dias: 30 },
+  { id: "60d",  nombre: "60 días",  dias: 60 },
+  { id: "90d",  nombre: "90 días",  dias: 90 },
+  { id: "1a",   nombre: "1 año",    dias: 365 },
+  { id: "5a",   nombre: "5 años",   dias: 365 * 5 },
+  { id: "10a",  nombre: "10 años",  dias: 365 * 10 },
 ];
 
 function ConfigPage() {
@@ -69,6 +79,11 @@ function ConfigPage() {
   const [pass1, setPass1] = useState("");
   const [pass2, setPass2] = useState("");
   const [sel, setSel] = useState<Record<string, boolean>>({});
+
+  // Licencia
+  const [licDuracion, setLicDuracion] = useState<string>("30d");
+  const [licAniosCustom, setLicAniosCustom] = useState<number>(2);
+  const [licSaving, setLicSaving] = useState(false);
 
   const cargar = async () => {
     setLoading(true);
@@ -202,7 +217,7 @@ function ConfigPage() {
   const generarBackup = async () => {
     if (isDemo) return toast.info("Modo demo");
     toast.message("Generando backup…");
-    const tablas = ["configuracion","tiendas","terminales","licencia","categorias","productos","clientes","proveedores","ventas","detalle_ventas","pagos_venta"];
+    const tablas = ["configuracion","tiendas","terminales","licencia","categorias","productos","proveedores","clientes","combos","lotes","kardex","compras","compra_items","ventas","venta_items","venta_pagos","cajas","movimientos_caja","gastos"];
     const dump: Record<string, any[]> = {};
     for (const t of tablas) {
       const { data } = await supabase.from(t).select("*");
@@ -234,6 +249,57 @@ function ConfigPage() {
     const d = (new Date(licencia.fecha_vencimiento).getTime() - Date.now()) / 86400000;
     return Math.max(0, Math.floor(d));
   }, [licencia]);
+
+  // ===== Licencia: activar/renovar =====
+  const diasSeleccionados = (): number => {
+    if (licDuracion === "custom") return Math.max(1, Math.floor(licAniosCustom * 365));
+    return DURACIONES_LIC.find(d => d.id === licDuracion)?.dias ?? 30;
+  };
+  const nombreTipo = (): string => {
+    if (licDuracion === "custom") return `${licAniosCustom} año${licAniosCustom !== 1 ? "s" : ""}`;
+    return DURACIONES_LIC.find(d => d.id === licDuracion)?.nombre ?? "30 días";
+  };
+  const activarLicencia = async (modo: "nueva" | "renovar") => {
+    if (!isAdmin) return toast.error("Solo administradores");
+    if (isDemo) return toast.info("Modo demo: cambios no persistidos");
+    const dias = diasSeleccionados();
+    const inicio = modo === "renovar" && licencia?.fecha_vencimiento && new Date(licencia.fecha_vencimiento) > new Date()
+      ? new Date(licencia.fecha_vencimiento)
+      : new Date();
+    const vence = new Date(inicio);
+    vence.setDate(vence.getDate() + dias);
+    const clave = `LIC-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+    const payload: any = {
+      tipo: licDuracion === "custom" ? `${licAniosCustom}a` : licDuracion,
+      estado: "activa",
+      duracion_dias: dias,
+      fecha_inicio: (modo === "renovar" ? new Date() : inicio).toISOString().slice(0, 10),
+      fecha_vencimiento: vence.toISOString().slice(0, 10),
+      clave,
+      notas: `${modo === "renovar" ? "Renovación" : "Activación"} — ${nombreTipo()}`,
+    };
+    setLicSaving(true);
+    let error: any = null;
+    if (licencia?.id) {
+      const res = await supabase.from("licencia").update(payload).eq("id", licencia.id);
+      error = res.error;
+    } else {
+      const res = await supabase.from("licencia").insert(payload);
+      error = res.error;
+    }
+    setLicSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success(`Licencia ${modo === "renovar" ? "renovada" : "activada"} por ${nombreTipo()}`);
+    cargar();
+  };
+  const suspenderLicencia = async () => {
+    if (!isAdmin || isDemo || !licencia?.id) return;
+    if (!window.confirm("¿Suspender la licencia?")) return;
+    const { error } = await supabase.from("licencia").update({ estado: "suspendida" }).eq("id", licencia.id);
+    if (error) return toast.error(error.message);
+    toast.success("Licencia suspendida"); cargar();
+  };
+
 
   return (
     <div className="p-6 space-y-6 max-w-6xl">
@@ -346,14 +412,88 @@ function ConfigPage() {
 
           <Card className="p-6 space-y-4">
             <h2 className="text-xl font-bold flex items-center gap-2"><Key className="h-5 w-5 text-accent"/> Licencia del Sistema</h2>
-            <p className="text-sm text-muted-foreground -mt-2">Estado de tu licencia actual</p>
-            <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-4 space-y-2 text-sm">
-              <div className="flex justify-between"><span className="font-medium">Estado:</span><Badge className="bg-green-600">{licencia?.estado?.toUpperCase() ?? "—"}</Badge></div>
-              <div className="flex justify-between"><span className="font-medium">Tipo:</span><span>{licencia?.tipo ?? "—"}</span></div>
-              <div className="flex justify-between"><span className="font-medium">Vence:</span><span>{licencia?.fecha_vencimiento ?? "—"}</span></div>
-              <div className="flex justify-between"><span className="font-medium">Días restantes:</span><span className="text-green-700 font-bold">{diasRestantes} días</span></div>
+            <p className="text-sm text-muted-foreground -mt-2">Estado y renovación de tu licencia</p>
+
+            {(() => {
+              const estado = (licencia?.estado ?? "sin licencia").toString();
+              const vencida = diasRestantes <= 0 && licencia?.fecha_vencimiento;
+              const porVencer = diasRestantes > 0 && diasRestantes <= 7;
+              const cls = vencida ? "border-red-500/40 bg-red-500/10"
+                        : porVencer ? "border-yellow-500/40 bg-yellow-500/10"
+                        : "border-green-500/30 bg-green-500/10";
+              const badgeCls = vencida ? "bg-red-600" : porVencer ? "bg-yellow-600" : "bg-green-600";
+              return (
+                <div className={`rounded-lg border p-4 space-y-2 text-sm ${cls}`}>
+                  <div className="flex justify-between"><span className="font-medium">Estado:</span><Badge className={badgeCls}>{estado.toUpperCase()}</Badge></div>
+                  <div className="flex justify-between"><span className="font-medium">Tipo:</span><span>{licencia?.tipo ?? "—"}</span></div>
+                  <div className="flex justify-between"><span className="font-medium">Inicio:</span><span>{licencia?.fecha_inicio ?? "—"}</span></div>
+                  <div className="flex justify-between"><span className="font-medium">Vence:</span><span>{licencia?.fecha_vencimiento ?? "—"}</span></div>
+                  <div className="flex justify-between"><span className="font-medium">Días restantes:</span><span className={`font-bold ${vencida?"text-red-700":porVencer?"text-yellow-700":"text-green-700"}`}>{diasRestantes} días</span></div>
+                  {licencia?.clave && <div className="flex justify-between gap-2"><span className="font-medium">Clave:</span><span className="font-mono text-xs truncate max-w-[60%]">{licencia.clave}</span></div>}
+                </div>
+              );
+            })()}
+
+            <div>
+              <Label>Duración de la licencia</Label>
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                {DURACIONES_LIC.map((d) => (
+                  <button
+                    key={d.id}
+                    type="button"
+                    onClick={() => setLicDuracion(d.id)}
+                    className={`rounded-md border p-2 text-sm font-medium transition ${licDuracion===d.id ? "border-accent bg-accent/10 text-accent" : "border-border hover:border-muted-foreground/40"}`}
+                  >
+                    {d.nombre}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setLicDuracion("custom")}
+                  className={`rounded-md border p-2 text-sm font-medium transition ${licDuracion==="custom" ? "border-accent bg-accent/10 text-accent" : "border-border hover:border-muted-foreground/40"}`}
+                >
+                  Personalizado
+                </button>
+              </div>
+              {licDuracion === "custom" && (
+                <div className="mt-2 flex items-center gap-2">
+                  <Label className="text-xs">Años:</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={99}
+                    value={licAniosCustom}
+                    onChange={(e) => setLicAniosCustom(Math.max(1, Number(e.target.value) || 1))}
+                    className="w-24"
+                  />
+                  <span className="text-xs text-muted-foreground">= {licAniosCustom * 365} días</span>
+                </div>
+              )}
             </div>
-            <Button variant="outline" className="w-full" onClick={()=>toast.info("Contacta a tu proveedor para renovar")}><RefreshCcw className="h-4 w-4 mr-1"/> Renovar Licencia</Button>
+
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
+                onClick={() => activarLicencia("renovar")}
+                disabled={licSaving || !isAdmin}
+              >
+                <RefreshCcw className="h-4 w-4 mr-1"/> Renovar ({nombreTipo()})
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => activarLicencia("nueva")}
+                disabled={licSaving || !isAdmin}
+              >
+                <Key className="h-4 w-4 mr-1"/> Activar nueva
+              </Button>
+            </div>
+            {licencia?.id && licencia?.estado === "activa" && (
+              <Button variant="ghost" className="w-full text-red-600 hover:text-red-700" onClick={suspenderLicencia}>
+                Suspender licencia
+              </Button>
+            )}
+            {!isAdmin && <p className="text-xs text-muted-foreground">Solo el administrador puede modificar la licencia.</p>}
           </Card>
         </TabsContent>
 
@@ -556,7 +696,7 @@ function ConfigPage() {
             </ul>
             <div className="rounded-md border border-yellow-300/60 bg-yellow-50/60 p-3 text-sm text-yellow-800">⚠ Se eliminarán: Órdenes, Pagos, Sesiones de caja, Movimientos de stock, Clientes</div>
             <Button variant="outline" className="border-orange-300 text-orange-700" onClick={()=>{
-              setSel({ ventas:true, pagos_venta:true, detalle_ventas:true, sesiones_caja:true, movimientos_caja:true, movimientos_stock:true, clientes:true });
+              setSel({ ventas:true, venta_pagos:true, venta_items:true, cajas:true, movimientos_caja:true, kardex:true, clientes:true, gastos:true });
               toast.info("Selección preparada. Confirma abajo en 'Borrar Datos Seleccionados'.");
             }}><RefreshCcw className="h-4 w-4 mr-1"/> Resetear Sistema</Button>
           </Card>
