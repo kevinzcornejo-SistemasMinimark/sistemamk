@@ -23,9 +23,11 @@ import {
   Boxes,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 type Item = {
   to: string;
+  key: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
 };
@@ -41,58 +43,58 @@ const sections: Section[] = [
     title: "Principal",
     color: "text-primary",
     items: [
-      { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { to: "/pos", label: "Punto de Venta", icon: ShoppingCart },
+      { to: "/dashboard", key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { to: "/pos", key: "pos", label: "Punto de Venta", icon: ShoppingCart },
     ],
   },
   {
     title: "Inventario",
     color: "text-emerald-400",
     items: [
-      { to: "/productos", label: "Productos", icon: Package },
-      { to: "/categorias", label: "Categorías", icon: Tags },
-      { to: "/combos", label: "Combos", icon: Layers },
-      { to: "/inventario", label: "Inventario", icon: Warehouse },
-      { to: "/lotes", label: "Lotes", icon: CalendarClock },
-      { to: "/kardex", label: "Kardex", icon: ClipboardList },
-      { to: "/etiquetas", label: "Etiquetas", icon: Printer },
+      { to: "/productos", key: "productos", label: "Productos", icon: Package },
+      { to: "/categorias", key: "categorias", label: "Categorías", icon: Tags },
+      { to: "/combos", key: "combos", label: "Combos", icon: Layers },
+      { to: "/inventario", key: "inventario", label: "Inventario", icon: Warehouse },
+      { to: "/lotes", key: "lotes", label: "Lotes", icon: CalendarClock },
+      { to: "/kardex", key: "kardex", label: "Kardex", icon: ClipboardList },
+      { to: "/etiquetas", key: "etiquetas", label: "Etiquetas", icon: Printer },
     ],
   },
   {
     title: "Compras",
     color: "text-amber-400",
     items: [
-      { to: "/compras", label: "Compras", icon: Boxes },
-      { to: "/proveedores", label: "Proveedores", icon: Truck },
+      { to: "/compras", key: "compras", label: "Compras", icon: Boxes },
+      { to: "/proveedores", key: "proveedores", label: "Proveedores", icon: Truck },
     ],
   },
   {
     title: "Clientes",
     color: "text-sky-400",
-    items: [{ to: "/clientes", label: "Clientes", icon: Users }],
+    items: [{ to: "/clientes", key: "clientes", label: "Clientes", icon: Users }],
   },
   {
     title: "Caja",
     color: "text-rose-400",
     items: [
-      { to: "/caja", label: "Caja", icon: Wallet },
-      { to: "/gastos", label: "Gastos", icon: Receipt },
-      { to: "/tickets", label: "Tickets", icon: ClipboardList },
+      { to: "/caja", key: "caja", label: "Caja", icon: Wallet },
+      { to: "/gastos", key: "gastos", label: "Gastos", icon: Receipt },
+      { to: "/tickets", key: "tickets", label: "Tickets", icon: ClipboardList },
     ],
   },
   {
     title: "Reportes",
     color: "text-violet-400",
-    items: [{ to: "/reportes", label: "Reportes", icon: BarChart3 }],
+    items: [{ to: "/reportes", key: "reportes", label: "Reportes", icon: BarChart3 }],
   },
   {
     title: "Sistema",
     color: "text-fuchsia-400",
     items: [
-      { to: "/usuarios", label: "Usuarios", icon: UserCog },
-      { to: "/ajustes", label: "Ajustes", icon: Settings },
-      { to: "/configuracion", label: "Configuración", icon: Cog },
-      { to: "/guia", label: "Guía", icon: BookOpen },
+      { to: "/usuarios", key: "usuarios", label: "Usuarios", icon: UserCog },
+      { to: "/ajustes", key: "ajustes", label: "Ajustes", icon: Settings },
+      { to: "/configuracion", key: "configuracion", label: "Configuración", icon: Cog },
+      { to: "/guia", key: "guia", label: "Guía", icon: BookOpen },
     ],
   },
 ];
@@ -107,6 +109,11 @@ export function Sidebar({
   onCloseMobile: () => void;
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { can } = useAuth();
+
+  const visibles = sections
+    .map((s) => ({ ...s, items: s.items.filter((it) => can(it.key)) }))
+    .filter((s) => s.items.length > 0);
 
   const content = (
     <nav className="h-full overflow-y-auto py-4 px-3 space-y-5">
@@ -124,7 +131,7 @@ export function Sidebar({
         )}
       </div>
 
-      {sections.map((sec) => (
+      {visibles.map((sec) => (
         <div key={sec.title}>
           {!collapsed && (
             <div

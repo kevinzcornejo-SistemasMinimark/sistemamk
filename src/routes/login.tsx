@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
@@ -15,8 +14,7 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
-  const { user, signIn, signUp, signInWithGoogle, enterDemo, isDemo, loading } =
-    useAuth();
+  const { user, signIn, enterDemo, isDemo, loading } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,16 +26,15 @@ function LoginPage() {
     }
   }, [user, isDemo, loading, navigate]);
 
-  const handle = async (mode: "in" | "up") => {
+  const handle = async () => {
     if (!email || !password) {
       toast.error("Ingresa email y contraseña");
       return;
     }
     setSubmitting(true);
-    const res = mode === "in" ? await signIn(email, password) : await signUp(email, password);
+    const res = await signIn(email, password);
     setSubmitting(false);
     if (res.error) toast.error(res.error);
-    else if (mode === "up") toast.success("Revisa tu correo para confirmar la cuenta");
   };
 
   return (
@@ -71,58 +68,39 @@ function LoginPage() {
         <Card className="p-6 md:p-8 shadow-xl border-border/60">
           <h2 className="text-xl font-bold mb-1">Bienvenido</h2>
           <p className="text-sm text-muted-foreground mb-6">
-            Inicia sesión con tu cuenta o entra en modo demo.
+            Inicia sesión con tu correo y contraseña. Las nuevas cuentas las crea el administrador.
           </p>
 
-          <Tabs defaultValue="login">
-            <TabsList className="grid grid-cols-2 mb-4">
-              <TabsTrigger value="login">Ingresar</TabsTrigger>
-              <TabsTrigger value="register">Crear cuenta</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="login" className="space-y-3">
-              <div className="space-y-2">
-                <Label htmlFor="email">Correo</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@correo.com" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Contraseña</Label>
-                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-              </div>
-              <Button className="w-full" disabled={submitting} onClick={() => handle("in")}>
-                {submitting ? "Ingresando…" : "Ingresar"}
-              </Button>
-            </TabsContent>
-
-            <TabsContent value="register" className="space-y-3">
-              <div className="space-y-2">
-                <Label htmlFor="r-email">Correo</Label>
-                <Input id="r-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="r-password">Contraseña</Label>
-                <Input id="r-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-              </div>
-              <Button className="w-full" disabled={submitting} onClick={() => handle("up")}>
-                {submitting ? "Creando…" : "Crear cuenta"}
-              </Button>
-            </TabsContent>
-          </Tabs>
-
-          <div className="relative my-5">
-            <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">o</span>
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label htmlFor="email">Correo</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="tu@correo.com"
+                onKeyDown={(e) => e.key === "Enter" && handle()}
+              />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Contraseña</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handle()}
+              />
+            </div>
+            <Button className="w-full" disabled={submitting} onClick={handle}>
+              {submitting ? "Ingresando…" : "Ingresar"}
+            </Button>
           </div>
-
-          <Button variant="outline" className="w-full" onClick={signInWithGoogle}>
-            Continuar con Google
-          </Button>
 
           <Button
             variant="secondary"
-            className="w-full mt-3"
+            className="w-full mt-4"
             onClick={() => {
               enterDemo();
               toast.success("Modo demo activado");

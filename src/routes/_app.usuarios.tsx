@@ -1,10 +1,41 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  UserCog,
+  Plus,
+  Shield,
+  Trash2,
+  Pencil,
+  Lock,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { supabaseSignup } from "@/integrations/supabase/signupClient";
+import {
+  useAuth,
+  MODULOS,
+  ADMIN_MAESTRO_EMAIL,
+  type AppRole,
+} from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/usuarios")({
@@ -12,61 +43,501 @@ export const Route = createFileRoute("/_app/usuarios")({
   component: UsuariosPage,
 });
 
-type Row = { id: string; usuario_id: string; rol: string; creado_en: string; perfiles: { nombre: string | null; correo: string | null } | null };
+const ROLES: AppRole[] = [
+  "administrador",
+  "gerente",
+  "supervisor",
+  "cajero",
+  "almacenero",
+  "vendedor",
+  "contador",
+];
+
+type UsuarioRow = {
+  usuario_id: string;
+  correo: string | null;
+  nombre: string | null;
+  rol: string | null;
+  permisos: string[];
+  creado_en: string | null;
+};
 
 function UsuariosPage() {
-  const { user, isDemo } = useAuth();
-  const [rows, setRows] = useState<Row[]>([]);
+  const { isAdmin, isAdminMaestro, user, isDemo, refreshPermisos } = useAuth();
+  const [rows, setRows] = useState<UsuarioRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [openNew, setOpenNew] = useState(false);
+  const [openEdit, setOpenEdit] = useState<UsuarioRow | null>(null);
+
+  // Formulario nuevo usuario
+  const [nEmail, setNEmail] = useState("");
+  const [nPass, setNPass] = useState("");
+  const [nNombre, setNNombre] = useState("");
+  const [nRol, setNRol] = useState<AppRole>("cajero");
+  const [nModulos, setNModulos] = useState<string[]>([
+    "dashboard",
+    "pos",
+    "productos",
+  ]);
+  const [saving, setSaving] = useState(false);
+
+  // Formulario editar
+  const [eRol, setERol] = useState<AppRole>("cajero");
+  const [eModulos, setEModulos] = useState<string[]>([]);
+
+  const puedeGestionar = isAdmin;
+
+  const cargar = async () => {
+    setLoading(true);
+    const { data: roles, error } = await supabase
+      .from("roles_usuario")
+      .select("usuario_id,rol,creado_en")
+      .order("creado_en", { ascending: false });
+    if (error) toast.error(error.message);
+
+    const ids = (roles ?? []).map((r: any) => r.usuario_id);
+    let perfiles: Record<string, any> = {};
+    let permisos: Record<string, string[]> = {};
+    if (ids.length) {
+      const { data: p } = await supabase
+        .from("perfiles")
+        .select("id,nombre,correo")
+        .in("id", ids);
+      (p ?? []).forEach((x: any) => (perfiles[x.id] = x));
+
+      const { data: pm } = await supabase
+        .from("permisos_usuario")
+        .select("usuario_id,modulo")
+        .in("usuario_id", ids);
+      (pm ?? []).forEach((x: any) => {
+        permisos[x.usuario_id] = permisos[x.usuario_id] || [];
+        permisos[x.usuario_id].push(x.modulo);
+      });
+    }
+
+    setRows(
+      (roles ?? []).map((r: any) => ({
+        usuario_id: r.usuario_id,
+        rol: r.rol,
+        creado_en: r.creado_en,
+        correo: perfiles[r.usuario_id]?.correo ?? null,
+        nombre: perfiles[r.usuario_id]?.nombre ?? null,
+        permisos: permisos[r.usuario_id] ?? [],
+      })),
+    );
+    setLoading(false);
+  };
 
   useEffect(() => {
-    if (isDemo || !user) { setRows([]); setLoading(false); return; }
-    (async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("roles_usuario")
-        .select("id,usuario_id,rol,creado_en")
-        .order("creado_en", { ascending: false });
-      if (error) toast.error(error.message);
-      const ids = (data ?? []).map((r: any) => r.usuario_id);
-      let perfilesMap: Record<string, any> = {};
-      if (ids.length) {
-        const { data: p } = await supabase.from("perfiles").select("id,nombre,correo").in("id", ids);
-        (p ?? []).forEach((x: any) => { perfilesMap[x.id] = x; });
-      }
-      setRows((data ?? []).map((r: any) => ({ ...r, perfiles: perfilesMap[r.usuario_id] ?? null })));
+    if (isDemo) {
+      setRows([]);
       setLoading(false);
-    })();
-  }, [user?.id, isDemo]);
+      return;
+    }
+    cargar();
+  }, [isDemo]);
+
+  const toggle = (list: string[], v: string) =>
+    list.includes(v) ? list.filter((x) => x !== v) : [...list, v];
+
+  const resetNuevo = () => {
+    setNEmail("");
+    setNPass("");
+    setNNombre("");
+    setNRol("cajero");
+    setNModulos(["dashboard", "pos", "productos"]);
+  };
+
+  const crearUsuario = async () => {
+    if (!nEmail || !nPass) {
+      toast.error("Correo y contraseña son obligatorios");
+      return;
+    }
+    if (nPass.length < 6) {
+      toast.error("La contraseña debe tener al menos 6 caracteres");
+      return;
+    }
+    if (nEmail.toLowerCase() === ADMIN_MAESTRO_EMAIL) {
+      toast.error("Ese correo está reservado para el administrador maestro");
+      return;
+    }
+    setSaving(true);
+    try {
+      // Usar cliente sin persistencia para no reemplazar la sesión del admin
+      const { data, error } = await supabaseSignup.auth.signUp({
+        email: nEmail,
+        password: nPass,
+        options: {
+          data: { nombre: nNombre },
+          emailRedirectTo:
+            typeof window !== "undefined" ? `${window.location.origin}/login` : undefined,
+        },
+      });
+      if (error) throw error;
+      const uid = data.user?.id;
+      if (!uid) throw new Error("No se pudo obtener el ID del usuario");
+
+      // Perfil
+      await supabase
+        .from("perfiles")
+        .upsert({ id: uid, correo: nEmail, nombre: nNombre || nEmail.split("@")[0] });
+
+      // Rol (el trigger ya lo creó como 'cajero'; sobreescribimos si difiere)
+      await supabase.from("roles_usuario").delete().eq("usuario_id", uid);
+      await supabase.from("roles_usuario").insert({ usuario_id: uid, rol: nRol });
+
+      // Permisos
+      await supabase.from("permisos_usuario").delete().eq("usuario_id", uid);
+      if (nModulos.length) {
+        await supabase.from("permisos_usuario").insert(
+          nModulos.map((m) => ({ usuario_id: uid, modulo: m })),
+        );
+      }
+
+      toast.success("Usuario creado. Debe confirmar su correo antes de ingresar.");
+      resetNuevo();
+      setOpenNew(false);
+      await cargar();
+    } catch (e: any) {
+      toast.error(e.message ?? String(e));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const abrirEditar = (r: UsuarioRow) => {
+    setERol((r.rol as AppRole) ?? "cajero");
+    setEModulos(r.permisos ?? []);
+    setOpenEdit(r);
+  };
+
+  const guardarEditar = async () => {
+    if (!openEdit) return;
+    if (openEdit.correo?.toLowerCase() === ADMIN_MAESTRO_EMAIL) {
+      toast.error("No se puede modificar al administrador maestro");
+      return;
+    }
+    setSaving(true);
+    try {
+      await supabase
+        .from("roles_usuario")
+        .delete()
+        .eq("usuario_id", openEdit.usuario_id);
+      await supabase
+        .from("roles_usuario")
+        .insert({ usuario_id: openEdit.usuario_id, rol: eRol });
+
+      await supabase
+        .from("permisos_usuario")
+        .delete()
+        .eq("usuario_id", openEdit.usuario_id);
+      if (eModulos.length) {
+        await supabase
+          .from("permisos_usuario")
+          .insert(eModulos.map((m) => ({ usuario_id: openEdit.usuario_id, modulo: m })));
+      }
+      toast.success("Cambios guardados");
+      setOpenEdit(null);
+      await cargar();
+      if (user?.id === openEdit.usuario_id) await refreshPermisos();
+    } catch (e: any) {
+      toast.error(e.message ?? String(e));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const quitarAcceso = async (r: UsuarioRow) => {
+    if (r.correo?.toLowerCase() === ADMIN_MAESTRO_EMAIL) {
+      toast.error("No se puede quitar acceso al administrador maestro");
+      return;
+    }
+    if (!confirm(`¿Quitar todos los accesos a ${r.correo}?`)) return;
+    try {
+      await supabase.from("permisos_usuario").delete().eq("usuario_id", r.usuario_id);
+      await supabase.from("roles_usuario").delete().eq("usuario_id", r.usuario_id);
+      toast.success("Accesos removidos");
+      await cargar();
+    } catch (e: any) {
+      toast.error(e.message ?? String(e));
+    }
+  };
+
+  if (!puedeGestionar) {
+    return (
+      <div className="p-6">
+        <Card className="p-8 text-center space-y-3">
+          <Lock className="h-10 w-10 mx-auto text-muted-foreground" />
+          <h2 className="text-lg font-bold">Solo administradores</h2>
+          <p className="text-sm text-muted-foreground">
+            Esta sección es exclusiva para el administrador ({ADMIN_MAESTRO_EMAIL}).
+          </p>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-4">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight flex items-center gap-2"><Users className="h-6 w-6 text-primary" /> Usuarios y roles</h1>
-        <p className="text-muted-foreground">Cuentas registradas en el sistema</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight flex items-center gap-2">
+            <UserCog className="h-6 w-6 text-primary" /> Usuarios y permisos
+          </h1>
+          <p className="text-muted-foreground">
+            Crea cuentas con correo y contraseña y define a qué módulos pueden acceder.
+          </p>
+        </div>
+        <Button onClick={() => setOpenNew(true)}>
+          <Plus className="h-4 w-4 mr-2" /> Nuevo usuario
+        </Button>
       </div>
-      <Card className="p-4 text-sm bg-muted/30">
-        Los nuevos usuarios se crean desde el panel de Supabase Auth. Luego asigna el rol insertando una fila en <code className="font-mono text-xs bg-card px-1 py-0.5 rounded">roles_usuario</code>.
-      </Card>
+
       <Card className="overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs uppercase">
-            <tr><th className="px-4 py-2">Nombre</th><th className="px-4 py-2">Correo</th><th className="px-4 py-2">Rol</th><th className="px-4 py-2">Desde</th></tr>
+            <tr>
+              <th className="px-4 py-2">Correo</th>
+              <th className="px-4 py-2">Nombre</th>
+              <th className="px-4 py-2">Rol</th>
+              <th className="px-4 py-2">Módulos</th>
+              <th className="px-4 py-2 text-right">Acciones</th>
+            </tr>
           </thead>
           <tbody>
-            {loading ? <tr><td colSpan={4} className="p-6 text-center text-muted-foreground">Cargando…</td></tr>
-            : rows.length === 0 ? <tr><td colSpan={4} className="p-6 text-center text-muted-foreground">Sin usuarios con rol</td></tr>
-            : rows.map((r) => (
-              <tr key={r.id} className="border-t">
-                <td className="px-4 py-2 font-medium">{r.perfiles?.nombre ?? "—"}</td>
-                <td className="px-4 py-2 text-xs">{r.perfiles?.correo ?? r.usuario_id.slice(0, 8)}</td>
-                <td className="px-4 py-2"><Badge>{r.rol}</Badge></td>
-                <td className="px-4 py-2 text-xs">{new Date(r.creado_en).toLocaleDateString("es-PE")}</td>
+            {loading ? (
+              <tr>
+                <td colSpan={5} className="p-6 text-center text-muted-foreground">
+                  Cargando…
+                </td>
               </tr>
-            ))}
+            ) : rows.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="p-6 text-center text-muted-foreground">
+                  Sin usuarios registrados
+                </td>
+              </tr>
+            ) : (
+              rows.map((r) => {
+                const esMaestro = r.correo?.toLowerCase() === ADMIN_MAESTRO_EMAIL;
+                return (
+                  <tr key={r.usuario_id} className="border-t align-top">
+                    <td className="px-4 py-2 font-medium">
+                      {r.correo ?? r.usuario_id.slice(0, 8)}
+                      {esMaestro && (
+                        <Badge className="ml-2 bg-primary text-primary-foreground">
+                          <Shield className="h-3 w-3 mr-1" /> Admin maestro
+                        </Badge>
+                      )}
+                    </td>
+                    <td className="px-4 py-2">{r.nombre ?? "—"}</td>
+                    <td className="px-4 py-2">
+                      <Badge variant="secondary">{r.rol ?? "—"}</Badge>
+                    </td>
+                    <td className="px-4 py-2">
+                      <div className="flex flex-wrap gap-1 max-w-[420px]">
+                        {esMaestro ? (
+                          <Badge variant="outline">Todos</Badge>
+                        ) : r.permisos.length === 0 ? (
+                          <span className="text-xs text-muted-foreground">Sin accesos</span>
+                        ) : (
+                          r.permisos.map((m) => (
+                            <Badge key={m} variant="outline" className="text-[10px]">
+                              {MODULOS.find((x) => x.key === m)?.label ?? m}
+                            </Badge>
+                          ))
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-2">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={esMaestro}
+                          onClick={() => abrirEditar(r)}
+                          title="Editar"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={esMaestro}
+                          onClick={() => quitarAcceso(r)}
+                          title="Quitar acceso"
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
       </Card>
+
+      {/* Nuevo usuario */}
+      <Dialog open={openNew} onOpenChange={setOpenNew}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Nuevo usuario</DialogTitle>
+          </DialogHeader>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Correo *</Label>
+              <Input
+                type="email"
+                value={nEmail}
+                onChange={(e) => setNEmail(e.target.value)}
+                placeholder="usuario@correo.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Contraseña *</Label>
+              <Input
+                type="text"
+                value={nPass}
+                onChange={(e) => setNPass(e.target.value)}
+                placeholder="Mínimo 6 caracteres"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Nombre</Label>
+              <Input value={nNombre} onChange={(e) => setNNombre(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Rol</Label>
+              <Select value={nRol} onValueChange={(v) => setNRol(v as AppRole)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROLES.map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {r}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label>Módulos con acceso</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setNModulos(MODULOS.map((m) => m.key))}
+                >
+                  Todos
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setNModulos([])}
+                >
+                  Ninguno
+                </Button>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-64 overflow-auto p-2 border rounded-md">
+              {MODULOS.map((m) => (
+                <label key={m.key} className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={nModulos.includes(m.key)}
+                    onCheckedChange={() => setNModulos((l) => toggle(l, m.key))}
+                  />
+                  {m.label}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenNew(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={crearUsuario} disabled={saving}>
+              {saving ? "Creando…" : "Crear usuario"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Editar */}
+      <Dialog open={!!openEdit} onOpenChange={(o) => !o && setOpenEdit(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Editar accesos — {openEdit?.correo}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2 max-w-xs">
+              <Label>Rol</Label>
+              <Select value={eRol} onValueChange={(v) => setERol(v as AppRole)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROLES.map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {r}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Módulos con acceso</Label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEModulos(MODULOS.map((m) => m.key))}
+                  >
+                    Todos
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEModulos([])}
+                  >
+                    Ninguno
+                  </Button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-64 overflow-auto p-2 border rounded-md">
+                {MODULOS.map((m) => (
+                  <label key={m.key} className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={eModulos.includes(m.key)}
+                      onCheckedChange={() => setEModulos((l) => toggle(l, m.key))}
+                    />
+                    {m.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenEdit(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={guardarEditar} disabled={saving}>
+              {saving ? "Guardando…" : "Guardar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
