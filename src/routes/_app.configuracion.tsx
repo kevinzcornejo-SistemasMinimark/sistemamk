@@ -41,17 +41,27 @@ const SIDEBARS = [
 ];
 
 const TABLAS_BORRAR = [
+  { id: "venta_items", nombre: "Detalle de ventas", desc: "Líneas de cada venta" },
+  { id: "venta_pagos", nombre: "Pagos de ventas", desc: "Pagos recibidos por venta" },
   { id: "ventas", nombre: "Ventas", desc: "Ventas y comprobantes" },
-  { id: "pagos_venta", nombre: "Pagos", desc: "Pagos de ventas" },
-  { id: "detalle_ventas", nombre: "Detalle ventas", desc: "Líneas de venta" },
   { id: "movimientos_caja", nombre: "Movimientos de caja", desc: "Entradas/salidas" },
-  { id: "sesiones_caja", nombre: "Sesiones de caja", desc: "Aperturas/cierres" },
+  { id: "cajas", nombre: "Sesiones de caja", desc: "Aperturas/cierres" },
+  { id: "gastos", nombre: "Gastos", desc: "Registro de gastos" },
   { id: "clientes", nombre: "Clientes", desc: "Base de clientes" },
-  { id: "movimientos_stock", nombre: "Movimientos de stock", desc: "Kardex" },
+  { id: "kardex", nombre: "Kardex", desc: "Movimientos de stock" },
+  { id: "compra_items", nombre: "Detalle de compras", desc: "Líneas de compra" },
   { id: "compras", nombre: "Compras", desc: "Compras a proveedores" },
-  { id: "categorias", nombre: "Categorías", desc: "Categorías de productos" },
-  { id: "combos", nombre: "Combos", desc: "Combos y promociones" },
   { id: "lotes", nombre: "Lotes", desc: "Lotes y vencimientos" },
+];
+
+// Duraciones predefinidas para licencia
+const DURACIONES_LIC = [
+  { id: "30d",  nombre: "30 días",  dias: 30 },
+  { id: "60d",  nombre: "60 días",  dias: 60 },
+  { id: "90d",  nombre: "90 días",  dias: 90 },
+  { id: "1a",   nombre: "1 año",    dias: 365 },
+  { id: "5a",   nombre: "5 años",   dias: 365 * 5 },
+  { id: "10a",  nombre: "10 años",  dias: 365 * 10 },
 ];
 
 function ConfigPage() {
