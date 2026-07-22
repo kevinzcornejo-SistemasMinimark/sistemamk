@@ -412,14 +412,88 @@ function ConfigPage() {
 
           <Card className="p-6 space-y-4">
             <h2 className="text-xl font-bold flex items-center gap-2"><Key className="h-5 w-5 text-accent"/> Licencia del Sistema</h2>
-            <p className="text-sm text-muted-foreground -mt-2">Estado de tu licencia actual</p>
-            <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-4 space-y-2 text-sm">
-              <div className="flex justify-between"><span className="font-medium">Estado:</span><Badge className="bg-green-600">{licencia?.estado?.toUpperCase() ?? "—"}</Badge></div>
-              <div className="flex justify-between"><span className="font-medium">Tipo:</span><span>{licencia?.tipo ?? "—"}</span></div>
-              <div className="flex justify-between"><span className="font-medium">Vence:</span><span>{licencia?.fecha_vencimiento ?? "—"}</span></div>
-              <div className="flex justify-between"><span className="font-medium">Días restantes:</span><span className="text-green-700 font-bold">{diasRestantes} días</span></div>
+            <p className="text-sm text-muted-foreground -mt-2">Estado y renovación de tu licencia</p>
+
+            {(() => {
+              const estado = (licencia?.estado ?? "sin licencia").toString();
+              const vencida = diasRestantes <= 0 && licencia?.fecha_vencimiento;
+              const porVencer = diasRestantes > 0 && diasRestantes <= 7;
+              const cls = vencida ? "border-red-500/40 bg-red-500/10"
+                        : porVencer ? "border-yellow-500/40 bg-yellow-500/10"
+                        : "border-green-500/30 bg-green-500/10";
+              const badgeCls = vencida ? "bg-red-600" : porVencer ? "bg-yellow-600" : "bg-green-600";
+              return (
+                <div className={`rounded-lg border p-4 space-y-2 text-sm ${cls}`}>
+                  <div className="flex justify-between"><span className="font-medium">Estado:</span><Badge className={badgeCls}>{estado.toUpperCase()}</Badge></div>
+                  <div className="flex justify-between"><span className="font-medium">Tipo:</span><span>{licencia?.tipo ?? "—"}</span></div>
+                  <div className="flex justify-between"><span className="font-medium">Inicio:</span><span>{licencia?.fecha_inicio ?? "—"}</span></div>
+                  <div className="flex justify-between"><span className="font-medium">Vence:</span><span>{licencia?.fecha_vencimiento ?? "—"}</span></div>
+                  <div className="flex justify-between"><span className="font-medium">Días restantes:</span><span className={`font-bold ${vencida?"text-red-700":porVencer?"text-yellow-700":"text-green-700"}`}>{diasRestantes} días</span></div>
+                  {licencia?.clave && <div className="flex justify-between gap-2"><span className="font-medium">Clave:</span><span className="font-mono text-xs truncate max-w-[60%]">{licencia.clave}</span></div>}
+                </div>
+              );
+            })()}
+
+            <div>
+              <Label>Duración de la licencia</Label>
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                {DURACIONES_LIC.map((d) => (
+                  <button
+                    key={d.id}
+                    type="button"
+                    onClick={() => setLicDuracion(d.id)}
+                    className={`rounded-md border p-2 text-sm font-medium transition ${licDuracion===d.id ? "border-accent bg-accent/10 text-accent" : "border-border hover:border-muted-foreground/40"}`}
+                  >
+                    {d.nombre}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setLicDuracion("custom")}
+                  className={`rounded-md border p-2 text-sm font-medium transition ${licDuracion==="custom" ? "border-accent bg-accent/10 text-accent" : "border-border hover:border-muted-foreground/40"}`}
+                >
+                  Personalizado
+                </button>
+              </div>
+              {licDuracion === "custom" && (
+                <div className="mt-2 flex items-center gap-2">
+                  <Label className="text-xs">Años:</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={99}
+                    value={licAniosCustom}
+                    onChange={(e) => setLicAniosCustom(Math.max(1, Number(e.target.value) || 1))}
+                    className="w-24"
+                  />
+                  <span className="text-xs text-muted-foreground">= {licAniosCustom * 365} días</span>
+                </div>
+              )}
             </div>
-            <Button variant="outline" className="w-full" onClick={()=>toast.info("Contacta a tu proveedor para renovar")}><RefreshCcw className="h-4 w-4 mr-1"/> Renovar Licencia</Button>
+
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
+                onClick={() => activarLicencia("renovar")}
+                disabled={licSaving || !isAdmin}
+              >
+                <RefreshCcw className="h-4 w-4 mr-1"/> Renovar ({nombreTipo()})
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => activarLicencia("nueva")}
+                disabled={licSaving || !isAdmin}
+              >
+                <Key className="h-4 w-4 mr-1"/> Activar nueva
+              </Button>
+            </div>
+            {licencia?.id && licencia?.estado === "activa" && (
+              <Button variant="ghost" className="w-full text-red-600 hover:text-red-700" onClick={suspenderLicencia}>
+                Suspender licencia
+              </Button>
+            )}
+            {!isAdmin && <p className="text-xs text-muted-foreground">Solo el administrador puede modificar la licencia.</p>}
           </Card>
         </TabsContent>
 
