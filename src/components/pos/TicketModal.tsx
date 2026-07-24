@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Printer, X, Eye } from "lucide-react";
 import { formatPEN } from "@/lib/format";
 import { useBusinessInfo } from "@/hooks/useBusinessInfo";
+import { useAppConfig } from "@/hooks/useAppConfig";
 import type { CartItem } from "@/hooks/usePOSCart";
 
 export interface TicketData {
@@ -35,16 +36,24 @@ export function TicketModal({
   ticket: TicketData | null;
 }) {
   const biz = useBusinessInfo();
+  const { cfg } = useAppConfig();
   if (!ticket) return null;
   const correl = String(ticket.correlativo).padStart(4, "0");
   const fechaStr = ticket.fecha.toLocaleString("es-PE", {
     day: "2-digit", month: "2-digit", year: "numeric",
     hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true,
   });
+  const promocion = (cfg.ticket_promocion || "").trim();
+  const pie = (cfg.ticket_pie || "¡Gracias por su compra!").trim();
+  const copias = Math.max(1, Math.min(20, parseInt(cfg.impresora_copias || "1", 10) || 1));
 
   const handlePrint = () => {
     const el = document.getElementById("ticket-print-area");
     if (!el) return;
+    const bodyOne = el.innerHTML;
+    const body = Array.from({ length: copias })
+      .map((_, i) => `<div>${bodyOne}</div>${i < copias - 1 ? '<div style="page-break-after:always"></div>' : ""}`)
+      .join("");
     const html = `
       <html><head><title>Ticket ${ticket.serie}-${correl}</title>
       <style>
@@ -59,7 +68,7 @@ export function TicketModal({
         th:last-child, td:last-child { text-align: right; }
         .total { font-size: 16px; font-weight: 700; }
       </style></head>
-      <body>${el.innerHTML}</body>
+      <body>${body}</body>
       </html>
     `;
     const iframe = document.createElement("iframe");
@@ -148,9 +157,13 @@ export function TicketModal({
               <span className="tabular-nums">{ticket.total.toFixed(2)}</span>
             </div>
             <hr className="my-2 border-t border-dashed border-black" />
+            {promocion && (
+              <div className="center text-center text-[11px] font-bold mb-1">
+                {promocion.split("\n").map((l, i) => (<div key={i}>{l}</div>))}
+              </div>
+            )}
             <div className="center text-center text-[11px]">
-              ¡Gracias por su compra!
-              <br />Conserve su ticket
+              {pie.split("\n").map((l, i) => (<div key={i}>{l}</div>))}
             </div>
             <hr className="my-2 border-t border-dashed border-black" />
             <div className="text-[10px] leading-snug">
