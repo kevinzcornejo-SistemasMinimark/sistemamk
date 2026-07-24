@@ -1,7 +1,7 @@
 import { Minus, Plus, Trash2, ShoppingCart, CreditCard, Percent } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatPEN } from "@/lib/format";
-import type { CartItem } from "@/hooks/usePOSCart";
+import type { CartItem, DescuentoInfo } from "@/hooks/usePOSCart";
 
 export function Cart({
   items,
@@ -12,16 +12,22 @@ export function Cart({
   onCheckout,
   onClear,
   onDescuento,
+  descuentoInfo,
+  onQuitarDescuento,
 }: {
   items: CartItem[];
   onInc: (id: string) => void;
   onDec: (id: string) => void;
   onRemove: (id: string) => void;
-  totales: { subtotal: number; igv: number; total: number; cantidadItems: number };
+  totales: { subtotal: number; igv: number; total: number; cantidadItems: number; bruto?: number; descuentoAplicado?: number };
   onCheckout: () => void;
   onClear: () => void;
   onDescuento?: () => void;
+  descuentoInfo?: DescuentoInfo | null;
+  onQuitarDescuento?: () => void;
 }) {
+  const descMonto = totales.descuentoAplicado ?? 0;
+  const bruto = totales.bruto ?? totales.subtotal + totales.igv + descMonto;
   return (
     <div className="flex flex-col h-full bg-card border-l">
       {/* Header */}
@@ -49,8 +55,33 @@ export function Cart({
       <div className="px-3 pb-3 border-b space-y-2">
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground font-medium">Subtotal</span>
-          <span className="font-extrabold tabular-nums">{formatPEN(totales.subtotal + totales.igv)}</span>
+          <span className="font-extrabold tabular-nums">{formatPEN(bruto)}</span>
         </div>
+        {descMonto > 0 && (
+          <div className="flex items-center justify-between text-sm rounded-lg bg-emerald-50 border border-emerald-200 px-2 py-1.5">
+            <div className="flex items-center gap-1.5">
+              <Percent className="h-3.5 w-3.5 text-emerald-600" />
+              <span className="font-bold text-emerald-700">
+                Descuento{descuentoInfo?.tipo === "porcentaje" ? ` (${descuentoInfo.valor}%)` : ""}
+              </span>
+              {onQuitarDescuento && (
+                <button
+                  onClick={onQuitarDescuento}
+                  className="ml-1 h-5 w-5 rounded grid place-items-center text-emerald-700 hover:bg-emerald-100"
+                  title="Quitar descuento"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+            <span className="font-extrabold tabular-nums text-emerald-700">- {formatPEN(descMonto)}</span>
+          </div>
+        )}
+        {descMonto > 0 && descuentoInfo?.motivo && (
+          <div className="text-[10px] text-emerald-700 font-semibold px-1 -mt-1">
+            Motivo: {descuentoInfo.motivo === "Otro" ? descuentoInfo.motivoTexto : descuentoInfo.motivo}
+          </div>
+        )}
         <div className="flex items-baseline justify-between">
           <span className="text-2xl font-black">TOTAL</span>
           <span className="text-2xl font-black text-primary tabular-nums">
@@ -67,12 +98,12 @@ export function Cart({
         </Button>
         <Button
           variant="outline"
-          className="w-full h-10 text-sm font-bold rounded-xl border-2"
+          className={`w-full h-10 text-sm font-bold rounded-xl border-2 ${descMonto > 0 ? "border-emerald-500 text-emerald-700 bg-emerald-50 hover:bg-emerald-100" : ""}`}
           disabled={items.length === 0}
           onClick={onDescuento}
         >
           <Percent className="h-4 w-4 mr-2" />
-          Descuento
+          {descMonto > 0 ? `Modificar descuento (${formatPEN(descMonto)})` : "Descuento"}
         </Button>
       </div>
 
