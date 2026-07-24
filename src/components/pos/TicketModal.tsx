@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Printer, X, Eye } from "lucide-react";
 import { formatPEN } from "@/lib/format";
 import { useBusinessInfo } from "@/hooks/useBusinessInfo";
+import { useAppConfig } from "@/hooks/useAppConfig";
 import type { CartItem } from "@/hooks/usePOSCart";
 
 export interface TicketData {
