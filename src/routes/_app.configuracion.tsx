@@ -89,6 +89,9 @@ function ConfigPage() {
   const [licDuracion, setLicDuracion] = useState<string>("30d");
   const [licAniosCustom, setLicAniosCustom] = useState<number>(2);
   const [licSaving, setLicSaving] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+
+
 
   const cargar = async () => {
     setLoading(true);
