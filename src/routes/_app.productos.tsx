@@ -394,9 +394,9 @@ function ProductoModal({
   onOpenChange: (o: boolean) => void;
   initial: Producto | null;
   categorias: Categoria[];
-  onSave: (p: Partial<Producto>) => void;
+  onSave: (p: Partial<Producto> & { _numero_lote?: string; _fecha_vencimiento?: string }) => void;
 }) {
-  const [f, setF] = useState<Partial<Producto>>({});
+  const [f, setF] = useState<Partial<Producto> & { _numero_lote?: string; _fecha_vencimiento?: string }>({});
   const fileRef = useRef<HTMLInputElement>(null);
   const [procesando, setProcesando] = useState(false);
 
