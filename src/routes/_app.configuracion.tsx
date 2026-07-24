@@ -43,6 +43,7 @@ const SIDEBARS = [
   { id: "gris",       nombre: "Gris Pizarra",            bg: "#475569" },
 ];
 
+// Orden: hijos antes que padres para respetar FKs
 const TABLAS_BORRAR = [
   { id: "venta_items", nombre: "Detalle de ventas", desc: "Líneas de cada venta" },
   { id: "venta_pagos", nombre: "Pagos de ventas", desc: "Pagos recibidos por venta" },
@@ -55,6 +56,11 @@ const TABLAS_BORRAR = [
   { id: "compra_items", nombre: "Detalle de compras", desc: "Líneas de compra" },
   { id: "compras", nombre: "Compras", desc: "Compras a proveedores" },
   { id: "lotes", nombre: "Lotes", desc: "Lotes y vencimientos" },
+  { id: "combo_items", nombre: "Detalle de combos", desc: "Componentes de combos" },
+  { id: "combos", nombre: "Combos", desc: "Catálogo de combos" },
+  { id: "productos", nombre: "Productos", desc: "Catálogo de productos" },
+  { id: "categorias", nombre: "Categorías", desc: "Categorías de productos" },
+  { id: "proveedores", nombre: "Proveedores", desc: "Base de proveedores" },
 ];
 
 // Duraciones predefinidas para licencia
