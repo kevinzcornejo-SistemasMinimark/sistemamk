@@ -54,6 +54,9 @@ import { broadcastCart, broadcastPagado, openCustomerDisplay } from "@/lib/custo
 import { supabase } from "@/integrations/supabase/client";
 import { useLicencia } from "@/hooks/useLicencia";
 import { LicenciaBloqueo } from "@/components/LicenciaBloqueo";
+import { useCajaAbierta } from "@/hooks/useCajaAbierta";
+import { Link } from "@tanstack/react-router";
+import { Wallet, LockOpen } from "lucide-react";
 
 const COMBOS_CAT_ID = "__combos__";
 type ComboRow = {
