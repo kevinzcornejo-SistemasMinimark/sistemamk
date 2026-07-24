@@ -667,7 +667,7 @@ function ConfigPage() {
               <Input value={cfg.ticket_pie ?? ""} onChange={(e)=>set("ticket_pie", e.target.value)} />
             </div>
 
-            <Button variant="outline" className="w-full" onClick={()=>window.print()}><Eye className="h-4 w-4 mr-1"/> Ver Vista Previa</Button>
+            <Button variant="outline" className="w-full" onClick={()=>setPreviewOpen(true)}><Eye className="h-4 w-4 mr-1"/> Ver Vista Previa</Button>
           </Card>
 
           <Card className="p-6 bg-blue-50/60 border-blue-200/60">
