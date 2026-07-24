@@ -21,6 +21,8 @@ export interface TicketData {
   cajero?: string;
   caja?: string;
   turno?: string;
+  descuento?: number;
+  descuentoMotivo?: string;
 }
 
 const tipoLabel = (t: TicketData["tipo"]) =>
@@ -151,6 +153,16 @@ export function TicketModal({
             <div className="row flex justify-between text-xs">
               <span>IGV (18%)</span><span className="tabular-nums">{formatPEN(ticket.igv)}</span>
             </div>
+            {ticket.descuento && ticket.descuento > 0 ? (
+              <>
+                <div className="row flex justify-between text-xs">
+                  <span>DESCUENTO</span><span className="tabular-nums">- {formatPEN(ticket.descuento)}</span>
+                </div>
+                {ticket.descuentoMotivo && (
+                  <div className="text-[10px]">Motivo: {ticket.descuentoMotivo}</div>
+                )}
+              </>
+            ) : null}
             <hr className="my-2 border-t border-dashed border-black" />
             <div className="row flex justify-between total text-base font-bold">
               <span>TOTAL S/.</span>

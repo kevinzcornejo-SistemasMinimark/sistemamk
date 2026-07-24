@@ -44,6 +44,7 @@ import { ProductGrid } from "@/components/pos/ProductGrid";
 import { Cart } from "@/components/pos/Cart";
 import { CheckoutModal } from "@/components/pos/CheckoutModal";
 import { TicketModal, type TicketData } from "@/components/pos/TicketModal";
+import { DescuentoModal } from "@/components/pos/DescuentoModal";
 import { usePOSCart } from "@/hooks/usePOSCart";
 import { toast } from "sonner";
 import { formatPEN } from "@/lib/format";
@@ -79,13 +80,14 @@ export const Route = createFileRoute("/_app/pos")({
 function POSPage() {
   const cart = usePOSCart();
   const { productos: allProductos, categorias, refresh } = useCatalog();
-  const { user, isDemo } = useAuth();
+  const { user, isDemo, role, isAdminMaestro } = useAuth();
   const { bloqueada, estado } = useLicencia();
   const { caja: cajaAbierta, loading: cajaLoading } = useCajaAbierta(user?.id);
   const [combos, setCombos] = useState<ComboRow[]>([]);
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState<string | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [descuentoOpen, setDescuentoOpen] = useState(false);
   const [ticket, setTicket] = useState<TicketData | null>(null);
   const [kiosko, setKiosko] = useState(true);
   const [escuchando, setEscuchando] = useState(false);
@@ -325,6 +327,12 @@ function POSPage() {
       metodoPago: metodoPrincipal.replace("_", " "),
       documentoCliente: data.documento_cliente,
       cliente: data.nombre_cliente,
+      descuento: cart.totales.descuentoAplicado,
+      descuentoMotivo: cart.descuentoInfo
+        ? cart.descuentoInfo.motivo === "Otro"
+          ? cart.descuentoInfo.motivoTexto
+          : cart.descuentoInfo.motivo
+        : undefined,
     };
     if (isDemo || !user) {
       setCheckoutOpen(false);
@@ -347,6 +355,7 @@ function POSPage() {
         total: cart.totales.total,
         cajero_id: user.id,
         caja_id: cajaAbierta?.id ?? null,
+        descuento_info: cart.descuentoInfo,
         observaciones: data.nombre_cliente
           ? `Cliente: ${data.nombre_cliente}${data.documento_cliente ? ` · Doc: ${data.documento_cliente}` : ""}`
           : undefined,
@@ -555,6 +564,9 @@ function POSPage() {
         totales={cart.totales}
         onCheckout={() => setCheckoutOpen(true)}
         onClear={cart.clear}
+        onDescuento={() => setDescuentoOpen(true)}
+        descuentoInfo={cart.descuentoInfo}
+        onQuitarDescuento={cart.quitarDescuento}
       />
       </div>
 
@@ -563,6 +575,19 @@ function POSPage() {
         onOpenChange={setCheckoutOpen}
         total={cart.totales.total}
         onConfirm={confirmarVenta}
+      />
+
+      <DescuentoModal
+        open={descuentoOpen}
+        onOpenChange={setDescuentoOpen}
+        items={cart.items}
+        totalBruto={cart.totales.bruto}
+        descuentoActual={cart.descuentoInfo}
+        onAplicar={cart.aplicarDescuento}
+        onQuitar={cart.quitarDescuento}
+        role={role}
+        isAdminMaestro={isAdminMaestro}
+        usuarioEmail={user?.email}
       />
 
       <TicketModal

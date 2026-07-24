@@ -21,6 +21,7 @@ import {
   Store,
   X,
   Boxes,
+  Percent,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -89,6 +90,7 @@ const sections: Section[] = [
     items: [
       { to: "/reportes", key: "reportes", label: "Reportes", icon: BarChart3 },
       { to: "/reportes2", key: "reportes2", label: "Comparativo", icon: BarChart3 },
+      { to: "/descuentos", key: "descuentos", label: "Descuentos", icon: Percent },
     ],
   },
   {
