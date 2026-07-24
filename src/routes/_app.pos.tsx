@@ -54,6 +54,9 @@ import { broadcastCart, broadcastPagado, openCustomerDisplay } from "@/lib/custo
 import { supabase } from "@/integrations/supabase/client";
 import { useLicencia } from "@/hooks/useLicencia";
 import { LicenciaBloqueo } from "@/components/LicenciaBloqueo";
+import { useCajaAbierta } from "@/hooks/useCajaAbierta";
+import { Link } from "@tanstack/react-router";
+import { Wallet, LockOpen } from "lucide-react";
 
 const COMBOS_CAT_ID = "__combos__";
 type ComboRow = {
@@ -78,6 +81,7 @@ function POSPage() {
   const { productos: allProductos, categorias, refresh } = useCatalog();
   const { user, isDemo } = useAuth();
   const { bloqueada, estado } = useLicencia();
+  const { caja: cajaAbierta, loading: cajaLoading } = useCajaAbierta(user?.id);
   const [combos, setCombos] = useState<ComboRow[]>([]);
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState<string | null>(null);
@@ -342,6 +346,7 @@ function POSPage() {
         igv: cart.totales.igv,
         total: cart.totales.total,
         cajero_id: user.id,
+        caja_id: cajaAbierta?.id ?? null,
         observaciones: data.nombre_cliente
           ? `Cliente: ${data.nombre_cliente}${data.documento_cliente ? ` · Doc: ${data.documento_cliente}` : ""}`
           : undefined,
@@ -363,6 +368,28 @@ function POSPage() {
   if (bloqueada && !isDemo) {
     return <LicenciaBloqueo estado={estado} />;
   }
+
+  if (!isDemo && user && !cajaLoading && !cajaAbierta) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-6 bg-muted/30">
+        <div className="max-w-md w-full rounded-2xl border-2 border-amber-500/60 bg-amber-50 p-8 shadow-xl text-center">
+          <div className="mx-auto w-16 h-16 rounded-full bg-amber-500/15 flex items-center justify-center mb-4">
+            <Wallet className="w-9 h-9 text-amber-600" />
+          </div>
+          <h2 className="text-2xl font-extrabold text-amber-800 mb-2">Caja cerrada</h2>
+          <p className="text-amber-900/80 mb-5">
+            No puedes vender hasta abrir una caja. Registra tu fondo inicial para comenzar el turno.
+          </p>
+          <Link to="/caja">
+            <Button size="lg" className="w-full">
+              <LockOpen className="w-4 h-4 mr-2" /> Ir a Caja y abrir turno
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
 
   return (
     <div className="flex flex-col lg:flex-row h-full overflow-hidden bg-muted/30">

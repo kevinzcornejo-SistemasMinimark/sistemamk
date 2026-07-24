@@ -11,6 +11,7 @@ export type RegistrarVentaInput = {
   igv: number;
   total: number;
   cajero_id?: string | null;
+  caja_id?: string | null;
   observaciones?: string;
 };
 
@@ -96,6 +97,24 @@ export async function registrarVenta(input: RegistrarVentaInput) {
   );
   if (movimientos.length > 0) {
     await supabase.from("kardex").insert(movimientos);
+  }
+
+  // Registrar movimientos de caja (uno por método de pago)
+  if (input.caja_id) {
+    const doc = `${venta.serie}-${String(venta.correlativo ?? "").padStart(8, "0")}`;
+    const movCaja = input.pagos.map((p) => ({
+      caja_id: input.caja_id,
+      tipo: "VENTA",
+      metodo_pago: p.metodo,
+      monto: p.monto,
+      concepto: `Venta ${doc}`,
+      documento: doc,
+      referencia: p.referencia ?? null,
+      usuario_id: input.cajero_id ?? null,
+    }));
+    if (movCaja.length > 0) {
+      await supabase.from("movimientos_caja").insert(movCaja);
+    }
   }
 
   return venta;
