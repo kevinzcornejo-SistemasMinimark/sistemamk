@@ -337,6 +337,113 @@ function ConfigPage() {
   };
   const totalSel = Object.values(sel).filter(Boolean).length;
 
+  const [resetting, setResetting] = useState(false);
+  const resetearSistema = async () => {
+    if (isDemo) return toast.info("Modo demo");
+    if (!isAdmin) return toast.error("Solo administradores");
+    if (!window.confirm("¿Resetear el sistema?\n\nSe eliminarán: ventas, pagos, items de venta, compras, items de compra, gastos, cajas, movimientos de caja, kardex, lotes y clientes.\n\nSE MANTIENEN: usuarios, empresa, licencia, sucursales, categorías, productos, combos y proveedores.\n\nEsta acción es IRREVERSIBLE.")) return;
+    if (!window.confirm("Confirmación final: ¿Proceder con el reseteo?")) return;
+    setResetting(true);
+    const orden = ["kardex","movimientos_caja","venta_pagos","venta_items","ventas","compra_items","compras","gastos","cajas","lotes","clientes"];
+    const avisos: string[] = [];
+    for (const t of orden) {
+      const { error } = await supabase.from(t).delete().neq("id","00000000-0000-0000-0000-000000000000");
+      if (error) avisos.push(`${t}: ${error.message}`);
+    }
+    setResetting(false);
+    if (avisos.length) toast.error("Reset con avisos: " + avisos.slice(0,3).join(" | "));
+    else toast.success("Sistema reseteado. Catálogo y usuarios intactos.");
+    cargar();
+  };
+
+  const [seeding, setSeeding] = useState(false);
+  const insertarEjemplos = async () => {
+    if (isDemo) return toast.info("Modo demo");
+    if (!isAdmin) return toast.error("Solo administradores");
+    if (!window.confirm("¿Insertar datos de EJEMPLO en las tablas principales?\n\nSe crearán filas de muestra prefijadas con 'EJEMPLO —' para que puedas identificarlas.")) return;
+    setSeeding(true);
+    const ok: string[] = [];
+    const fail: string[] = [];
+    const tryIns = async (tabla: string, rows: any[]): Promise<any[] | null> => {
+      const { data, error } = await supabase.from(tabla).insert(rows).select();
+      if (error) { fail.push(`${tabla}: ${error.message}`); return null; }
+      ok.push(tabla); return data ?? [];
+    };
+
+    const cat = await tryIns("categorias", [{ nombre: "EJEMPLO — Abarrotes", descripcion: "Categoría de ejemplo" }]);
+    const catId = cat?.[0]?.id ?? null;
+
+    const prov = await tryIns("proveedores", [{ razon_social: "EJEMPLO — Distribuidora Demo S.A.C.", ruc: "20999888777", telefono: "999888777", email: "demo@proveedor.com", direccion: "Av. Demo 123" }]);
+    const provId = prov?.[0]?.id ?? null;
+
+    await tryIns("clientes", [{ razon_social: "EJEMPLO — Cliente Demo", tipo_doc: "DNI", numero_doc: "12345678", telefono: "987654321", email: "cliente@demo.com" }]);
+
+    const prod = await tryIns("productos", [{
+      nombre: "EJEMPLO — Arroz Costeño 1kg", codigo_barras: "7750100000001",
+      precio_venta: 5.5, precio_compra: 4.2, stock: 20, stock_minimo: 5,
+      unidad: "UND", igv: true, afecto_igv: true, categoria_id: catId, activo: true,
+    }]);
+    const prodId = prod?.[0]?.id ?? null;
+
+    if (prodId) {
+      await tryIns("lotes", [{
+        producto_id: prodId, numero_lote: "L-EJEMPLO-001",
+        cantidad_actual: 20, cantidad_inicial: 20,
+        fecha_vencimiento: new Date(Date.now() + 180*86400000).toISOString().slice(0,10),
+      }]);
+    }
+
+    await tryIns("combos", [{ nombre: "EJEMPLO — Combo Desayuno", precio: 12.9, activo: true }]);
+
+    await tryIns("gastos", [{
+      concepto: "EJEMPLO — Servicio de luz", descripcion: "Gasto de ejemplo",
+      monto: 120, fecha: new Date().toISOString().slice(0,10), categoria: "SERVICIOS",
+    }]);
+
+    const caja = await tryIns("cajas", [{
+      numero: 9999, estado: "CERRADA", monto_apertura: 100, monto_cierre: 100,
+      abierta_en: new Date().toISOString(), cerrada_en: new Date().toISOString(), turno: "DIA",
+    }]);
+    const cajaId = caja?.[0]?.id ?? null;
+    if (cajaId) {
+      await tryIns("movimientos_caja", [{
+        caja_id: cajaId, tipo: "INGRESO", monto: 50,
+        concepto: "EJEMPLO — Ingreso de caja", fecha: new Date().toISOString(),
+      }]);
+    }
+
+    if (provId && prodId) {
+      const compra = await tryIns("compras", [{
+        proveedor_id: provId, serie: "F001", correlativo: "EJEMPLO-1",
+        tipo_documento: "FACTURA", subtotal: 42, igv: 7.56, total: 49.56,
+        fecha: new Date().toISOString(), estado: "REGISTRADA",
+      }]);
+      const compraId = compra?.[0]?.id ?? null;
+      if (compraId) {
+        await tryIns("compra_items", [{ compra_id: compraId, producto_id: prodId, cantidad: 10, precio_unitario: 4.2, subtotal: 42 }]);
+      }
+    }
+
+    if (prodId) {
+      const venta = await tryIns("ventas", [{
+        serie: "B001", tipo_documento: "BOLETA",
+        subtotal: 4.66, igv: 0.84, total: 5.5,
+        monto_recibido: 10, vuelto: 4.5, metodo_pago: "EFECTIVO",
+        estado: "PAGADA", fecha: new Date().toISOString(),
+      }]);
+      const ventaId = venta?.[0]?.id ?? null;
+      if (ventaId) {
+        await tryIns("venta_items", [{ venta_id: ventaId, producto_id: prodId, cantidad: 1, precio_unitario: 5.5, descuento: 0, subtotal: 5.5 }]);
+        await tryIns("venta_pagos", [{ venta_id: ventaId, metodo: "EFECTIVO", monto: 5.5 }]);
+      }
+    }
+
+    setSeeding(false);
+    if (ok.length) toast.success(`Ejemplos insertados en: ${ok.join(", ")}`);
+    if (fail.length) toast.error("Con avisos: " + fail.slice(0,2).join(" | "));
+    cargar();
+  };
+
   const diasRestantes = useMemo(() => {
     if (!licencia?.fecha_vencimiento) return 0;
     const d = (new Date(licencia.fecha_vencimiento).getTime() - Date.now()) / 86400000;
@@ -788,11 +895,26 @@ function ConfigPage() {
               <li>Mantiene el catálogo de productos, categorías, combos e insumos</li>
             </ul>
             <div className="rounded-md border border-yellow-300/60 bg-yellow-50/60 p-3 text-sm text-yellow-800">⚠ Se eliminarán: Órdenes, Pagos, Sesiones de caja, Movimientos de stock, Clientes</div>
-            <Button variant="outline" className="border-orange-300 text-orange-700" onClick={()=>{
-              setSel({ ventas:true, venta_pagos:true, venta_items:true, cajas:true, movimientos_caja:true, kardex:true, clientes:true, gastos:true });
-              toast.info("Selección preparada. Confirma abajo en 'Borrar Datos Seleccionados'.");
-            }}><RefreshCcw className="h-4 w-4 mr-1"/> Resetear Sistema</Button>
+            <Button variant="outline" className="border-orange-300 text-orange-700" disabled={resetting} onClick={resetearSistema}>
+              <RefreshCcw className={`h-4 w-4 mr-1 ${resetting?"animate-spin":""}`}/> {resetting?"Reseteando…":"Resetear Sistema"}
+            </Button>
           </Card>
+
+          <Card className="p-6 border-emerald-200/70 space-y-3">
+            <h2 className="text-xl font-bold flex items-center gap-2 text-emerald-700"><Database className="h-5 w-5"/> Insertar Ejemplos (Guía)</h2>
+            <p className="text-sm text-muted-foreground -mt-2">Crea una fila de muestra en cada tabla principal para que puedas ver cómo se llenan los datos del sistema.</p>
+            <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+              <li>Categorías, Productos, Proveedores, Clientes, Combos, Lotes</li>
+              <li>Compras + items, Ventas + items + pagos</li>
+              <li>Cajas + movimientos, Gastos</li>
+              <li>Todas las filas se prefijan con <strong>"EJEMPLO —"</strong> para identificarlas</li>
+            </ul>
+            <div className="rounded-md border border-emerald-300/60 bg-emerald-50/60 p-3 text-sm text-emerald-800">Recomendado tras un reset o al empezar. Puedes borrarlos luego desde "Borrar Datos Específicos".</div>
+            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" disabled={seeding} onClick={insertarEjemplos}>
+              <Database className={`h-4 w-4 mr-1 ${seeding?"animate-pulse":""}`}/> {seeding?"Insertando…":"Insertar Ejemplos"}
+            </Button>
+          </Card>
+
 
           <Card className="p-6 border-red-200 space-y-3">
             <h2 className="text-xl font-bold flex items-center gap-2 text-red-700"><Trash2 className="h-5 w-5"/> Borrar Datos Específicos</h2>
