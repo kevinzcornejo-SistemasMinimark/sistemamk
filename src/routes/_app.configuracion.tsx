@@ -719,7 +719,7 @@ function ConfigPage() {
               <Switch checked={cfg.impresora_auto==="true"} onCheckedChange={(v)=>set("impresora_auto", String(v))}/>
             </div>
 
-            <Button variant="outline" className="w-full" onClick={()=>window.print()}><Printer className="h-4 w-4 mr-1"/> Imprimir Prueba</Button>
+            <Button variant="outline" className="w-full" onClick={imprimirPrueba} disabled={cfg.impresora_habilitada!=="true"}><Printer className="h-4 w-4 mr-1"/> Imprimir Prueba</Button>
           </Card>
         </TabsContent>
 
