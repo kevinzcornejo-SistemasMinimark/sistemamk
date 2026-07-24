@@ -17,8 +17,10 @@ const RUTAS_PERMITIDAS = ["/configuracion", "/ajustes"];
 function AppLayout() {
   const { user, isDemo, loading } = useAuth();
   const { bloqueada, estado, loading: licLoading } = useLicencia();
+  useAppConfig();
   const navigate = useNavigate();
   const location = useLocation();
+
 
   useEffect(() => {
     if (!loading && !user && !isDemo) {
