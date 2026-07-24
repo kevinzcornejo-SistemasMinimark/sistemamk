@@ -369,6 +369,28 @@ function POSPage() {
     return <LicenciaBloqueo estado={estado} />;
   }
 
+  if (!isDemo && user && !cajaLoading && !cajaAbierta) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-6 bg-muted/30">
+        <div className="max-w-md w-full rounded-2xl border-2 border-amber-500/60 bg-amber-50 p-8 shadow-xl text-center">
+          <div className="mx-auto w-16 h-16 rounded-full bg-amber-500/15 flex items-center justify-center mb-4">
+            <Wallet className="w-9 h-9 text-amber-600" />
+          </div>
+          <h2 className="text-2xl font-extrabold text-amber-800 mb-2">Caja cerrada</h2>
+          <p className="text-amber-900/80 mb-5">
+            No puedes vender hasta abrir una caja. Registra tu fondo inicial para comenzar el turno.
+          </p>
+          <Link to="/caja">
+            <Button size="lg" className="w-full">
+              <LockOpen className="w-4 h-4 mr-2" /> Ir a Caja y abrir turno
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+
   return (
     <div className="flex flex-col lg:flex-row h-full overflow-hidden bg-muted/30">
       {/* Columna productos */}
