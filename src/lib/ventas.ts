@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { CartItem } from "@/hooks/usePOSCart";
+import type { CartItem, DescuentoInfo } from "@/hooks/usePOSCart";
 
 export type RegistrarVentaInput = {
   items: CartItem[];
@@ -13,6 +13,7 @@ export type RegistrarVentaInput = {
   cajero_id?: string | null;
   caja_id?: string | null;
   observaciones?: string;
+  descuento_info?: DescuentoInfo | null;
 };
 
 export async function registrarVenta(input: RegistrarVentaInput) {
@@ -31,7 +32,7 @@ export async function registrarVenta(input: RegistrarVentaInput) {
       cliente_id: input.cliente_id ?? null,
       cajero_id: input.cajero_id ?? null,
       subtotal: input.subtotal,
-      descuento: 0,
+      descuento: input.descuento_info?.montoDescuento ?? 0,
       igv: input.igv,
       total: input.total,
       metodo_pago: metodo_pago as any,
@@ -43,6 +44,30 @@ export async function registrarVenta(input: RegistrarVentaInput) {
     .select("id, serie, correlativo")
     .single();
   if (vErr || !venta) throw vErr ?? new Error("No se pudo crear la venta");
+
+  // Auditoría de descuento (best-effort — no rompe la venta si falla)
+  if (input.descuento_info && input.descuento_info.montoDescuento > 0) {
+    try {
+      await supabase.from("descuentos_auditoria").insert({
+        venta_id: venta.id,
+        usuario_id: input.cajero_id ?? null,
+        tipo: input.descuento_info.tipo,
+        aplicado_a: input.descuento_info.aplicadoA,
+        producto_id: input.descuento_info.productoId ?? null,
+        valor: input.descuento_info.valor,
+        monto_descuento: input.descuento_info.montoDescuento,
+        motivo:
+          input.descuento_info.motivo === "Otro"
+            ? (input.descuento_info.motivoTexto ?? "Otro")
+            : input.descuento_info.motivo,
+        motivo_texto: input.descuento_info.motivoTexto ?? null,
+        autorizado_por: input.descuento_info.autorizadoPor ?? null,
+      });
+    } catch (e) {
+      // Ignorar si la tabla no existe todavía
+      console.warn("No se pudo registrar auditoría de descuento:", e);
+    }
+  }
 
   const detalle = input.items.map((i) => {
     const lineaTotal = i.producto.precio_venta * i.cantidad - i.descuento;
