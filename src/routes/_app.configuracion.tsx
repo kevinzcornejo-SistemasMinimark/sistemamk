@@ -18,6 +18,9 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { applyTheme } from "@/hooks/useAppConfig";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
 
 export const Route = createFileRoute("/_app/configuracion")({
   head: () => ({ meta: [{ title: "Configuración — POS Minimarket" }] }),
