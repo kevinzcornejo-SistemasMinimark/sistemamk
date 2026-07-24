@@ -494,10 +494,28 @@ function CajaPage() {
             <div><Label>Sucursal</Label><Input value={sucursal} onChange={e => setSucursal(e.target.value)} /></div>
             <div>
               <Label>Turno</Label>
-              <Select value={turno} onValueChange={setTurno}>
+              <Select value={turno} onValueChange={setTurno} disabled={!multiTurno}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{TURNOS.map(t => <SelectItem key={t.v} value={t.v}>{t.label}</SelectItem>)}</SelectContent>
+                <SelectContent>
+                  {(multiTurno ? TURNOS_MULTI : TURNOS_SIMPLE).map(t => (
+                    <SelectItem key={t.v} value={t.v}>{t.label}</SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
+            </div>
+            <div className="col-span-2 flex items-center justify-between rounded-md border p-2 bg-muted/40">
+              <div className="text-xs">
+                <div className="font-medium">Múltiples turnos por día</div>
+                <div className="text-muted-foreground">Actívalo cuando manejes Mañana / Tarde / Noche.</div>
+              </div>
+              <label className="flex items-center gap-2 text-xs cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={multiTurno}
+                  onChange={e => setMultiTurno(e.target.checked)}
+                />
+                Habilitar
+              </label>
             </div>
             <div className="col-span-2">
               <Label>Fondo inicial (S/)</Label>
