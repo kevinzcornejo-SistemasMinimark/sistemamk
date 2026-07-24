@@ -814,6 +814,26 @@ function ConfigPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-md p-0 overflow-hidden">
+          <DialogHeader className="px-5 py-3 border-b">
+            <DialogTitle className="flex items-center gap-2"><Eye className="h-4 w-4"/> Vista previa del ticket</DialogTitle>
+          </DialogHeader>
+          <div className="p-4 bg-muted/40 max-h-[70vh] overflow-auto">
+            <div
+              className="bg-white text-black mx-auto p-3 rounded shadow-sm font-mono text-[12px] leading-tight"
+              style={{ width: 300 }}
+              dangerouslySetInnerHTML={{ __html: buildTicketHTML() }}
+            />
+          </div>
+          <div className="p-3 border-t flex justify-end gap-2">
+            <Button variant="outline" onClick={()=>setPreviewOpen(false)}>Cerrar</Button>
+            <Button onClick={()=>{ imprimirPrueba(); setPreviewOpen(false); }} className="bg-accent text-accent-foreground"><Printer className="h-4 w-4 mr-1"/> Imprimir</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
