@@ -157,9 +157,13 @@ export function TicketModal({
               <span className="tabular-nums">{ticket.total.toFixed(2)}</span>
             </div>
             <hr className="my-2 border-t border-dashed border-black" />
+            {promocion && (
+              <div className="center text-center text-[11px] font-bold mb-1">
+                {promocion.split("\n").map((l, i) => (<div key={i}>{l}</div>))}
+              </div>
+            )}
             <div className="center text-center text-[11px]">
-              ¡Gracias por su compra!
-              <br />Conserve su ticket
+              {pie.split("\n").map((l, i) => (<div key={i}>{l}</div>))}
             </div>
             <hr className="my-2 border-t border-dashed border-black" />
             <div className="text-[10px] leading-snug">
