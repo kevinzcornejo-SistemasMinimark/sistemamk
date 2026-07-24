@@ -46,7 +46,10 @@ type Mov = {
 };
 
 const METODOS = ["EFECTIVO","YAPE","PLIN","TARJETA_DEBITO","TARJETA_CREDITO","TRANSFERENCIA"];
-const TURNOS = [
+// Turnos: por ahora solo "DIA" (turno único). En el futuro se pueden habilitar
+// múltiples turnos activando la opción en el modal de apertura.
+const TURNOS_SIMPLE = [{ v: "DIA", label: "Día" }];
+const TURNOS_MULTI = [
   { v: "MANANA", label: "Mañana" },
   { v: "TARDE", label: "Tarde" },
   { v: "NOCHE", label: "Noche" },
@@ -54,7 +57,7 @@ const TURNOS = [
 const DENOM_MONEDAS = [0.10, 0.20, 0.50, 1, 2, 5];
 const DENOM_BILLETES = [10, 20, 50, 100, 200];
 
-const turnoAuto = () => {
+const turnoAutoMulti = () => {
   const h = new Date().getHours();
   if (h < 13) return "MANANA";
   if (h < 19) return "TARDE";
@@ -79,7 +82,17 @@ function CajaPage() {
   // Formularios
   const [fondo, setFondo] = useState("");
   const [ultimoFondo, setUltimoFondo] = useState<number | null>(null);
-  const [turno, setTurno] = useState<string>(turnoAuto());
+  const [multiTurno, setMultiTurno] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("caja_multi_turno") === "1";
+  });
+  const [turno, setTurno] = useState<string>("DIA");
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("caja_multi_turno", multiTurno ? "1" : "0");
+    }
+    setTurno(multiTurno ? turnoAutoMulti() : "DIA");
+  }, [multiTurno]);
   const [sucursal, setSucursal] = useState("Principal");
   const [obsAp, setObsAp] = useState("");
   const [monto, setMonto] = useState("");
