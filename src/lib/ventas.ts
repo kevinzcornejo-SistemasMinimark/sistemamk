@@ -72,32 +72,56 @@ export async function registrarVenta(input: RegistrarVentaInput) {
   const { error: pErr } = await supabase.from("venta_pagos").insert(pagos);
   if (pErr) throw pErr;
 
-  // Descontar stock y registrar kardex
+  // Descontar stock (FIFO por lotes) y registrar kardex
   const movimientos: any[] = [];
-  await Promise.all(
-    input.items.map(async (i) => {
+  const erroresStock: string[] = [];
+  for (const i of input.items) {
+    const { data: nuevoStock, error: rpcErr } = await supabase.rpc(
+      "descontar_stock_venta",
+      { p_producto: i.producto.id, p_cantidad: i.cantidad },
+    );
+    if (rpcErr) {
+      // Fallback: descuento directo si la función aún no existe en la BD
       const stockActual = Number(i.producto.stock ?? 0);
-      const nuevoStock = stockActual - Number(i.cantidad ?? 0);
+      const fallback = Math.max(0, stockActual - Number(i.cantidad ?? 0));
       const { error: upErr } = await supabase
         .from("productos")
-        .update({ stock: nuevoStock })
+        .update({ stock: fallback })
         .eq("id", i.producto.id);
-      if (upErr) return;
+      if (upErr) {
+        erroresStock.push(`${i.producto.nombre}: ${upErr.message}`);
+        continue;
+      }
       movimientos.push({
         producto_id: i.producto.id,
         tipo: "VENTA",
         cantidad: -i.cantidad,
-        saldo: nuevoStock,
+        saldo: fallback,
         costo_unitario: i.producto.precio_compra ?? null,
         documento: `${venta.serie}-${venta.correlativo ?? ""}`,
         motivo: `Venta ${venta.id.slice(0, 8)}`,
         usuario_id: input.cajero_id ?? null,
       });
-    }),
-  );
+      continue;
+    }
+    movimientos.push({
+      producto_id: i.producto.id,
+      tipo: "VENTA",
+      cantidad: -i.cantidad,
+      saldo: Number(nuevoStock ?? 0),
+      costo_unitario: i.producto.precio_compra ?? null,
+      documento: `${venta.serie}-${venta.correlativo ?? ""}`,
+      motivo: `Venta ${venta.id.slice(0, 8)}`,
+      usuario_id: input.cajero_id ?? null,
+    });
+  }
   if (movimientos.length > 0) {
     await supabase.from("kardex").insert(movimientos);
   }
+  if (erroresStock.length > 0) {
+    throw new Error(`No se pudo actualizar el stock: ${erroresStock.join("; ")}`);
+  }
+
 
   // Registrar movimientos de caja (uno por método de pago)
   if (input.caja_id) {
