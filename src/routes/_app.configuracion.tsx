@@ -287,15 +287,26 @@ function ConfigPage() {
     toast.success("Terminal creado"); cargar();
   };
 
-  // ===== Subida de logo =====
+  // ===== Subida de logo (Storage con fallback a data URL) =====
   const subirLogo = async (file: File, key: "negocio_logo_url" | "ticket_logo_url") => {
     if (isDemo) return toast.info("Modo demo");
-    const path = `${key}/${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage.from("logos").upload(path, file, { upsert: true });
-    if (error) return toast.error(error.message);
-    const { data } = supabase.storage.from("logos").getPublicUrl(path);
-    set(key, data.publicUrl);
-    toast.success("Logo subido. No olvides guardar cambios.");
+    try {
+      const path = `${key}/${Date.now()}-${file.name}`;
+      const { error } = await supabase.storage.from("logos").upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data } = supabase.storage.from("logos").getPublicUrl(path);
+      set(key, data.publicUrl);
+      toast.success("Logo subido. No olvides guardar cambios.");
+    } catch (e: any) {
+      // Fallback: guarda como data URL redimensionado (funciona sin bucket)
+      try {
+        const url = await fileToThumbDataUrl(file, 256, 0.85);
+        set(key, url);
+        toast.success("Logo cargado (guardado como imagen incrustada).");
+      } catch (err: any) {
+        toast.error(err?.message || e?.message || "No se pudo subir el logo");
+      }
+    }
   };
 
   // ===== Seguridad =====
