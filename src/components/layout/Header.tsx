@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { mockBusiness } from "@/data/mockData";
+import { useBusinessInfo } from "@/hooks/useBusinessInfo";
 
 export function Header({
   onToggleSidebar,
@@ -15,6 +15,7 @@ export function Header({
 }) {
   const { user, isDemo, role, signOut } = useAuth();
   const navigate = useNavigate();
+  const biz = useBusinessInfo();
   const [online, setOnline] = useState(true);
 
   useEffect(() => {
@@ -48,12 +49,13 @@ export function Header({
         <PanelLeftClose className="h-5 w-5" />
       </Button>
 
-      <div className="hidden sm:block">
-        <div className="text-sm font-bold leading-tight">
-          {mockBusiness.nombre_comercial}
-        </div>
-        <div className="text-[11px] text-muted-foreground">
-          RUC {mockBusiness.ruc}
+      <div className="hidden sm:flex items-center gap-2">
+        {biz.logo && (
+          <img src={biz.logo} alt="logo" className="h-8 w-8 rounded object-cover" />
+        )}
+        <div>
+          <div className="text-sm font-bold leading-tight">{biz.nombre}</div>
+          <div className="text-[11px] text-muted-foreground">RUC {biz.ruc}</div>
         </div>
       </div>
 

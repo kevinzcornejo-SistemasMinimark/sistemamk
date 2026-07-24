@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { ShoppingCart, CheckCircle2 } from "lucide-react";
 import { subscribeDisplay, type DisplayPayload } from "@/lib/customerDisplay";
 import { formatPEN } from "@/lib/format";
-import { mockBusiness } from "@/data/mockData";
+import { useBusinessInfo } from "@/hooks/useBusinessInfo";
 
 export const Route = createFileRoute("/_app/cliente-display")({
   head: () => ({ meta: [{ title: "Pantalla Cliente — POS" }] }),
@@ -13,6 +13,7 @@ export const Route = createFileRoute("/_app/cliente-display")({
 function ClienteDisplayPage() {
   const [d, setD] = useState<DisplayPayload | null>(null);
   const [hora, setHora] = useState(new Date());
+  const biz = useBusinessInfo();
 
   useEffect(() => {
     const unsub = subscribeDisplay(setD);
@@ -27,9 +28,12 @@ function ClienteDisplayPage() {
     <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 text-white flex flex-col">
       {/* Header */}
       <div className="px-10 py-6 flex items-center justify-between border-b border-white/10">
-        <div>
-          <div className="text-3xl font-extrabold tracking-tight">{mockBusiness.nombre_comercial}</div>
-          <div className="text-sm text-white/60">RUC {mockBusiness.ruc}</div>
+        <div className="flex items-center gap-4">
+          {biz.logo && <img src={biz.logo} alt="logo" className="h-14 w-14 rounded-lg object-cover" />}
+          <div>
+            <div className="text-3xl font-extrabold tracking-tight">{biz.nombre}</div>
+            <div className="text-sm text-white/60">RUC {biz.ruc}</div>
+          </div>
         </div>
         <div className="text-right">
           <div className="text-4xl font-mono font-bold">{hora.toLocaleTimeString("es-PE")}</div>

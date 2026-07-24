@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useBusinessInfo } from "@/hooks/useBusinessInfo";
 
 type Item = {
   to: string;
@@ -110,6 +111,7 @@ export function Sidebar({
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { can } = useAuth();
+  const biz = useBusinessInfo();
 
   const visibles = sections
     .map((s) => ({ ...s, items: s.items.filter((it) => can(it.key)) }))
@@ -118,12 +120,18 @@ export function Sidebar({
   const content = (
     <nav className="h-full overflow-y-auto py-4 px-3 space-y-5">
       <div className="flex items-center gap-2 px-2 mb-2">
-        <div className="h-9 w-9 rounded-xl bg-primary grid place-items-center text-primary-foreground">
-          <Store className="h-5 w-5" />
+        <div className="h-9 w-9 rounded-xl bg-primary grid place-items-center text-primary-foreground overflow-hidden">
+          {biz.logo ? (
+            <img src={biz.logo} alt="logo" className="h-full w-full object-cover" />
+          ) : (
+            <Store className="h-5 w-5" />
+          )}
         </div>
         {!collapsed && (
           <div className="leading-tight">
-            <div className="font-extrabold text-sidebar-foreground">Minimarket</div>
+            <div className="font-extrabold text-sidebar-foreground truncate max-w-[140px]">
+              {biz.nombre}
+            </div>
             <div className="text-[10px] uppercase tracking-wider text-sidebar-foreground/60">
               POS Perú
             </div>
