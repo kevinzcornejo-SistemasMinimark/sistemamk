@@ -106,7 +106,7 @@ function ProductosPage() {
     );
   }, [rows, q]);
 
-  const onSave = async (p: Partial<Producto>) => {
+  const onSave = async (p: Partial<Producto> & { _numero_lote?: string; _fecha_vencimiento?: string }) => {
     if (isDemo || !user) {
       toast.info("Demo: no se guarda en la base de datos");
       setOpen(false);
@@ -117,12 +117,16 @@ function ProductosPage() {
     if (pv < pc) {
       return toast.error("El precio de venta no puede ser menor al precio de compra");
     }
+    const nuevoStock = Number(p.stock ?? 0);
+    const stockPrev = editing ? Number(editing.stock ?? 0) : 0;
+    const delta = nuevoStock - stockPrev;
+
     const payload: any = {
       codigo_barras: p.codigo_barras || null,
       nombre: p.nombre,
       precio_venta: p.precio_venta ?? 0,
       precio_compra: p.precio_compra ?? 0,
-      stock: p.stock ?? 0,
+      stock: nuevoStock,
       stock_minimo: p.stock_minimo ?? 0,
       unidad: p.unidad ?? "UNIDAD",
       categoria_id: p.categoria_id || null,
@@ -162,11 +166,72 @@ function ProductosPage() {
       );
       return;
     }
-    toast.success("Producto guardado");
+
+    const productoId = saved?.id ?? editing?.id;
+    const avisos: string[] = [];
+
+    // Registrar lote + kardex según cambio de stock
+    if (productoId && delta !== 0) {
+      const esInicial = !editing;
+      const motivoBase = esInicial ? "Ingreso inicial" : "Ajuste manual de stock";
+      const tipoMov = esInicial ? "ENTRADA" : "AJUSTE";
+
+      if (delta > 0) {
+        const hoy = new Date();
+        const yy = String(hoy.getFullYear()).slice(2);
+        const mm = String(hoy.getMonth() + 1).padStart(2, "0");
+        const dd = String(hoy.getDate()).padStart(2, "0");
+        const numero =
+          (p._numero_lote ?? "").trim() ||
+          `L${yy}${mm}${dd}-${String(productoId).slice(0, 6).toUpperCase()}`;
+        const { error: lErr } = await supabase.from("lotes").insert({
+          producto_id: productoId,
+          numero_lote: numero,
+          fecha_vencimiento: p._fecha_vencimiento || null,
+          cantidad_inicial: delta,
+          cantidad_actual: delta,
+          costo_unitario: pc || null,
+        });
+        if (lErr) avisos.push(`Lote: ${lErr.message}`);
+
+        const { error: kErr } = await supabase.from("kardex").insert({
+          producto_id: productoId,
+          tipo: tipoMov,
+          cantidad: delta,
+          saldo: nuevoStock,
+          costo_unitario: pc || null,
+          motivo: `${motivoBase} · Lote ${numero}`,
+          usuario_id: user?.id ?? null,
+        });
+        if (kErr) avisos.push(`Kardex: ${kErr.message}`);
+      } else {
+        const { error: kErr } = await supabase.from("kardex").insert({
+          producto_id: productoId,
+          tipo: "AJUSTE",
+          cantidad: delta,
+          saldo: nuevoStock,
+          costo_unitario: pc || null,
+          motivo: "Ajuste manual (reducción de stock)",
+          usuario_id: user?.id ?? null,
+        });
+        if (kErr) avisos.push(`Kardex: ${kErr.message}`);
+      }
+    }
+
+    if (avisos.length > 0) {
+      toast.warning(`Producto guardado, con avisos: ${avisos.join(" | ")}`, { duration: 10000 });
+    } else {
+      toast.success(
+        delta > 0
+          ? "Producto guardado · Lote y kardex actualizados"
+          : "Producto guardado",
+      );
+    }
     setOpen(false);
     setEditing(null);
     void load();
   };
+
 
   const onDelete = async (id: string) => {
     if (!confirm("¿Eliminar producto?")) return;
