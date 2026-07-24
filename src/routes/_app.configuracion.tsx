@@ -330,7 +330,7 @@ function ConfigPage() {
     if (!elegidas.length) return;
     if (!window.confirm(`¿Borrar TODOS los registros de: ${elegidas.join(", ")}? Esta acción es irreversible.`)) return;
     for (const t of elegidas) {
-      await supabase.from(t).delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      await supabase.from(t).delete().not("id", "is", null);
     }
     setSel({});
     toast.success("Datos eliminados"); cargar();
