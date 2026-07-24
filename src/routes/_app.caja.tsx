@@ -46,7 +46,10 @@ type Mov = {
 };
 
 const METODOS = ["EFECTIVO","YAPE","PLIN","TARJETA_DEBITO","TARJETA_CREDITO","TRANSFERENCIA"];
-const TURNOS = [
+// Turnos: por ahora solo "DIA" (turno único). En el futuro se pueden habilitar
+// múltiples turnos activando la opción en el modal de apertura.
+const TURNOS_SIMPLE = [{ v: "DIA", label: "Día" }];
+const TURNOS_MULTI = [
   { v: "MANANA", label: "Mañana" },
   { v: "TARDE", label: "Tarde" },
   { v: "NOCHE", label: "Noche" },
@@ -54,7 +57,7 @@ const TURNOS = [
 const DENOM_MONEDAS = [0.10, 0.20, 0.50, 1, 2, 5];
 const DENOM_BILLETES = [10, 20, 50, 100, 200];
 
-const turnoAuto = () => {
+const turnoAutoMulti = () => {
   const h = new Date().getHours();
   if (h < 13) return "MANANA";
   if (h < 19) return "TARDE";
@@ -79,7 +82,17 @@ function CajaPage() {
   // Formularios
   const [fondo, setFondo] = useState("");
   const [ultimoFondo, setUltimoFondo] = useState<number | null>(null);
-  const [turno, setTurno] = useState<string>(turnoAuto());
+  const [multiTurno, setMultiTurno] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("caja_multi_turno") === "1";
+  });
+  const [turno, setTurno] = useState<string>("DIA");
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("caja_multi_turno", multiTurno ? "1" : "0");
+    }
+    setTurno(multiTurno ? turnoAutoMulti() : "DIA");
+  }, [multiTurno]);
   const [sucursal, setSucursal] = useState("Principal");
   const [obsAp, setObsAp] = useState("");
   const [monto, setMonto] = useState("");
@@ -356,7 +369,7 @@ function CajaPage() {
           <Lock className="h-12 w-12 mx-auto text-muted-foreground" />
           <div className="text-lg font-semibold">No tienes una caja abierta</div>
           <p className="text-sm text-muted-foreground">Abre tu caja para poder vender.</p>
-          <Button size="lg" onClick={() => { setFondo(ultimoFondo ? String(ultimoFondo) : ""); setTurno(turnoAuto()); setOpenAp(true); }} disabled={isDemo || !user}>
+          <Button size="lg" onClick={() => { setFondo(ultimoFondo ? String(ultimoFondo) : ""); setTurno(multiTurno ? turnoAutoMulti() : "DIA"); setOpenAp(true); }} disabled={isDemo || !user}>
             <LockOpen className="h-4 w-4 mr-1" /> Abrir caja
           </Button>
         </Card>
@@ -481,10 +494,28 @@ function CajaPage() {
             <div><Label>Sucursal</Label><Input value={sucursal} onChange={e => setSucursal(e.target.value)} /></div>
             <div>
               <Label>Turno</Label>
-              <Select value={turno} onValueChange={setTurno}>
+              <Select value={turno} onValueChange={setTurno} disabled={!multiTurno}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{TURNOS.map(t => <SelectItem key={t.v} value={t.v}>{t.label}</SelectItem>)}</SelectContent>
+                <SelectContent>
+                  {(multiTurno ? TURNOS_MULTI : TURNOS_SIMPLE).map(t => (
+                    <SelectItem key={t.v} value={t.v}>{t.label}</SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
+            </div>
+            <div className="col-span-2 flex items-center justify-between rounded-md border p-2 bg-muted/40">
+              <div className="text-xs">
+                <div className="font-medium">Múltiples turnos por día</div>
+                <div className="text-muted-foreground">Actívalo cuando manejes Mañana / Tarde / Noche.</div>
+              </div>
+              <label className="flex items-center gap-2 text-xs cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={multiTurno}
+                  onChange={e => setMultiTurno(e.target.checked)}
+                />
+                Habilitar
+              </label>
             </div>
             <div className="col-span-2">
               <Label>Fondo inicial (S/)</Label>
