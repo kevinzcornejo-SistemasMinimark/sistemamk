@@ -153,7 +153,15 @@ function ConfigPage() {
 
   useEffect(() => { cargar(); /* eslint-disable-next-line */ }, [user?.id, isDemo]);
 
-  const set = (k: string, v: string) => setCfg((p) => ({ ...p, [k]: v }));
+  const set = (k: string, v: string) => {
+    setCfg((p) => {
+      const next = { ...p, [k]: v };
+      if (k === "tema_color" || k === "tema_color_custom" || k === "sidebar_color") {
+        try { applyTheme(next); } catch {}
+      }
+      return next;
+    });
+  };
 
   const guardar = async () => {
     if (!isAdmin) return toast.error("Solo administradores");
@@ -163,8 +171,85 @@ function ConfigPage() {
     const { error } = await supabase.from("configuracion").upsert(rows, { onConflict: "clave" });
     setSaving(false);
     if (error) return toast.error(error.message);
+    window.dispatchEvent(new Event("config-updated"));
     toast.success("Configuración guardada");
   };
+
+  // ===== Impresión de prueba (ticket 80mm) =====
+  const buildTicketHTML = () => {
+    const nombre = cfg.negocio_nombre || "Mi Negocio";
+    const dir = cfg.negocio_direccion || "";
+    const tel = cfg.negocio_telefono || "";
+    const ruc = cfg.negocio_ruc || "";
+    const promo = cfg.ticket_promocion || "";
+    const pie = cfg.ticket_pie || "¡Gracias por su compra!";
+    const logo = cfg.ticket_logo_url || cfg.negocio_logo_url || "";
+    const fecha = new Date().toLocaleString("es-PE");
+    return `
+      <div style="text-align:center">
+        ${logo ? `<img src="${logo}" style="max-width:120px;max-height:80px;margin:0 auto 4px" />` : ""}
+        <div style="font-weight:700;font-size:14px">${nombre.toUpperCase()}</div>
+        ${ruc ? `<div>R.U.C. ${ruc}</div>` : ""}
+        ${dir ? `<div>${dir}</div>` : ""}
+        ${tel ? `<div>Tel: ${tel}</div>` : ""}
+        <hr style="border:0;border-top:1px dashed #000;margin:6px 0" />
+        <div style="font-weight:700">TICKET DE PRUEBA</div>
+        <div>T001-000001</div>
+      </div>
+      <hr style="border:0;border-top:1px dashed #000;margin:6px 0" />
+      <div>FECHA : ${fecha}</div>
+      <div>TIPO  : LOCAL</div>
+      <div>CLIENTE : Cliente Genérico</div>
+      <div>PAGO  : EFECTIVO</div>
+      <hr style="border:0;border-top:1px dashed #000;margin:6px 0" />
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead><tr style="border-bottom:1px dashed #000">
+          <th style="text-align:left">CANT</th>
+          <th style="text-align:left">DESCRIPCION</th>
+          <th style="text-align:right">SUBT</th>
+        </tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Producto demo A</td><td style="text-align:right">10.00</td></tr>
+          <tr><td>2</td><td>Producto demo B</td><td style="text-align:right">14.00</td></tr>
+        </tbody>
+      </table>
+      <hr style="border:0;border-top:1px dashed #000;margin:6px 0" />
+      <div style="display:flex;justify-content:space-between"><span>SUBTOTAL</span><span>S/ 20.34</span></div>
+      <div style="display:flex;justify-content:space-between"><span>IGV (18%)</span><span>S/ 3.66</span></div>
+      <div style="display:flex;justify-content:space-between;font-weight:700;font-size:14px"><span>TOTAL</span><span>S/ 24.00</span></div>
+      <div style="display:flex;justify-content:space-between"><span>RECIBIDO</span><span>S/ 30.00</span></div>
+      <div style="display:flex;justify-content:space-between"><span>VUELTO</span><span>S/ 6.00</span></div>
+      <hr style="border:0;border-top:1px dashed #000;margin:6px 0" />
+      ${promo ? `<div style="text-align:center">${promo}</div>` : ""}
+      <div style="text-align:center;margin-top:4px">${pie}</div>
+    `;
+  };
+
+  const imprimirPrueba = () => {
+    const copias = Math.max(1, parseInt(cfg.impresora_copias || "1", 10) || 1);
+    const html = buildTicketHTML();
+    const full = `
+      <html><head><title>Prueba de impresión</title>
+      <style>
+        @page { size: 80mm auto; margin: 0; }
+        body { font-family: 'Courier New', monospace; font-size: 12px; padding: 8px; margin: 0; color: #000; width: 80mm; }
+      </style></head>
+      <body>${Array.from({ length: copias }).map((_,i)=>`<div>${html}</div>${i<copias-1?'<div style="page-break-after:always"></div>':''}`).join("")}</body></html>
+    `;
+    const iframe = document.createElement("iframe");
+    iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
+    document.body.appendChild(iframe);
+    const doc = iframe.contentWindow?.document;
+    if (!doc) { document.body.removeChild(iframe); return; }
+    doc.open(); doc.write(full); doc.close();
+    const fire = () => {
+      try { iframe.contentWindow?.focus(); iframe.contentWindow?.print(); } catch {}
+      setTimeout(() => { try { document.body.removeChild(iframe); } catch {} }, 1500);
+    };
+    if (iframe.contentWindow?.document.readyState === "complete") setTimeout(fire, 200);
+    else iframe.onload = () => setTimeout(fire, 200);
+  };
+
 
   // ===== Setup checks =====
   const checks = [
