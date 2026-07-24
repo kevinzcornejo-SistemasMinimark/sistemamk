@@ -895,11 +895,26 @@ function ConfigPage() {
               <li>Mantiene el catálogo de productos, categorías, combos e insumos</li>
             </ul>
             <div className="rounded-md border border-yellow-300/60 bg-yellow-50/60 p-3 text-sm text-yellow-800">⚠ Se eliminarán: Órdenes, Pagos, Sesiones de caja, Movimientos de stock, Clientes</div>
-            <Button variant="outline" className="border-orange-300 text-orange-700" onClick={()=>{
-              setSel({ ventas:true, venta_pagos:true, venta_items:true, cajas:true, movimientos_caja:true, kardex:true, clientes:true, gastos:true });
-              toast.info("Selección preparada. Confirma abajo en 'Borrar Datos Seleccionados'.");
-            }}><RefreshCcw className="h-4 w-4 mr-1"/> Resetear Sistema</Button>
+            <Button variant="outline" className="border-orange-300 text-orange-700" disabled={resetting} onClick={resetearSistema}>
+              <RefreshCcw className={`h-4 w-4 mr-1 ${resetting?"animate-spin":""}`}/> {resetting?"Reseteando…":"Resetear Sistema"}
+            </Button>
           </Card>
+
+          <Card className="p-6 border-emerald-200/70 space-y-3">
+            <h2 className="text-xl font-bold flex items-center gap-2 text-emerald-700"><Database className="h-5 w-5"/> Insertar Ejemplos (Guía)</h2>
+            <p className="text-sm text-muted-foreground -mt-2">Crea una fila de muestra en cada tabla principal para que puedas ver cómo se llenan los datos del sistema.</p>
+            <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+              <li>Categorías, Productos, Proveedores, Clientes, Combos, Lotes</li>
+              <li>Compras + items, Ventas + items + pagos</li>
+              <li>Cajas + movimientos, Gastos</li>
+              <li>Todas las filas se prefijan con <strong>"EJEMPLO —"</strong> para identificarlas</li>
+            </ul>
+            <div className="rounded-md border border-emerald-300/60 bg-emerald-50/60 p-3 text-sm text-emerald-800">Recomendado tras un reset o al empezar. Puedes borrarlos luego desde "Borrar Datos Específicos".</div>
+            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" disabled={seeding} onClick={insertarEjemplos}>
+              <Database className={`h-4 w-4 mr-1 ${seeding?"animate-pulse":""}`}/> {seeding?"Insertando…":"Insertar Ejemplos"}
+            </Button>
+          </Card>
+
 
           <Card className="p-6 border-red-200 space-y-3">
             <h2 className="text-xl font-bold flex items-center gap-2 text-red-700"><Trash2 className="h-5 w-5"/> Borrar Datos Específicos</h2>
