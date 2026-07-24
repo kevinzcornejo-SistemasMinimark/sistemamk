@@ -4,6 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { AppShell } from "@/components/layout/AppShell";
 import { useLicencia } from "@/hooks/useLicencia";
 import { LicenciaBloqueo } from "@/components/LicenciaBloqueo";
+import { useAppConfig } from "@/hooks/useAppConfig";
+
 
 export const Route = createFileRoute("/_app")({
   component: AppLayout,
@@ -15,8 +17,10 @@ const RUTAS_PERMITIDAS = ["/configuracion", "/ajustes"];
 function AppLayout() {
   const { user, isDemo, loading } = useAuth();
   const { bloqueada, estado, loading: licLoading } = useLicencia();
+  useAppConfig();
   const navigate = useNavigate();
   const location = useLocation();
+
 
   useEffect(() => {
     if (!loading && !user && !isDemo) {
