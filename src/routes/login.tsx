@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import { useBusinessInfo } from "@/hooks/useBusinessInfo";
 
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "Iniciar sesión — POS Minimarket" }] }),
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const { user, signIn, enterDemo, isDemo, loading } = useAuth();
   const navigate = useNavigate();
+  const biz = useBusinessInfo();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -42,11 +44,15 @@ function LoginPage() {
       <div className="w-full max-w-5xl grid md:grid-cols-2 gap-8 items-center">
         <div className="hidden md:block space-y-6">
           <div className="flex items-center gap-3">
-            <div className="h-14 w-14 rounded-2xl bg-primary text-primary-foreground grid place-items-center shadow-lg">
-              <Store className="h-7 w-7" />
+            <div className="h-14 w-14 rounded-2xl bg-primary text-primary-foreground grid place-items-center shadow-lg overflow-hidden">
+              {biz.logo ? (
+                <img src={biz.logo} alt="logo" className="h-full w-full object-cover" />
+              ) : (
+                <Store className="h-7 w-7" />
+              )}
             </div>
             <div>
-              <h1 className="text-3xl font-extrabold tracking-tight">POS Minimarket</h1>
+              <h1 className="text-3xl font-extrabold tracking-tight">{biz.nombre}</h1>
               <p className="text-muted-foreground">Punto de venta para tu bodega 🇵🇪</p>
             </div>
           </div>
