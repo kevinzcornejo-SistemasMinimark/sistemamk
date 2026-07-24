@@ -58,7 +58,7 @@ export function TicketModal({
         th:last-child, td:last-child { text-align: right; }
         .total { font-size: 16px; font-weight: 700; }
       </style></head>
-      <body>${el.innerHTML}${el.innerHTML}</body>
+      <body>${el.innerHTML}</body>
       </html>
     `;
     const iframe = document.createElement("iframe");
