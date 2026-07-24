@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { ShoppingCart, CheckCircle2 } from "lucide-react";
 import { subscribeDisplay, type DisplayPayload } from "@/lib/customerDisplay";
 import { formatPEN } from "@/lib/format";
-import { mockBusiness } from "@/data/mockData";
+import { useBusinessInfo } from "@/hooks/useBusinessInfo";
 
 export const Route = createFileRoute("/_app/cliente-display")({
   head: () => ({ meta: [{ title: "Pantalla Cliente — POS" }] }),

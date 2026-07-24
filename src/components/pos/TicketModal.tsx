@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Printer, X, Eye } from "lucide-react";
 import { formatPEN } from "@/lib/format";
-import { mockBusiness } from "@/data/mockData";
+import { useBusinessInfo } from "@/hooks/useBusinessInfo";
 import type { CartItem } from "@/hooks/usePOSCart";
 
 export interface TicketData {
@@ -34,6 +34,7 @@ export function TicketModal({
   onOpenChange: (o: boolean) => void;
   ticket: TicketData | null;
 }) {
+  const biz = useBusinessInfo();
   if (!ticket) return null;
   const correl = String(ticket.correlativo).padStart(4, "0");
   const fechaStr = ticket.fecha.toLocaleString("es-PE", {
@@ -94,10 +95,15 @@ export function TicketModal({
             style={{ width: 300 }}
           >
             <div className="center text-center">
-              <div className="bold font-bold text-base">{mockBusiness.nombre_comercial.toUpperCase()}</div>
-              <div>R.U.C. : {mockBusiness.ruc}</div>
-              <div>{mockBusiness.direccion}</div>
-              <div>Tel: 01-234-5678</div>
+              {biz.ticketLogo && (
+                <div className="flex justify-center mb-1">
+                  <img src={biz.ticketLogo} alt="logo" style={{ maxHeight: 48, maxWidth: 140 }} />
+                </div>
+              )}
+              <div className="bold font-bold text-base">{biz.nombre.toUpperCase()}</div>
+              <div>R.U.C. : {biz.ruc}</div>
+              <div>{biz.direccion}</div>
+              {biz.telefono && <div>Tel: {biz.telefono}</div>}
               <hr className="my-2 border-t border-dashed border-black" />
               <div className="bold font-bold">{tipoLabel(ticket.tipo)}</div>
               <div className="bold font-bold mt-1">{ticket.serie}-{correl}</div>
