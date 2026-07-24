@@ -20,6 +20,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { applyTheme } from "@/hooks/useAppConfig";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { fileToThumbDataUrl } from "@/lib/imageResize";
 
 
 export const Route = createFileRoute("/_app/configuracion")({
