@@ -369,7 +369,7 @@ function CajaPage() {
           <Lock className="h-12 w-12 mx-auto text-muted-foreground" />
           <div className="text-lg font-semibold">No tienes una caja abierta</div>
           <p className="text-sm text-muted-foreground">Abre tu caja para poder vender.</p>
-          <Button size="lg" onClick={() => { setFondo(ultimoFondo ? String(ultimoFondo) : ""); setTurno(turnoAuto()); setOpenAp(true); }} disabled={isDemo || !user}>
+          <Button size="lg" onClick={() => { setFondo(ultimoFondo ? String(ultimoFondo) : ""); setTurno(multiTurno ? turnoAutoMulti() : "DIA"); setOpenAp(true); }} disabled={isDemo || !user}>
             <LockOpen className="h-4 w-4 mr-1" /> Abrir caja
           </Button>
         </Card>
