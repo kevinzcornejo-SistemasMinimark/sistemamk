@@ -38,6 +38,7 @@ export const MODULOS: { key: string; label: string }[] = [
   { key: "tickets", label: "Tickets" },
   { key: "reportes", label: "Reportes" },
   { key: "reportes2", label: "Reportes Comparativo" },
+  { key: "descuentos", label: "Descuentos" },
   { key: "usuarios", label: "Usuarios" },
   { key: "ajustes", label: "Ajustes" },
   { key: "configuracion", label: "Configuración" },
