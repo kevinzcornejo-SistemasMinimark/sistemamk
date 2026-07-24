@@ -86,7 +86,10 @@ const sections: Section[] = [
   {
     title: "Reportes",
     color: "text-violet-400",
-    items: [{ to: "/reportes", key: "reportes", label: "Reportes", icon: BarChart3 }],
+    items: [
+      { to: "/reportes", key: "reportes", label: "Reportes", icon: BarChart3 },
+      { to: "/reportes2", key: "reportes2", label: "Comparativo", icon: BarChart3 },
+    ],
   },
   {
     title: "Sistema",
