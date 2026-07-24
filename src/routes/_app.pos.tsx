@@ -81,6 +81,7 @@ function POSPage() {
   const { productos: allProductos, categorias, refresh } = useCatalog();
   const { user, isDemo } = useAuth();
   const { bloqueada, estado } = useLicencia();
+  const { caja: cajaAbierta, loading: cajaLoading } = useCajaAbierta(user?.id);
   const [combos, setCombos] = useState<ComboRow[]>([]);
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState<string | null>(null);
@@ -345,6 +346,7 @@ function POSPage() {
         igv: cart.totales.igv,
         total: cart.totales.total,
         cajero_id: user.id,
+        caja_id: cajaAbierta?.id ?? null,
         observaciones: data.nombre_cliente
           ? `Cliente: ${data.nombre_cliente}${data.documento_cliente ? ` · Doc: ${data.documento_cliente}` : ""}`
           : undefined,
