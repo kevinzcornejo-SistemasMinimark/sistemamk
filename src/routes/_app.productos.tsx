@@ -418,7 +418,7 @@ function ProductoModal({
     }
   }, [open, initial]);
 
-  const set = (patch: Partial<Producto>) => setF((p) => ({ ...p, ...patch }));
+  const set = (patch: Partial<typeof f>) => setF((p) => ({ ...p, ...patch }));
 
   const onPickFile = async (file: File | null) => {
     if (!file) return;
