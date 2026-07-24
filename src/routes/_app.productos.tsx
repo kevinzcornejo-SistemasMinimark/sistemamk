@@ -630,6 +630,42 @@ function ProductoModal({
               }
             />
           </div>
+          {(() => {
+            const stockPrev = Number(initial?.stock ?? 0);
+            const stockNuevo = Number(f.stock ?? 0);
+            const delta = stockNuevo - stockPrev;
+            if (delta <= 0) return null;
+            return (
+              <div className="col-span-2 rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
+                <div className="text-sm font-semibold">
+                  {initial ? "Ingreso de stock" : "Ingreso inicial"} · Se registrará lote y kardex por{" "}
+                  <span className="text-primary">+{delta}</span> {f.unidad ?? "UNIDAD"}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Nº de lote (opcional)</Label>
+                    <Input
+                      placeholder="Auto si se deja vacío"
+                      value={f._numero_lote ?? ""}
+                      onChange={(e) => set({ _numero_lote: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Fecha de vencimiento (opcional)</Label>
+                    <Input
+                      type="date"
+                      value={f._fecha_vencimiento ?? ""}
+                      onChange={(e) => set({ _fecha_vencimiento: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Se creará un nuevo lote con esta cantidad y se registrará como{" "}
+                  {initial ? "AJUSTE" : "ENTRADA"} en Kardex.
+                </p>
+              </div>
+            );
+          })()}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
