@@ -327,6 +327,12 @@ function POSPage() {
       metodoPago: metodoPrincipal.replace("_", " "),
       documentoCliente: data.documento_cliente,
       cliente: data.nombre_cliente,
+      descuento: cart.totales.descuentoAplicado,
+      descuentoMotivo: cart.descuentoInfo
+        ? cart.descuentoInfo.motivo === "Otro"
+          ? cart.descuentoInfo.motivoTexto
+          : cart.descuentoInfo.motivo
+        : undefined,
     };
     if (isDemo || !user) {
       setCheckoutOpen(false);
