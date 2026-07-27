@@ -26,6 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBusinessInfo } from "@/hooks/useBusinessInfo";
+import { StorageWidget } from "./StorageWidget";
 
 type Item = {
   to: string;
@@ -123,7 +124,8 @@ export function Sidebar({
     .filter((s) => s.items.length > 0);
 
   const content = (
-    <nav className="h-full overflow-y-auto py-4 px-3 space-y-5">
+    <nav className="h-full flex flex-col py-4 px-3">
+      <div className="flex-1 overflow-y-auto space-y-5">
       <div className="flex items-center gap-2 px-2 mb-2">
         <div className="h-9 w-9 rounded-xl bg-primary grid place-items-center text-primary-foreground overflow-hidden">
           {biz.logo ? (
@@ -183,6 +185,10 @@ export function Sidebar({
           </div>
         </div>
       ))}
+      </div>
+      <div className="pt-3 mt-3 border-t border-sidebar-border">
+        <StorageWidget collapsed={collapsed} />
+      </div>
     </nav>
   );
 
