@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBusinessInfo } from "@/hooks/useBusinessInfo";
 import { StorageWidget } from "./StorageWidget";
+import { LicenseWidget } from "./LicenseWidget";
 
 type Item = {
   to: string;
@@ -187,6 +188,7 @@ export function Sidebar({
       ))}
       </div>
       <div className="pt-3 mt-3 border-t border-sidebar-border">
+        <LicenseWidget collapsed={collapsed} />
         <StorageWidget collapsed={collapsed} />
       </div>
     </nav>
