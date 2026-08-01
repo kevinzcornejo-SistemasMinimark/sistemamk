@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Printer, X, Eye } from "lucide-react";
@@ -32,24 +33,29 @@ export function TicketModal({
   open,
   onOpenChange,
   ticket,
+  autoPrint = true,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   ticket: TicketData | null;
+  autoPrint?: boolean;
 }) {
   const biz = useBusinessInfo();
   const { cfg } = useAppConfig();
-  if (!ticket) return null;
-  const correl = String(ticket.correlativo).padStart(4, "0");
-  const fechaStr = ticket.fecha.toLocaleString("es-PE", {
-    day: "2-digit", month: "2-digit", year: "numeric",
-    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true,
-  });
+  const printedRef = useRef(false);
+  const correl = ticket ? String(ticket.correlativo).padStart(4, "0") : "";
+  const fechaStr = ticket
+    ? ticket.fecha.toLocaleString("es-PE", {
+        day: "2-digit", month: "2-digit", year: "numeric",
+        hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true,
+      })
+    : "";
   const promocion = (cfg.ticket_promocion || "").trim();
   const pie = (cfg.ticket_pie || "¡Gracias por su compra!").trim();
   const copias = Math.max(1, Math.min(20, parseInt(cfg.impresora_copias || "1", 10) || 1));
 
-  const handlePrint = () => {
+  const handlePrint = useCallback(() => {
+    if (!ticket) return;
     const el = document.getElementById("ticket-print-area");
     if (!el) return;
     const bodyOne = el.innerHTML;
@@ -60,15 +66,17 @@ export function TicketModal({
       <html><head><title>Ticket ${ticket.serie}-${correl}</title>
       <style>
         @page { size: 80mm auto; margin: 0; }
-        body { font-family: 'Courier New', monospace; font-size: 12px; padding: 8px; margin: 0; color: #000; }
+        body { font-family: 'Courier New', monospace; font-size: 13px; font-weight: 700; padding: 8px; margin: 0; color: #000; -webkit-font-smoothing: none; }
         .center { text-align: center; }
         .row { display: flex; justify-content: space-between; }
-        .bold { font-weight: 700; }
-        hr { border: 0; border-top: 1px dashed #000; margin: 6px 0; }
+        .bold { font-weight: 900; }
+        img { max-height: 110px !important; max-width: 100% !important; filter: contrast(1.6) grayscale(1); }
+        hr { border: 0; border-top: 2px dashed #000; margin: 6px 0; }
         table { width: 100%; border-collapse: collapse; }
-        th, td { text-align: left; padding: 1px 0; font-size: 11px; }
+        th, td { text-align: left; padding: 2px 0; font-size: 12px; font-weight: 700; }
+        th { font-weight: 900; }
         th:last-child, td:last-child { text-align: right; }
-        .total { font-size: 16px; font-weight: 700; }
+        .total { font-size: 18px; font-weight: 900; }
       </style></head>
       <body>${body}</body>
       </html>
@@ -85,7 +93,18 @@ export function TicketModal({
     };
     if (iframe.contentWindow?.document.readyState === "complete") setTimeout(fire, 200);
     else iframe.onload = () => setTimeout(fire, 200);
-  };
+  }, [ticket, correl, copias]);
+
+  // Impresión automática al confirmar la venta
+  useEffect(() => {
+    if (!open || !ticket) { printedRef.current = false; return; }
+    if (!autoPrint || printedRef.current) return;
+    printedRef.current = true;
+    const t = setTimeout(() => handlePrint(), 250);
+    return () => clearTimeout(t);
+  }, [open, ticket, autoPrint, handlePrint]);
+
+  if (!ticket) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -102,22 +121,22 @@ export function TicketModal({
         <div className="max-h-[60vh] overflow-y-auto p-5 bg-muted/40">
           <div
             id="ticket-print-area"
-            className="bg-white text-black mx-auto p-4 rounded shadow-sm font-mono text-[12px] leading-tight"
+            className="bg-white text-black mx-auto p-4 rounded shadow-sm font-mono text-[13px] font-bold leading-tight"
             style={{ width: 300 }}
           >
             <div className="center text-center">
               {biz.ticketLogo && (
-                <div className="flex justify-center mb-1">
-                  <img src={biz.ticketLogo} alt="logo" style={{ maxHeight: 48, maxWidth: 140 }} />
+                <div className="flex justify-center mb-2">
+                  <img src={biz.ticketLogo} alt="logo" style={{ maxHeight: 110, maxWidth: 260 }} />
                 </div>
               )}
-              <div className="bold font-bold text-base">{biz.nombre.toUpperCase()}</div>
+              <div className="bold font-extrabold text-lg">{biz.nombre.toUpperCase()}</div>
               <div>R.U.C. : {biz.ruc}</div>
               <div>{biz.direccion}</div>
               {biz.telefono && <div>Tel: {biz.telefono}</div>}
               <hr className="my-2 border-t border-dashed border-black" />
-              <div className="bold font-bold">{tipoLabel(ticket.tipo)}</div>
-              <div className="bold font-bold mt-1">{ticket.serie}-{correl}</div>
+              <div className="bold font-extrabold">{tipoLabel(ticket.tipo)}</div>
+              <div className="bold font-extrabold mt-1 text-base">{ticket.serie}-{correl}</div>
             </div>
             <hr className="my-2 border-t border-dashed border-black" />
             <div>FECHA : {fechaStr}</div>
@@ -128,7 +147,7 @@ export function TicketModal({
             <hr className="my-2 border-t border-dashed border-black" />
             <table className="w-full">
               <thead>
-                <tr className="border-b border-dashed border-black">
+                <tr className="border-b border-dashed border-black font-extrabold">
                   <th className="text-left">CANT</th>
                   <th className="text-left">DESCRIPCION</th>
                   <th className="text-right">PRECIO</th>
@@ -147,10 +166,10 @@ export function TicketModal({
               </tbody>
             </table>
             <hr className="my-2 border-t border-dashed border-black" />
-            <div className="row flex justify-between text-xs">
+            <div className="row flex justify-between text-xs font-bold">
               <span>SUBTOTAL</span><span className="tabular-nums">{formatPEN(ticket.subtotal)}</span>
             </div>
-            <div className="row flex justify-between text-xs">
+            <div className="row flex justify-between text-xs font-bold">
               <span>IGV (18%)</span><span className="tabular-nums">{formatPEN(ticket.igv)}</span>
             </div>
             {ticket.descuento && ticket.descuento > 0 ? (
@@ -164,21 +183,21 @@ export function TicketModal({
               </>
             ) : null}
             <hr className="my-2 border-t border-dashed border-black" />
-            <div className="row flex justify-between total text-base font-bold">
+            <div className="row flex justify-between total text-lg font-extrabold">
               <span>TOTAL S/.</span>
               <span className="tabular-nums">{ticket.total.toFixed(2)}</span>
             </div>
             <hr className="my-2 border-t border-dashed border-black" />
             {promocion && (
-              <div className="center text-center text-[11px] font-bold mb-1">
+              <div className="center text-center text-[12px] font-extrabold mb-1">
                 {promocion.split("\n").map((l, i) => (<div key={i}>{l}</div>))}
               </div>
             )}
-            <div className="center text-center text-[11px]">
+            <div className="center text-center text-[12px] font-bold">
               {pie.split("\n").map((l, i) => (<div key={i}>{l}</div>))}
             </div>
             <hr className="my-2 border-t border-dashed border-black" />
-            <div className="text-[10px] leading-snug">
+            <div className="text-[11px] leading-snug font-bold">
               <div>EMITIDO : {fechaStr}</div>
               {ticket.caja && <div>CAJA    : {ticket.caja}</div>}
               {ticket.turno && <div>TURNO   : {ticket.turno}</div>}
@@ -193,13 +212,13 @@ export function TicketModal({
             onClick={() => onOpenChange(false)}
             className="h-14 px-6 text-base font-bold flex-1 sm:flex-initial"
           >
-            <X className="h-5 w-5 mr-2" /> Sin imprimir
+            <X className="h-5 w-5 mr-2" /> Cerrar
           </Button>
           <Button
-            onClick={() => { handlePrint(); onOpenChange(false); }}
+            onClick={() => handlePrint()}
             className="h-14 px-6 text-base font-extrabold flex-1 bg-emerald-500 hover:bg-emerald-600 text-white"
           >
-            <Printer className="h-5 w-5 mr-2" /> Imprimir ahora
+            <Printer className="h-5 w-5 mr-2" /> Reimprimir
           </Button>
         </DialogFooter>
       </DialogContent>
