@@ -212,13 +212,13 @@ export function TicketModal({
             onClick={() => onOpenChange(false)}
             className="h-14 px-6 text-base font-bold flex-1 sm:flex-initial"
           >
-            <X className="h-5 w-5 mr-2" /> Sin imprimir
+            <X className="h-5 w-5 mr-2" /> Cerrar
           </Button>
           <Button
-            onClick={() => { handlePrint(); onOpenChange(false); }}
+            onClick={() => handlePrint()}
             className="h-14 px-6 text-base font-extrabold flex-1 bg-emerald-500 hover:bg-emerald-600 text-white"
           >
-            <Printer className="h-5 w-5 mr-2" /> Imprimir ahora
+            <Printer className="h-5 w-5 mr-2" /> Reimprimir
           </Button>
         </DialogFooter>
       </DialogContent>
