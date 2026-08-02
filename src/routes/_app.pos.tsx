@@ -273,6 +273,48 @@ function POSPage() {
     if (!ok) toast.warning(`Stock máximo alcanzado: ${p.stock} ${p.unidad}`);
   };
 
+  // ---- Accesos rápidos: servicios (recarga, pago de servicio, bolsa) ----
+  const { servicios, disponible: serviciosOk } = useServiciosPOS(!!user && !isDemo);
+
+  const abrirServicio = (tipo: ServicioTipo) => {
+    if (!isDemo && !serviciosOk) {
+      toast.error("Falta configurar los servicios: ejecuta sql/servicios-pos.sql en Supabase");
+      return;
+    }
+    setServicioTipo(tipo);
+  };
+
+  const agregarServicio = (r: ServicioResultado) => {
+    const base = servicios[r.tipo];
+    const linea: MockProducto = {
+      ...base,
+      id: `${base.id}::${Date.now()}`,
+      servicio_id: base.id.startsWith("virtual-") ? undefined : base.id,
+      nombre: r.descripcion,
+      precio_venta: r.total,
+      es_servicio: true,
+      stock: 999999,
+    };
+    cart.add(linea, 1);
+    toast.success(`${r.descripcion} · ${formatPEN(r.total)}`);
+  };
+
+  const agregarBolsa = () => {
+    if (!isDemo && !serviciosOk) {
+      toast.error("Falta configurar los servicios: ejecuta sql/servicios-pos.sql en Supabase");
+      return;
+    }
+    const base = servicios.bolsa;
+    const linea: MockProducto = {
+      ...base,
+      servicio_id: base.id.startsWith("virtual-") ? undefined : base.id,
+      es_servicio: true,
+      stock: 999999,
+    };
+    cart.add(linea, 1);
+    toast.success(`Bolsa plástica agregada · ${formatPEN(base.precio_venta)}`);
+  };
+
   // Agregar combo: expande componentes y aplica descuentos para igualar precio_combo
   const handlePickCombo = (c: ComboRow) => {
     const lineas = (c.combo_items ?? []).map((it) => {
@@ -516,9 +558,24 @@ function POSPage() {
                 className="pl-10 h-11 rounded-xl bg-card"
               />
             </div>
-            <QuickAction icon={Smartphone} label="Recarga Celular" color="text-purple-600" />
-            <QuickAction icon={Zap} label="Pago de Servicio" color="text-blue-600" />
-            <QuickAction icon={ShoppingBag} label="Bolsa Plástica" color="text-emerald-600" />
+            <QuickAction
+              icon={Smartphone}
+              label="Recarga Celular"
+              color="text-purple-600"
+              onClick={() => abrirServicio("recarga")}
+            />
+            <QuickAction
+              icon={Zap}
+              label="Pago de Servicio"
+              color="text-blue-600"
+              onClick={() => abrirServicio("pago")}
+            />
+            <QuickAction
+              icon={ShoppingBag}
+              label="Bolsa Plástica"
+              color="text-emerald-600"
+              onClick={agregarBolsa}
+            />
           </div>
         </div>
 
@@ -591,6 +648,13 @@ function POSPage() {
         role={role}
         isAdminMaestro={isAdminMaestro}
         usuarioEmail={user?.email}
+      />
+
+      <ServicioModal
+        open={servicioTipo !== null}
+        onOpenChange={(o) => !o && setServicioTipo(null)}
+        tipo={servicioTipo ?? "recarga"}
+        onConfirm={agregarServicio}
       />
 
       <TicketModal
@@ -670,13 +734,17 @@ function QuickAction({
   icon: Icon,
   label,
   color,
+  onClick,
 }: {
   icon: LucideIcon;
   label: string;
   color: string;
+  onClick?: () => void;
 }) {
   return (
     <button
+      type="button"
+      onClick={onClick}
       className="shrink-0 hidden md:inline-flex items-center gap-2 h-11 px-3 rounded-xl bg-card border text-sm font-bold hover:bg-muted transition"
       title={label}
     >
