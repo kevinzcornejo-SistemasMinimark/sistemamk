@@ -126,6 +126,7 @@ function toInputDate(d: Date) {
 
 function TicketsPage() {
   const { user, isDemo } = useAuth();
+  const biz = useBusinessInfo();
   const [rows, setRows] = useState<Venta[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
