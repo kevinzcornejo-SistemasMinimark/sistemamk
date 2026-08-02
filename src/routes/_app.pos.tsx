@@ -45,6 +45,8 @@ import { Cart } from "@/components/pos/Cart";
 import { CheckoutModal } from "@/components/pos/CheckoutModal";
 import { TicketModal, type TicketData } from "@/components/pos/TicketModal";
 import { DescuentoModal } from "@/components/pos/DescuentoModal";
+import { ServicioModal, type ServicioResultado, type ServicioTipo } from "@/components/pos/ServicioModal";
+import { useServiciosPOS } from "@/hooks/useServiciosPOS";
 import { usePOSCart } from "@/hooks/usePOSCart";
 import { toast } from "sonner";
 import { formatPEN } from "@/lib/format";
@@ -88,6 +90,7 @@ function POSPage() {
   const [cat, setCat] = useState<string | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [descuentoOpen, setDescuentoOpen] = useState(false);
+  const [servicioTipo, setServicioTipo] = useState<ServicioTipo | null>(null);
   const [ticket, setTicket] = useState<TicketData | null>(null);
   const [kiosko, setKiosko] = useState(true);
   const [escuchando, setEscuchando] = useState(false);
