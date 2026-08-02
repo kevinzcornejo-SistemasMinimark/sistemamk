@@ -21,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { formatPEN } from "@/lib/format";
+import { useBusinessInfo } from "@/hooks/useBusinessInfo";
 import { TicketModal, type TicketData } from "@/components/pos/TicketModal";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
