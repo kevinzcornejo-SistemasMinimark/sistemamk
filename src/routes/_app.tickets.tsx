@@ -21,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { formatPEN } from "@/lib/format";
+import { useBusinessInfo } from "@/hooks/useBusinessInfo";
 import { TicketModal, type TicketData } from "@/components/pos/TicketModal";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -125,6 +126,7 @@ function toInputDate(d: Date) {
 
 function TicketsPage() {
   const { user, isDemo } = useAuth();
+  const biz = useBusinessInfo();
   const [rows, setRows] = useState<Venta[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
@@ -455,56 +457,56 @@ function TicketsPage() {
 
     const filas = filtered.map((v) => {
       const fecha = new Date(v.creada_en);
-      const dd = String(fecha.getDate());
-      const mm = String(fecha.getMonth() + 1);
-      const yy = fecha.getFullYear();
+      const dd = String(fecha.getDate()).padStart(2, "0");
+      const mm = String(fecha.getMonth() + 1).padStart(2, "0");
       const hh = String(fecha.getHours()).padStart(2, "0");
       const mi = String(fecha.getMinutes()).padStart(2, "0");
-      const ampm = fecha.getHours() >= 12 ? "p. m." : "a. m.";
-      const ticket = `${v.serie}-${v.correlativo}`;
-      const cliente = (v.clientes?.razon_social ?? v.clientes?.nombres ?? "Local").slice(0, 8);
-      const tipo = (v.tipo_comprobante || "").toLowerCase();
-      const pago = (METODO_LABEL[v.metodo_pago] ?? v.metodo_pago ?? "").toLowerCase();
+      const ticket = `#${String(v.correlativo).replace(/^0+/, "") || "0"}`;
+      const pago = (METODO_LABEL[v.metodo_pago] ?? v.metodo_pago ?? "");
       return (
         pad(ticket, 7) +
-        pad(`${dd}/${mm}/${yy}`, 9) +
-        pad(`${hh}:${mi} ${ampm}`, 11) +
-        pad(cliente, 9) +
-        pad(tipo, 7) +
-        pad(pago, 8) +
-        padR(fmt(Number(v.total)), 8)
+        pad(`${dd}/${mm}`, 6) +
+        pad(`${hh}:${mi}`, 6) +
+        pad(pago, 11) +
+        padR(fmt(Number(v.total)), 10)
       );
     }).join("\n");
 
     const totalDesglose = desglose.map(([m, d]) => {
-      const label = `${(METODO_LABEL[m] ?? m).toLowerCase()} (${d.count})`;
+      const label = `${METODO_LABEL[m] ?? m} (${d.count})`;
       const pct = totalPeriodo > 0 ? (d.total / totalPeriodo) * 100 : 0;
-      const right = `${fmt(d.total)} (${pct.toFixed(1)}%)`;
-      return pad(label, 30) + padR(right, 18);
+      const right = `${fmt(d.total)} ${pct.toFixed(1)}%`;
+      return pad(label, 21) + padR(right, 19);
     }).join("\n");
 
-    const sep = "-".repeat(48);
+    const sep = "-".repeat(40);
     const titulo = `REPORTE DE TICKETS`;
     const subt = periodoTexto;
+    const esc = (s: string) =>
+      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
     const html = `<!doctype html><html><head><meta charset="utf-8"><title>Reporte de tickets</title>
 <style>
   @page { size: 80mm auto; margin: 3mm; }
-  body { font-family: 'Courier New', monospace; font-size: 11px; color:#000; margin:0; }
+  body { font-family: 'Courier New', monospace; font-size: 13px; font-weight: 700; color:#000; margin:0; -webkit-font-smoothing: none; }
   .center { text-align:center; }
-  .logo { font-size: 14px; font-weight: 900; letter-spacing: 1px; }
-  pre { font-family: inherit; font-size: 11px; line-height: 1.25; margin: 0; white-space: pre; }
-  .total-box { border:1px solid #000; padding:4px 0; margin:6px 0; text-align:center; font-weight:900; }
-  .small { font-size: 10px; }
-  h3 { font-size: 11px; margin: 6px 0 3px; }
+  .logo { font-size: 19px; font-weight: 900; letter-spacing: 1px; }
+  img.marca { max-height: 110px; max-width: 100%; filter: contrast(1.6) grayscale(1); margin-bottom: 4px; }
+  pre { font-family: inherit; font-size: 13px; font-weight: 700; line-height: 1.3; margin: 0; white-space: pre; }
+  .total-box { border:2px solid #000; padding:5px 0; margin:7px 0; text-align:center; font-weight:900; font-size:16px; }
+  .small { font-size: 12px; font-weight: 700; }
+  h3 { font-size: 14px; font-weight: 900; margin: 7px 0 3px; }
 </style></head><body>
   <div class="center">
-    <div class="logo">TOMATE &amp; QUESO</div>
-    <div><b>${titulo}</b></div>
+    ${biz.ticketLogo ? `<img class="marca" src="${esc(biz.ticketLogo)}" alt="logo" />` : ""}
+    <div class="logo">${esc(biz.nombre.toUpperCase())}</div>
+    ${biz.ruc ? `<div class="small">R.U.C. ${esc(biz.ruc)}</div>` : ""}
+    ${biz.direccion ? `<div class="small">${esc(biz.direccion)}</div>` : ""}
+    <div style="font-size:15px;font-weight:900;margin-top:3px">${titulo}</div>
     <div class="small">${subt}</div>
   </div>
   <pre>${sep}</pre>
-  <pre>${pad("Ticket", 7)}${pad("Fecha", 9)}${pad("Hora", 11)}${pad("Cliente", 9)}${pad("Tipo", 7)}${pad("Pago", 8)}${padR("Total", 8)}</pre>
+  <pre>${pad("TICKET", 7)}${pad("FECHA", 6)}${pad("HORA", 6)}${pad("PAGO", 11)}${padR("TOTAL", 10)}</pre>
   <pre>${sep}</pre>
   <pre>${filas}</pre>
   <pre>${sep}</pre>
@@ -514,7 +516,7 @@ function TicketsPage() {
   <pre>${totalDesglose}</pre>
   <pre>${sep}</pre>
   <div class="center small">Generado: ${new Date().toLocaleString("es-PE")}</div>
-  <script>window.onload=()=>{window.print();setTimeout(()=>window.close(),400);}</script>
+  <script>window.onload=()=>{setTimeout(()=>{window.print();setTimeout(()=>window.close(),400);},300);}</script>
 </body></html>`;
     return html;
   };
