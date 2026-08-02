@@ -74,7 +74,7 @@ export async function registrarVenta(input: RegistrarVentaInput) {
     const igv = i.producto.igv ? lineaTotal - lineaTotal / 1.18 : 0;
     return {
       venta_id: venta.id,
-      producto_id: i.producto.id,
+      producto_id: i.producto.servicio_id ?? i.producto.id,
       nombre: i.producto.nombre,
       cantidad: i.cantidad,
       precio_unitario: i.producto.precio_venta,
@@ -101,6 +101,8 @@ export async function registrarVenta(input: RegistrarVentaInput) {
   const movimientos: any[] = [];
   const erroresStock: string[] = [];
   for (const i of input.items) {
+    // Los servicios (recarga, pago de servicio, bolsa) no controlan stock
+    if (i.producto.es_servicio) continue;
     const { data: nuevoStock, error: rpcErr } = await supabase.rpc(
       "descontar_stock_venta",
       { p_producto: i.producto.id, p_cantidad: i.cantidad },

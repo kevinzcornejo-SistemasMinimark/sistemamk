@@ -10,6 +10,10 @@ export interface MockProducto {
   categoria_id: string;
   imagen?: string;
   igv: boolean;
+  /** Producto de servicio (recarga, pago de servicio, bolsa): no controla stock */
+  es_servicio?: boolean;
+  /** UUID real del producto en BD cuando la línea usa un id sintético */
+  servicio_id?: string;
 }
 
 export interface MockCategoria {
