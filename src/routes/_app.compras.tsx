@@ -143,11 +143,27 @@ function ComprasPage() {
     for (const l of lineas) {
       const prod = productos.find((p) => p.id === l.producto_id);
       if (!prod) continue;
-      const nuevoStock = Number(prod.stock ?? 0) + Number(l.cantidad ?? 0);
+      // Leer el stock REAL desde la BD (el catálogo puede estar desactualizado)
+      const { data: actual, error: readErr } = await supabase
+        .from("productos")
+        .select("stock")
+        .eq("id", l.producto_id)
+        .maybeSingle();
+      if (readErr) { stockErrors.push(`${prod.nombre}: ${readErr.message}`); continue; }
+      const stockBase = Number(actual?.stock ?? prod.stock ?? 0);
+      const nuevoStock = stockBase + Number(l.cantidad ?? 0);
       const patch: Record<string, number> = { stock: nuevoStock };
       if (l.precio_unitario > 0) patch.precio_compra = l.precio_unitario;
-      const { error: upErr } = await supabase.from("productos").update(patch).eq("id", l.producto_id);
+      const { data: upRows, error: upErr } = await supabase
+        .from("productos")
+        .update(patch)
+        .eq("id", l.producto_id)
+        .select("id,stock");
       if (upErr) { stockErrors.push(`${prod.nombre}: ${upErr.message}`); continue; }
+      if (!upRows || upRows.length === 0) {
+        stockErrors.push(`${prod.nombre}: sin permiso para actualizar el stock (RLS)`);
+        continue;
+      }
 
       let refLote = "";
       if (l.modo_lote === "nuevo" && l.numero_lote?.trim()) {
