@@ -33,7 +33,7 @@ export function TicketModal({
   open,
   onOpenChange,
   ticket,
-  autoPrint = true,
+  autoPrint = false,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -114,7 +114,7 @@ export function TicketModal({
             <Eye className="h-5 w-5 text-emerald-600" /> Vista previa del ticket
           </DialogTitle>
           <p className="text-xs text-muted-foreground font-medium">
-            Revisa el contenido antes de enviarlo a la impresora
+            Revisa el contenido y presiona “Imprimir ticket” para enviarlo a la impresora
           </p>
         </DialogHeader>
 
@@ -201,7 +201,7 @@ export function TicketModal({
               <div>EMITIDO : {fechaStr}</div>
               {ticket.caja && <div>CAJA    : {ticket.caja}</div>}
               {ticket.turno && <div>TURNO   : {ticket.turno}</div>}
-              {ticket.cajero && <div>CAJERO  : {ticket.cajero}</div>}
+              {ticket.cajero && <div>VENDEDOR: {ticket.cajero}</div>}
             </div>
           </div>
         </div>
@@ -212,13 +212,13 @@ export function TicketModal({
             onClick={() => onOpenChange(false)}
             className="h-14 px-6 text-base font-bold flex-1 sm:flex-initial"
           >
-            <X className="h-5 w-5 mr-2" /> Cerrar
+            <X className="h-5 w-5 mr-2" /> Cerrar sin imprimir
           </Button>
           <Button
             onClick={() => handlePrint()}
             className="h-14 px-6 text-base font-extrabold flex-1 bg-emerald-500 hover:bg-emerald-600 text-white"
           >
-            <Printer className="h-5 w-5 mr-2" /> Reimprimir
+            <Printer className="h-5 w-5 mr-2" /> Imprimir ticket
           </Button>
         </DialogFooter>
       </DialogContent>
