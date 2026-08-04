@@ -373,6 +373,13 @@ function POSPage() {
       documentoCliente: data.documento_cliente,
       cliente: data.nombre_cliente,
       descuento: cart.totales.descuentoAplicado,
+      cajero:
+        (user?.user_metadata?.["nombre"] as string | undefined) ??
+        (user?.user_metadata?.["full_name"] as string | undefined) ??
+        user?.email ??
+        (isDemo ? "Demo" : undefined),
+      caja: cajaAbierta ? `#${cajaAbierta.numero}` : undefined,
+      turno: cajaAbierta?.turno ?? undefined,
       descuentoMotivo: cart.descuentoInfo
         ? cart.descuentoInfo.motivo === "Otro"
           ? cart.descuentoInfo.motivoTexto
