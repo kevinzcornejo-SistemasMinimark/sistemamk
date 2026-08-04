@@ -143,26 +143,45 @@ function ComprasPage() {
     for (const l of lineas) {
       const prod = productos.find((p) => p.id === l.producto_id);
       if (!prod) continue;
-      // Leer el stock REAL desde la BD (el catálogo puede estar desactualizado)
-      const { data: actual, error: readErr } = await supabase
-        .from("productos")
-        .select("stock")
-        .eq("id", l.producto_id)
-        .maybeSingle();
-      if (readErr) { stockErrors.push(`${prod.nombre}: ${readErr.message}`); continue; }
-      const stockBase = Number(actual?.stock ?? prod.stock ?? 0);
-      const nuevoStock = stockBase + Number(l.cantidad ?? 0);
-      const patch: Record<string, number> = { stock: nuevoStock };
-      if (l.precio_unitario > 0) patch.precio_compra = l.precio_unitario;
-      const { data: upRows, error: upErr } = await supabase
-        .from("productos")
-        .update(patch)
-        .eq("id", l.producto_id)
-        .select("id,stock");
-      if (upErr) { stockErrors.push(`${prod.nombre}: ${upErr.message}`); continue; }
-      if (!upRows || upRows.length === 0) {
-        stockErrors.push(`${prod.nombre}: sin permiso para actualizar el stock (RLS)`);
-        continue;
+      // 1) Vía preferida: RPC security definer (no la bloquea RLS) que suma
+      //    stock, actualiza costo y registra kardex.
+      let nuevoStock: number | null = null;
+      let kardexHecho = false;
+      const { data: rpcStock, error: rpcErr } = await supabase.rpc("aumentar_stock_compra", {
+        p_producto: l.producto_id,
+        p_cantidad: Number(l.cantidad ?? 0),
+        p_costo: l.precio_unitario > 0 ? l.precio_unitario : null,
+        p_documento: f.numero_documento || compra.id,
+        p_motivo: `Compra ${compra.id.slice(0, 8)}`,
+      });
+      if (!rpcErr && rpcStock != null) {
+        nuevoStock = Number(rpcStock);
+        kardexHecho = true;
+      } else {
+        // 2) Respaldo: update directo (requiere permisos RLS sobre productos)
+        const { data: actual, error: readErr } = await supabase
+          .from("productos")
+          .select("stock")
+          .eq("id", l.producto_id)
+          .maybeSingle();
+        if (readErr) { stockErrors.push(`${prod.nombre}: ${readErr.message}`); continue; }
+        const stockBase = Number(actual?.stock ?? prod.stock ?? 0);
+        const calc = stockBase + Number(l.cantidad ?? 0);
+        const patch: Record<string, number> = { stock: calc };
+        if (l.precio_unitario > 0) patch.precio_compra = l.precio_unitario;
+        const { data: upRows, error: upErr } = await supabase
+          .from("productos")
+          .update(patch)
+          .eq("id", l.producto_id)
+          .select("id,stock");
+        if (upErr) { stockErrors.push(`${prod.nombre}: ${upErr.message}`); continue; }
+        if (!upRows || upRows.length === 0) {
+          stockErrors.push(
+            `${prod.nombre}: no se pudo actualizar el stock. Ejecuta sql/compra-stock-fix.sql en Supabase`,
+          );
+          continue;
+        }
+        nuevoStock = Number(upRows[0].stock ?? calc);
       }
 
       let refLote = "";
@@ -188,7 +207,7 @@ function ComprasPage() {
         }
       }
 
-      movimientos.push({
+      if (!kardexHecho) movimientos.push({
         producto_id: l.producto_id,
         tipo: "COMPRA",
         cantidad: l.cantidad,
