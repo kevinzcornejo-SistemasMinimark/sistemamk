@@ -274,7 +274,7 @@ function POSPage() {
   };
 
   // ---- Accesos rápidos: servicios (recarga, pago de servicio, bolsa) ----
-  const { servicios, disponible: serviciosOk } = useServiciosPOS(!!user && !isDemo);
+  const { servicios } = useServiciosPOS(!!user && !isDemo);
 
   // Los servicios NO controlan stock ni dependen de la BD: si el producto de
   // servicio no existe, se usa una línea virtual (no afecta compras ni kardex).
@@ -301,7 +301,6 @@ function POSPage() {
     const base = servicios.bolsa;
     const linea: MockProducto = {
       ...base,
-      id: `${base.id}::${Date.now()}`,
       servicio_id: base.id.startsWith("virtual-") ? undefined : base.id,
       es_servicio: true,
       stock: 999999,
