@@ -50,6 +50,24 @@ const hoy = () => new Date().toISOString().slice(0, 10);
 const hace = (d: number) => new Date(Date.now() - d * 86400000).toISOString().slice(0, 10);
 const money = (n: number) => `S/ ${n.toFixed(2)}`;
 
+function exportToExcel(filename: string, rows: Record<string, any>[]) {
+  if (rows.length === 0) return;
+  const cols = Object.keys(rows[0]);
+  const esc = (v: any) =>
+    String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const html = `<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"></head><body>
+    <table border="1"><thead><tr>${cols.map((c) => `<th>${esc(c)}</th>`).join("")}</tr></thead>
+    <tbody>${rows.map((r) => `<tr>${cols.map((c) => `<td>${esc(r[c])}</td>`).join("")}</tr>`).join("")}</tbody>
+    </table></body></html>`;
+  const blob = new Blob(["\uFEFF" + html], { type: "application/vnd.ms-excel;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename.endsWith(".xls") ? filename : `${filename}.xls`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function KardexPage() {
   const { user, isDemo } = useAuth();
   const negocio = useBusinessInfo();
@@ -57,6 +75,7 @@ function KardexPage() {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [tipo, setTipo] = useState("TODOS");
+  const [producto, setProducto] = useState("TODOS");
   const [desde, setDesde] = useState(hace(30));
   const [hasta, setHasta] = useState(hoy());
 
@@ -82,10 +101,16 @@ function KardexPage() {
     [rows],
   );
 
+  const productos = useMemo(
+    () => Array.from(new Set(rows.map((r) => r.productos?.nombre).filter(Boolean) as string[])).sort(),
+    [rows],
+  );
+
   const filtered = useMemo(() => {
     const k = q.trim().toLowerCase();
     return rows.filter((r) => {
       if (tipo !== "TODOS" && r.tipo !== tipo) return false;
+      if (producto !== "TODOS" && (r.productos?.nombre ?? "") !== producto) return false;
       if (!k) return true;
       return (
         (r.productos?.nombre ?? "").toLowerCase().includes(k) ||
@@ -94,7 +119,7 @@ function KardexPage() {
         (r.motivo ?? "").toLowerCase().includes(k)
       );
     });
-  }, [rows, q, tipo]);
+  }, [rows, q, tipo, producto]);
 
   const kpis = useMemo(() => {
     let entradas = 0, salidas = 0, valor = 0;
@@ -151,6 +176,23 @@ function KardexPage() {
     );
   };
 
+  const exportXLS = () => {
+    if (filtered.length === 0) return toast.error("Sin datos para exportar");
+    exportToExcel(
+      `kardex_${desde}_${hasta}`,
+      filtered.map((r) => ({
+        Fecha: new Date(r.creado_en).toLocaleString("es-PE"),
+        Producto: r.productos?.nombre ?? "",
+        Tipo: r.tipo,
+        Cantidad: Number(r.cantidad ?? 0),
+        Saldo: r.saldo ?? "",
+        Costo: r.costo_unitario ?? "",
+        Documento: r.documento ?? "",
+        Motivo: r.motivo ?? "",
+      })),
+    );
+  };
+
   const exportPDF = () => {
     if (filtered.length === 0) return toast.error("Sin datos para exportar");
     const filas = filtered.map((r) => `<tr>
@@ -171,7 +213,7 @@ function KardexPage() {
         </div>
       </div>
       <h1>Kardex de inventario</h1>
-      <div class="meta">Del ${desde} al ${hasta} · Tipo: ${tipo} · ${filtered.length} movimientos</div>
+      <div class="meta">Del ${desde} al ${hasta} · Tipo: ${tipo} · Producto: ${producto} ${q ? `· Búsqueda: "${q}"` : ""} · ${filtered.length} movimientos</div>
       <div class="meta">Entradas: <b>${kpis.entradas}</b> · Salidas: <b>${kpis.salidas}</b> · Valor movido: <b>${money(kpis.valor)}</b></div>
       <table><thead><tr>
         <th>Fecha</th><th>Producto</th><th>Tipo</th><th class="right">Cant.</th>
@@ -180,7 +222,7 @@ function KardexPage() {
     `);
   };
 
-  const limpiar = () => { setQ(""); setTipo("TODOS"); setDesde(hace(30)); setHasta(hoy()); };
+  const limpiar = () => { setQ(""); setTipo("TODOS"); setProducto("TODOS"); setDesde(hace(30)); setHasta(hoy()); };
 
   return (
     <div className="p-6 space-y-5">
@@ -197,6 +239,9 @@ function KardexPage() {
           </Button>
           <Button variant="outline" size="sm" onClick={exportCSV}>
             <FileDown className="h-4 w-4 mr-1" /> CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={exportXLS}>
+            <FileDown className="h-4 w-4 mr-1" /> Excel
           </Button>
           <Button size="sm" onClick={exportPDF}>
             <Printer className="h-4 w-4 mr-1" /> Exportar PDF
@@ -227,11 +272,18 @@ function KardexPage() {
 
       <Card className="p-4 space-y-3">
         <div className="flex items-center gap-2 text-sm font-semibold"><Filter className="h-4 w-4" /> Filtros</div>
-        <div className="grid gap-3 md:grid-cols-5">
+        <div className="grid gap-3 md:grid-cols-6">
           <div className="relative md:col-span-2">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Producto, tipo, documento o motivo…" className="pl-9" />
           </div>
+          <Select value={producto} onValueChange={setProducto}>
+            <SelectTrigger><SelectValue placeholder="Producto" /></SelectTrigger>
+            <SelectContent className="max-h-72">
+              <SelectItem value="TODOS">Todos los productos</SelectItem>
+              {productos.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+            </SelectContent>
+          </Select>
           <Select value={tipo} onValueChange={setTipo}>
             <SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger>
             <SelectContent>
