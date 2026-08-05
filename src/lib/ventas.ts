@@ -72,9 +72,15 @@ export async function registrarVenta(input: RegistrarVentaInput) {
   const detalle = input.items.map((i) => {
     const lineaTotal = i.producto.precio_venta * i.cantidad - i.descuento;
     const igv = i.producto.igv ? lineaTotal - lineaTotal / 1.18 : 0;
+    // Servicios sin producto real en BD → sin producto_id (no afecta stock/compras)
+    const productoId = i.producto.servicio_id
+      ? i.producto.servicio_id
+      : i.producto.es_servicio
+        ? null
+        : i.producto.id;
     return {
       venta_id: venta.id,
-      producto_id: i.producto.servicio_id ?? i.producto.id,
+      producto_id: productoId,
       nombre: i.producto.nombre,
       cantidad: i.cantidad,
       precio_unitario: i.producto.precio_venta,
