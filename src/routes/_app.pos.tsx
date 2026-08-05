@@ -276,11 +276,9 @@ function POSPage() {
   // ---- Accesos rápidos: servicios (recarga, pago de servicio, bolsa) ----
   const { servicios, disponible: serviciosOk } = useServiciosPOS(!!user && !isDemo);
 
+  // Los servicios NO controlan stock ni dependen de la BD: si el producto de
+  // servicio no existe, se usa una línea virtual (no afecta compras ni kardex).
   const abrirServicio = (tipo: ServicioTipo) => {
-    if (!isDemo && !serviciosOk) {
-      toast.error("Falta configurar los servicios: ejecuta sql/servicios-pos.sql en Supabase");
-      return;
-    }
     setServicioTipo(tipo);
   };
 
@@ -300,13 +298,10 @@ function POSPage() {
   };
 
   const agregarBolsa = () => {
-    if (!isDemo && !serviciosOk) {
-      toast.error("Falta configurar los servicios: ejecuta sql/servicios-pos.sql en Supabase");
-      return;
-    }
     const base = servicios.bolsa;
     const linea: MockProducto = {
       ...base,
+      id: `${base.id}::${Date.now()}`,
       servicio_id: base.id.startsWith("virtual-") ? undefined : base.id,
       es_servicio: true,
       stock: 999999,
