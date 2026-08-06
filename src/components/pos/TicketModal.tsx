@@ -24,6 +24,8 @@ export interface TicketData {
   turno?: string;
   descuento?: number;
   descuentoMotivo?: string;
+  /** Total bruto antes de descuentos */
+  bruto?: number;
 }
 
 const tipoLabel = (t: TicketData["tipo"]) =>

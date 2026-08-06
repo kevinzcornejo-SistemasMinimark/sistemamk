@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Percent, DollarSign, ShoppingCart, Package, ShieldAlert, X, Check, Tag } from "lucide-react";
+import { Percent, DollarSign, ShoppingCart, Package, ShieldAlert, X, Check, Tag, TrendingDown } from "lucide-react";
 import { formatPEN } from "@/lib/format";
 import type { CartItem, DescuentoInfo, DescuentoTipo, DescuentoAplicadoA } from "@/hooks/usePOSCart";
 import { supabaseSignup } from "@/integrations/supabase/signupClient";
@@ -75,6 +75,7 @@ export function DescuentoModal({
   const [adminPass, setAdminPass] = useState<string>("");
   const [verificando, setVerificando] = useState(false);
   const [autorizadoPor, setAutorizadoPor] = useState<string | null>(null);
+  const [aceptaBajoCosto, setAceptaBajoCosto] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -98,6 +99,7 @@ export function DescuentoModal({
       }
       setAdminEmail("");
       setAdminPass("");
+      setAceptaBajoCosto(false);
     }
   }, [open]);
 
@@ -122,6 +124,21 @@ export function DescuentoModal({
   const nuevoTotal = Math.max(0, totalBruto - (aplicadoA === "total" ? montoDescuento : montoDescuento));
   const nuevoTotalDisplay = Math.max(0, totalBruto - montoDescuento);
 
+  // ---- Control de costo: el descuento no puede dejar el precio por debajo del costo ----
+  const costoBase = useMemo(() => {
+    const costoDe = (i: CartItem) =>
+      (i.producto.es_servicio ? 0 : Number(i.producto.precio_compra ?? 0)) * i.cantidad;
+    if (aplicadoA === "producto" && productoSeleccionado) return costoDe(productoSeleccionado);
+    return items.reduce((s, i) => s + costoDe(i), 0);
+  }, [aplicadoA, productoSeleccionado, items]);
+
+  const maxDescuentoCosto = Math.max(0, Math.round((base - costoBase) * 100) / 100);
+  const maxPorcentajeCosto = base > 0 ? (maxDescuentoCosto / base) * 100 : 0;
+  const bajoCosto = costoBase > 0 && montoDescuento > maxDescuentoCosto + 0.009;
+  const margenResultante = base - montoDescuento - costoBase;
+  const puedeAutorizarBajoCosto =
+    isAdminMaestro || role === "administrador" || role === "gerente";
+
   // Límite por rol (basado en porcentaje efectivo sobre la base)
   const limite = limitePorRol(role, isAdminMaestro);
   const requiereAutorizacion = porcentajeEfectivo > limite && !autorizadoPor;
@@ -134,7 +151,8 @@ export function DescuentoModal({
     motivo.length > 0 &&
     (motivo !== "Otro" || motivoTexto.trim().length > 0) &&
     (aplicadoA !== "producto" || !!productoSeleccionado) &&
-    !requiereAutorizacion;
+    !requiereAutorizacion &&
+    (!bajoCosto || (puedeAutorizarBajoCosto && aceptaBajoCosto));
 
   const autorizar = async () => {
     if (!adminEmail || !adminPass) {
@@ -396,7 +414,61 @@ export function DescuentoModal({
             <div className="text-xs font-bold text-emerald-700 text-right">
               Ahorro del cliente: {formatPEN(montoDescuento)}
             </div>
+            {costoBase > 0 && (
+              <div className="pt-2 mt-1 border-t border-emerald-200 grid grid-cols-3 gap-2 text-[11px]">
+                <div>
+                  <div className="text-muted-foreground font-semibold uppercase">Costo</div>
+                  <div className="font-bold tabular-nums">{formatPEN(costoBase)}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground font-semibold uppercase">Margen</div>
+                  <div className={`font-bold tabular-nums ${margenResultante < 0 ? "text-destructive" : "text-emerald-700"}`}>
+                    {formatPEN(margenResultante)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground font-semibold uppercase">Desc. máx.</div>
+                  <div className="font-bold tabular-nums">
+                    {formatPEN(maxDescuentoCosto)} ({maxPorcentajeCosto.toFixed(1)}%)
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
+
+          {/* Aviso: descuento por debajo del costo */}
+          {bajoCosto && (
+            <div className="rounded-xl border-2 border-destructive bg-destructive/10 p-4 space-y-2">
+              <div className="flex items-start gap-2">
+                <TrendingDown className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <div className="font-extrabold text-destructive">
+                    El descuento deja el precio por debajo del costo
+                  </div>
+                  <div className="text-xs text-destructive/90">
+                    Costo {formatPEN(costoBase)} · Precio con descuento {formatPEN(base - montoDescuento)} ·
+                    Pérdida {formatPEN(Math.abs(margenResultante))}. Máximo permitido:{" "}
+                    <b>{formatPEN(maxDescuentoCosto)} ({maxPorcentajeCosto.toFixed(1)}%)</b>.
+                  </div>
+                </div>
+              </div>
+              {puedeAutorizarBajoCosto ? (
+                <label className="flex items-center gap-2 text-xs font-bold text-destructive cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={aceptaBajoCosto}
+                    onChange={(e) => setAceptaBajoCosto(e.target.checked)}
+                    className="h-4 w-4 accent-current"
+                  />
+                  Autorizo vender por debajo del costo (queda registrado en auditoría)
+                </label>
+              ) : (
+                <div className="text-xs font-bold text-destructive">
+                  Tu rol no puede vender bajo costo. Reduce el descuento.
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Autorización */}
           {requiereAutorizacion && (
