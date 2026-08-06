@@ -367,6 +367,7 @@ function POSPage() {
       documentoCliente: data.documento_cliente,
       cliente: data.nombre_cliente,
       descuento: cart.totales.descuentoAplicado,
+      bruto: cart.totales.bruto,
       cajero:
         (user?.user_metadata?.["nombre"] as string | undefined) ??
         (user?.user_metadata?.["full_name"] as string | undefined) ??
