@@ -168,27 +168,38 @@ export function TicketModal({
               </tbody>
             </table>
             <hr className="my-2 border-t border-dashed border-black" />
+            {ticket.descuento && ticket.descuento > 0 ? (
+              <>
+                <div className="row flex justify-between text-xs font-bold">
+                  <span>IMPORTE</span>
+                  <span className="tabular-nums">
+                    {formatPEN(ticket.bruto ?? ticket.subtotal + ticket.igv + ticket.descuento)}
+                  </span>
+                </div>
+                <div className="row flex justify-between text-xs font-extrabold">
+                  <span>DESCUENTO</span><span className="tabular-nums">- {formatPEN(ticket.descuento)}</span>
+                </div>
+                {ticket.descuentoMotivo && (
+                  <div className="text-[11px] font-bold">MOTIVO: {ticket.descuentoMotivo}</div>
+                )}
+              </>
+            ) : null}
             <div className="row flex justify-between text-xs font-bold">
               <span>SUBTOTAL</span><span className="tabular-nums">{formatPEN(ticket.subtotal)}</span>
             </div>
             <div className="row flex justify-between text-xs font-bold">
               <span>IGV (18%)</span><span className="tabular-nums">{formatPEN(ticket.igv)}</span>
             </div>
-            {ticket.descuento && ticket.descuento > 0 ? (
-              <>
-                <div className="row flex justify-between text-xs">
-                  <span>DESCUENTO</span><span className="tabular-nums">- {formatPEN(ticket.descuento)}</span>
-                </div>
-                {ticket.descuentoMotivo && (
-                  <div className="text-[10px]">Motivo: {ticket.descuentoMotivo}</div>
-                )}
-              </>
-            ) : null}
             <hr className="my-2 border-t border-dashed border-black" />
             <div className="row flex justify-between total text-lg font-extrabold">
               <span>TOTAL S/.</span>
               <span className="tabular-nums">{ticket.total.toFixed(2)}</span>
             </div>
+            {ticket.descuento && ticket.descuento > 0 ? (
+              <div className="center text-center text-[12px] font-extrabold">
+                USTED AHORRÓ: {formatPEN(ticket.descuento)}
+              </div>
+            ) : null}
             <hr className="my-2 border-t border-dashed border-black" />
             {promocion && (
               <div className="center text-center text-[12px] font-extrabold mb-1">
