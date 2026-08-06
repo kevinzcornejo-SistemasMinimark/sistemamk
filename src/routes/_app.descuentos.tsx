@@ -66,7 +66,32 @@ function DescuentosReporte() {
       if (motivo !== "__all__") q = q.eq("motivo", motivo);
       const { data, error } = await q;
       if (error) throw error;
-      setRows(data ?? []);
+      let out = data ?? [];
+      // Respaldo: si no hay auditoría, mostrar las ventas que tienen descuento
+      if (out.length === 0 && motivo === "__all__") {
+        const { data: v } = await supabase
+          .from("ventas")
+          .select("id, creada_en, subtotal, descuento, total")
+          .gt("descuento", 0)
+          .gte("creada_en", d1)
+          .lte("creada_en", d2)
+          .order("creada_en", { ascending: false });
+        out = (v ?? []).map((r: any) => ({
+          id: r.id,
+          creado_en: r.creada_en,
+          tipo: "monto",
+          aplicado_a: "total",
+          valor: r.descuento,
+          monto_descuento: r.descuento,
+          motivo: "Sin registro de motivo",
+          motivo_texto: null,
+          autorizado_por: null,
+          usuario_id: null,
+          venta_id: r.id,
+          producto_id: null,
+        }));
+      }
+      setRows(out);
     } catch (e: any) {
       // Si la tabla no existe todavía
       if (String(e?.message ?? "").includes("does not exist") || e?.code === "42P01") {
