@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import type { CartItem, DescuentoInfo } from "@/hooks/usePOSCart";
 
 export type RegistrarVentaInput = {
@@ -48,12 +49,14 @@ export async function registrarVenta(input: RegistrarVentaInput) {
   // Auditoría de descuento (best-effort — no rompe la venta si falla)
   if (input.descuento_info && input.descuento_info.montoDescuento > 0) {
     try {
-      await supabase.from("descuentos_auditoria").insert({
+      const isUuid = (v?: string | null) =>
+        !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+      const { error: audErr } = await supabase.from("descuentos_auditoria").insert({
         venta_id: venta.id,
-        usuario_id: input.cajero_id ?? null,
+        usuario_id: isUuid(input.cajero_id) ? input.cajero_id : null,
         tipo: input.descuento_info.tipo,
         aplicado_a: input.descuento_info.aplicadoA,
-        producto_id: input.descuento_info.productoId ?? null,
+        producto_id: isUuid(input.descuento_info.productoId) ? input.descuento_info.productoId : null,
         valor: input.descuento_info.valor,
         monto_descuento: input.descuento_info.montoDescuento,
         motivo:
@@ -63,6 +66,12 @@ export async function registrarVenta(input: RegistrarVentaInput) {
         motivo_texto: input.descuento_info.motivoTexto ?? null,
         autorizado_por: input.descuento_info.autorizadoPor ?? null,
       });
+      if (audErr) {
+        console.error("Auditoría de descuento:", audErr);
+        toast.warning(
+          `Venta registrada, pero el descuento no se guardó en el reporte: ${audErr.message}`,
+        );
+      }
     } catch (e) {
       // Ignorar si la tabla no existe todavía
       console.warn("No se pudo registrar auditoría de descuento:", e);
