@@ -33,7 +33,7 @@ export async function registrarVenta(input: RegistrarVentaInput) {
       cliente_id: input.cliente_id ?? null,
       cajero_id: input.cajero_id ?? null,
       subtotal: input.subtotal,
-      descuento: input.descuento_info?.montoDescuento ?? 0,
+      descuento: Math.round(Number(input.descuento_info?.montoDescuento ?? 0) * 100) / 100,
       igv: input.igv,
       total: input.total,
       metodo_pago: metodo_pago as any,
@@ -47,7 +47,8 @@ export async function registrarVenta(input: RegistrarVentaInput) {
   if (vErr || !venta) throw vErr ?? new Error("No se pudo crear la venta");
 
   // Auditoría de descuento (best-effort — no rompe la venta si falla)
-  if (input.descuento_info && input.descuento_info.montoDescuento > 0) {
+  const montoDesc = Math.round(Number(input.descuento_info?.montoDescuento ?? 0) * 100) / 100;
+  if (input.descuento_info && montoDesc > 0) {
     try {
       const isUuid = (v?: string | null) =>
         !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
@@ -57,8 +58,8 @@ export async function registrarVenta(input: RegistrarVentaInput) {
         tipo: input.descuento_info.tipo,
         aplicado_a: input.descuento_info.aplicadoA,
         producto_id: isUuid(input.descuento_info.productoId) ? input.descuento_info.productoId : null,
-        valor: input.descuento_info.valor,
-        monto_descuento: input.descuento_info.montoDescuento,
+        valor: Number(input.descuento_info.valor),
+        monto_descuento: montoDesc,
         motivo:
           input.descuento_info.motivo === "Otro"
             ? (input.descuento_info.motivoTexto ?? "Otro")
