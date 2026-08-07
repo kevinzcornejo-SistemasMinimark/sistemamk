@@ -33,7 +33,7 @@ export async function registrarVenta(input: RegistrarVentaInput) {
       cliente_id: input.cliente_id ?? null,
       cajero_id: input.cajero_id ?? null,
       subtotal: input.subtotal,
-      descuento: input.descuento_info?.montoDescuento ?? 0,
+      descuento: Math.round(Number(input.descuento_info?.montoDescuento ?? 0) * 100) / 100,
       igv: input.igv,
       total: input.total,
       metodo_pago: metodo_pago as any,
