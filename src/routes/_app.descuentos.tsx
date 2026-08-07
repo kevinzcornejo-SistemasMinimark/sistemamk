@@ -68,30 +68,38 @@ function DescuentosReporte() {
       if (motivo !== "__all__") q = q.eq("motivo", motivo);
       const { data, error } = await q;
       if (error) throw error;
-      let out = data ?? [];
-      // Respaldo: si no hay auditoría, mostrar las ventas que tienen descuento
-      if (out.length === 0 && motivo === "__all__") {
+      const out = data ?? [];
+      // Respaldo: sumar las ventas con descuento que no tengan auditoría registrada
+      if (motivo === "__all__") {
+        const yaAuditadas = new Set(out.map((r: any) => r.venta_id).filter(Boolean));
         const { data: v } = await supabase
           .from("ventas")
           .select("id, creada_en, subtotal, descuento, total")
-          .gt("descuento", 0)
+          .gte("descuento", 0.005)
           .gte("creada_en", d1)
           .lte("creada_en", d2)
           .order("creada_en", { ascending: false });
-        out = (v ?? []).map((r: any) => ({
-          id: r.id,
-          creado_en: r.creada_en,
-          tipo: "monto",
-          aplicado_a: "total",
-          valor: r.descuento,
-          monto_descuento: r.descuento,
-          motivo: "Sin registro de motivo",
-          motivo_texto: null,
-          autorizado_por: null,
-          usuario_id: null,
-          venta_id: r.id,
-          producto_id: null,
-        }));
+        const extra = (v ?? [])
+          .filter((r: any) => !yaAuditadas.has(r.id))
+          .map((r: any) => ({
+            id: `venta-${r.id}`,
+            creado_en: r.creada_en,
+            tipo: "monto",
+            aplicado_a: "total",
+            valor: r.descuento,
+            monto_descuento: r.descuento,
+            motivo: "Sin registro de motivo",
+            motivo_texto: null,
+            autorizado_por: null,
+            usuario_id: null,
+            venta_id: r.id,
+            producto_id: null,
+          }));
+        out.push(...extra);
+        out.sort(
+          (a: any, b: any) =>
+            new Date(b.creado_en).getTime() - new Date(a.creado_en).getTime(),
+        );
       }
       setRows(out);
     } catch (e: any) {
@@ -166,6 +174,7 @@ function DescuentosReporte() {
                 <SelectItem value="ayer">Ayer</SelectItem>
                 <SelectItem value="semana">Esta semana</SelectItem>
                 <SelectItem value="mes">Este mes</SelectItem>
+                <SelectItem value="todos">Todos</SelectItem>
                 <SelectItem value="rango">Rango personalizado</SelectItem>
               </SelectContent>
             </Select>
