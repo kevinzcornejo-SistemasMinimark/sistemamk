@@ -15,7 +15,7 @@ export const Route = createFileRoute("/_app/descuentos")({
   component: DescuentosReporte,
 });
 
-type Rango = "hoy" | "ayer" | "semana" | "mes" | "rango";
+type Rango = "hoy" | "ayer" | "semana" | "mes" | "rango" | "todos";
 
 function rangoFechas(r: Rango, desde?: string, hasta?: string) {
   const now = new Date();
@@ -23,6 +23,8 @@ function rangoFechas(r: Rango, desde?: string, hasta?: string) {
   const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0);
   const endOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
   switch (r) {
+    case "todos":
+      return { desde: new Date(2000, 0, 1).toISOString(), hasta: iso(endOfDay(now)) };
     case "hoy":
       return { desde: iso(startOfDay(now)), hasta: iso(endOfDay(now)) };
     case "ayer": {
