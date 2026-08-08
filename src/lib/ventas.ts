@@ -62,7 +62,7 @@ export async function registrarVenta(input: RegistrarVentaInput) {
         usuario_id: isUuid(input.cajero_id) ? input.cajero_id : null,
         tipo: input.descuento_info?.tipo ?? "monto",
         aplicado_a: input.descuento_info?.aplicadoA ?? "total",
-        producto_id: isUuid(input.descuento_info?.productoId) ? input.descuento_info.productoId : null,
+        producto_id: isUuid(input.descuento_info?.productoId) ? (input.descuento_info?.productoId ?? null) : null,
         valor: Number(input.descuento_info?.valor ?? finalMonto),
         monto_descuento: finalMonto,
         motivo:
