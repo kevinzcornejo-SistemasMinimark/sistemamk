@@ -2,11 +2,15 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BarChart3, TrendingUp, FileSpreadsheet, Printer, Calendar, Package, RefreshCw } from "lucide-react";
+import { BarChart3, TrendingUp, FileSpreadsheet, Printer, Calendar as CalendarIcon, Package, RefreshCw, CalendarDays } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatPEN } from "@/lib/format";
 import { exportToCSV, printHTML } from "@/lib/exporters";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format, startOfDay, endOfDay, subDays } from "date-fns";
+import { es } from "date-fns/locale";
 import {
   BarChart, Bar, PieChart, Pie, Cell, LineChart, Line,
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
@@ -29,18 +33,31 @@ function ReportesPage() {
   const [porHora, setPorHora] = useState<{ hora: string; ventas: number }[]>([]);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [rango, setRango] = useState<7 | 15 | 30 | 90>(30);
+  const [rango, setRango] = useState<number | 'custom'>(30);
+  const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | undefined>(undefined);
 
   const cargar = async () => {
     if (isDemo || !user) return;
     setLoading(true); setErrorMsg(null);
     try {
-      const desde = new Date(); desde.setDate(desde.getDate() - rango);
-      const desdeIso = desde.toISOString();
+      let desdeIso: string;
+      let hastaIso = new Date().toISOString();
+
+      if (rango === 'custom' && dateRange?.from) {
+        desdeIso = startOfDay(dateRange.from).toISOString();
+        if (dateRange.to) {
+          hastaIso = endOfDay(dateRange.to).toISOString();
+        }
+      } else {
+        const dias = typeof rango === 'number' ? rango : 30;
+        const desde = startOfDay(subDays(new Date(), dias));
+        desdeIso = desde.toISOString();
+      }
 
       const { data: v, error: vErr } = await supabase.from("ventas")
         .select("id,creada_en,total,metodo_pago,tipo_comprobante")
         .gte("creada_en", desdeIso)
+        .lte("creada_en", hastaIso)
         .neq("estado", "ANULADA");
       if (vErr) throw vErr;
       setVentas((v ?? []) as any);
@@ -80,10 +97,18 @@ function ReportesPage() {
         setTopProductos([]);
       }
 
-      // Gastos: opcional; ignorar si tabla no existe
+      // Gastos
       try {
+        let desdeStr: string;
+        if (rango === 'custom' && dateRange?.from) {
+          desdeStr = format(dateRange.from, 'yyyy-MM-dd');
+        } else {
+          const dias = typeof rango === 'number' ? rango : 30;
+          desdeStr = format(subDays(new Date(), dias), 'yyyy-MM-dd');
+        }
+
         const { data: g, error: gErr } = await supabase.from("gastos")
-          .select("monto").gte("fecha", desde.toISOString().slice(0, 10));
+          .select("monto").gte("fecha", desdeStr);
         if (gErr) throw gErr;
         setGastosTotal((g ?? []).reduce((s: number, r: any) => s + Number(r.monto), 0));
       } catch {
@@ -96,7 +121,7 @@ function ReportesPage() {
     }
   };
 
-  useEffect(() => { cargar(); /* eslint-disable-next-line */ }, [user?.id, isDemo, rango]);
+  useEffect(() => { cargar(); /* eslint-disable-next-line */ }, [user?.id, isDemo, rango, dateRange]);
 
   const stats = useMemo(() => {
     const total = ventas.reduce((s, v) => s + Number(v.total), 0);
@@ -154,16 +179,45 @@ function ReportesPage() {
           <h1 className="text-3xl font-extrabold tracking-tight flex items-center gap-2">
             <BarChart3 className="h-7 w-7 text-primary" /> Reportes
           </h1>
-          <p className="text-muted-foreground">Análisis de ventas — últimos {rango} días</p>
+          <p className="text-muted-foreground">
+            {rango === 'custom' && dateRange?.from 
+              ? `Periodo: ${format(dateRange.from, 'dd/MM/yy')} - ${dateRange.to ? format(dateRange.to, 'dd/MM/yy') : '...'}`
+              : `Análisis de ventas — últimos ${rango} días`}
+          </p>
         </div>
-        <div className="flex gap-2 items-center">
-          <div className="flex gap-1 bg-card rounded-lg border p-1">
-            {([7, 15, 30, 90] as const).map((r) => (
+        <div className="flex gap-2 items-center flex-wrap">
+          <div className="flex gap-1 bg-card rounded-lg border p-1 flex-wrap">
+            {([1, 3, 7, 15, 30, 90] as const).map((r) => (
               <button key={r} onClick={() => setRango(r)}
-                className={`px-3 py-1.5 text-xs font-bold rounded-md ${rango === r ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}>
-                <Calendar className="h-3 w-3 inline mr-1" />{r}d
+                className={`px-3 py-1.5 text-xs font-bold rounded-md flex items-center gap-1 ${rango === r ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}>
+                <CalendarIcon className="h-3 w-3" />{r}d
               </button>
             ))}
+            
+            <Popover>
+              <PopoverTrigger asChild>
+                <button 
+                  onClick={() => setRango('custom')}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-md flex items-center gap-1 ${rango === 'custom' ? "bg-primary text-primary-foreground" : "hover:bg-muted text-muted-foreground"}`}
+                >
+                  <CalendarDays className="h-3 w-3" />
+                  {rango === 'custom' && dateRange?.from 
+                    ? `${format(dateRange.from, 'dd/MM', { locale: es })}`
+                    : 'Rango'}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  defaultMonth={dateRange?.from}
+                  selected={{ from: dateRange?.from, to: dateRange?.to }}
+                  onSelect={(range: any) => setDateRange(range)}
+                  numberOfMonths={2}
+                  locale={es}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
           <Button variant="outline" onClick={cargar} className="font-semibold" disabled={loading}>
             <RefreshCw className={`h-4 w-4 mr-2 text-blue-600 ${loading ? "animate-spin" : ""}`} />Actualizar
