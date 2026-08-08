@@ -1,13 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Boxes, Search, AlertTriangle, FileSpreadsheet, Printer, PackagePlus } from "lucide-react";
+import { Boxes, Search, AlertTriangle, FileSpreadsheet, Printer, PackagePlus, RefreshCcw } from "lucide-react";
 import { useCatalog } from "@/hooks/useCatalog";
 import { formatPEN } from "@/lib/format";
 import { exportToCSV, printHTML } from "@/lib/exporters";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/inventario")({
   head: () => ({ meta: [{ title: "Inventario — POS Minimarket" }] }),
@@ -15,7 +17,7 @@ export const Route = createFileRoute("/_app/inventario")({
 });
 
 function InventarioPage() {
-  const { productos, loading, mutate: refetchCatalog } = useCatalog();
+  const { productos, loading, refresh: refetchCatalog } = useCatalog();
   const [q, setQ] = useState("");
   const [solo, setSolo] = useState<"todos" | "bajo" | "agotado" | "reponer">("todos");
 
