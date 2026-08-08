@@ -25,7 +25,7 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         .eq("clave", "notif_stock_bajo")
         .maybeSingle();
 
-      if (configStock?.valor === "true") {
+      if (configStock?.valor === "true" || !configStock) { // Por defecto true si no existe
         const { data: prodsStock, error: prodsError } = await supabaseAdmin
           .from("productos")
           .select("id, nombre, stock, stock_minimo, unidad")
@@ -54,7 +54,7 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         .eq("clave", "notif_licencia")
         .maybeSingle();
 
-      if (configLic?.valor === "true") {
+      if (configLic?.valor === "true" || !configLic) { // Por defecto true
         const { data: lic, error: licError } = await supabaseAdmin
           .from("licencia")
           .select("*")
@@ -122,7 +122,7 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         .eq("clave", "notif_descuentos_grandes")
         .maybeSingle();
 
-      if (configDesc?.valor === "true") {
+      if (configDesc?.valor === "true" || !configDesc) { // Por defecto true
         const { data: descs, error: descError } = await supabaseAdmin
           .from("descuentos_auditoria")
           .select("id, monto_descuento, creado_en, motivo, autorizado_por, venta_id")

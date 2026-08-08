@@ -108,11 +108,18 @@ export function Header({
 
 function NotificacionesPopover() {
   const fetchAlerts = useServerFn(getNotificacionesAlertas);
-  const { data: alerts = [], isLoading } = useQuery({
+  const { data: alerts = [], isLoading, refetch } = useQuery({
     queryKey: ["notificaciones-alertas"],
     queryFn: () => fetchAlerts(),
-    refetchInterval: 60000 * 5, // Cada 5 min
+    refetchInterval: 60000 * 2, // Bajamos a 2 min por defecto para mejor respuesta
   });
+
+  // Escuchar evento de actualización manual (desde Inventario u otros)
+  useEffect(() => {
+    const handleRefresh = () => refetch();
+    window.addEventListener("refresh-notifications", handleRefresh);
+    return () => window.removeEventListener("refresh-notifications", handleRefresh);
+  }, [refetch]);
 
   const noLeidas = alerts.filter((a: any) => !a.leida).length;
 
@@ -134,7 +141,19 @@ function NotificacionesPopover() {
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 p-0 overflow-hidden shadow-xl border-border/60">
         <div className="p-4 border-b bg-muted/30 flex items-center justify-between">
-          <h3 className="font-bold text-sm">Notificaciones</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="font-bold text-sm">Notificaciones</h3>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-6 w-6" 
+              onClick={() => refetch()}
+              disabled={isLoading}
+              title="Actualizar ahora"
+            >
+              <Bell className={cn("h-3 w-3", isLoading && "animate-spin")} />
+            </Button>
+          </div>
           {noLeidas > 0 && (
             <Badge variant="secondary" className="text-[10px]">
               {noLeidas} nuevas
