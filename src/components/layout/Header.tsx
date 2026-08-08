@@ -7,6 +7,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useBusinessInfo } from "@/hooks/useBusinessInfo";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { getNotificacionesAlertas } from "@/lib/notificaciones.functions";
+import { getDiagnosticInfo } from "@/lib/diagnostic.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
@@ -108,10 +109,17 @@ export function Header({
 
 function NotificacionesPopover() {
   const fetchAlerts = useServerFn(getNotificacionesAlertas);
+  const fetchDiag = useServerFn(getDiagnosticInfo);
+  
   const { data: alerts = [], isLoading } = useQuery({
     queryKey: ["notificaciones-alertas"],
-    queryFn: () => fetchAlerts(),
-    refetchInterval: 60000 * 5, // Cada 5 min
+    queryFn: async () => {
+      const res = await fetchAlerts();
+      const diag = await fetchDiag();
+      console.log("NOTIF_DIAG:", diag);
+      return res;
+    },
+    refetchInterval: 60000 * 1, // Reducido a 1 min para debug
   });
 
   const noLeidas = alerts.filter((a: any) => !a.leida).length;
