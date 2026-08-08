@@ -62,7 +62,12 @@ export function LicenseWidget({ collapsed }: { collapsed: boolean }) {
       title={tooltip}
     >
       <KeyRound className="h-4 w-4 shrink-0" />
-      <span className="truncate">el recordatorio mejoralo</span>
+      <div className="flex flex-col min-w-0">
+        <span className="truncate">{texto}</span>
+        {vencStr && !loading && estado === "activa" && (
+          <span className="text-[9px] opacity-70 truncate">Vence: {vencStr}</span>
+        )}
+      </div>
     </div>
   );
 }
