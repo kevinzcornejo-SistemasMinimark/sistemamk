@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Rocket, Store, Palette, FileText, Printer, Bell, Shield, Database,
   Save, RefreshCcw, Plus, CheckCircle2, Upload, Eye, Key, Download,
-  Trash2, AlertTriangle,
+  Trash2, AlertTriangle, Package
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
