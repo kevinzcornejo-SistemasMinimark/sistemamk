@@ -1,10 +1,17 @@
-import { Menu, PanelLeftClose, LogOut, Wifi, WifiOff, Bell } from "lucide-react";
+import { Menu, PanelLeftClose, LogOut, Wifi, WifiOff, Bell, BellDot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useBusinessInfo } from "@/hooks/useBusinessInfo";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { getNotificacionesAlertas } from "@/lib/notificaciones.functions";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
+import { formatDistanceToNow } from "date-fns";
+import { es } from "date-fns/locale";
 
 export function Header({
   onToggleSidebar,
