@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Scale, TrendingUp, TrendingDown, Calendar, RefreshCw,
-  FileSpreadsheet, Printer, ShoppingCart, Receipt, DollarSign,
+  FileSpreadsheet, Printer, ShoppingCart, Receipt, DollarSign, Percent,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,14 +24,14 @@ export const Route = createFileRoute("/_app/reportes2")({
   component: Reportes2Page,
 });
 
-type Row = { fecha: string; ventas: number; compras: number; gastos: number };
+type Row = { fecha: string; ventas: number; compras: number; gastos: number; descuentos: number };
 
 function Reportes2Page() {
   const { user, isDemo } = useAuth();
   const [rango, setRango] = useState<number | 'custom'>(30);
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | undefined>(undefined);
   const [rows, setRows] = useState<Row[]>([]);
-  const [tot, setTot] = useState({ ventas: 0, compras: 0, gastos: 0 });
+  const [tot, setTot] = useState({ ventas: 0, compras: 0, gastos: 0, descuentos: 0 });
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -58,7 +58,7 @@ function Reportes2Page() {
       }
 
       const [vRes, cRes, gRes] = await Promise.all([
-        supabase.from("ventas").select("creada_en,total,estado").gte("creada_en", desdeIso).lte("creada_en", hastaIso).neq("estado", "ANULADA"),
+        supabase.from("ventas").select("creada_en,total,descuento,estado").gte("creada_en", desdeIso).lte("creada_en", hastaIso).neq("estado", "ANULADA"),
         supabase.from("compras").select("creada_en,total,estado").gte("creada_en", desdeIso).lte("creada_en", hastaIso),
         supabase.from("gastos").select("fecha,monto").gte("fecha", desdeDate).lte("fecha", hastaIso.slice(0, 10)),
       ]);
@@ -66,13 +66,15 @@ function Reportes2Page() {
       if (cRes.error) throw cRes.error;
 
       const map: Record<string, Row> = {};
-      const ensure = (k: string) => (map[k] ??= { fecha: k, ventas: 0, compras: 0, gastos: 0 });
+      const ensure = (k: string) => (map[k] ??= { fecha: k, ventas: 0, compras: 0, gastos: 0, descuentos: 0 });
 
-      let tV = 0, tC = 0, tG = 0;
+      let tV = 0, tC = 0, tG = 0, tD = 0;
       (vRes.data ?? []).forEach((r: any) => {
         const k = r.creada_en.slice(0, 10);
         ensure(k).ventas += Number(r.total);
+        ensure(k).descuentos += Number(r.descuento || 0);
         tV += Number(r.total);
+        tD += Number(r.descuento || 0);
       });
       (cRes.data ?? []).forEach((r: any) => {
         if (r.estado === "ANULADA") return;
@@ -91,9 +93,10 @@ function Reportes2Page() {
         ventas: Number(r.ventas.toFixed(2)),
         compras: Number(r.compras.toFixed(2)),
         gastos: Number(r.gastos.toFixed(2)),
+        descuentos: Number(r.descuentos.toFixed(2)),
       }));
       setRows(out);
-      setTot({ ventas: tV, compras: tC, gastos: tG });
+      setTot({ ventas: tV, compras: tC, gastos: tG, descuentos: tD });
     } catch (e: any) {
       setErr(e?.message ?? "Error cargando reporte");
     } finally {
@@ -205,7 +208,14 @@ function Reportes2Page() {
         <Card className="p-3 border-red-300 bg-red-50 text-red-700 text-sm font-medium">{err}</Card>
       )}
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+        <Card className="p-4 bg-gradient-to-br from-indigo-50 to-card border-indigo-200">
+          <div className="text-[11px] text-indigo-700 uppercase font-semibold flex items-center gap-1">
+            <Percent className="h-3 w-3" />
+            Descuentos
+          </div>
+          <div className="text-2xl font-extrabold text-indigo-700 mt-1">{formatPEN(tot.descuentos)}</div>
+        </Card>
         <Card className="p-4 bg-gradient-to-br from-emerald-50 to-card border-emerald-200">
           <div className="text-[11px] text-emerald-700 uppercase font-semibold flex items-center gap-1"><Receipt className="h-3 w-3" />Ventas</div>
           <div className="text-2xl font-extrabold text-emerald-700 mt-1">{formatPEN(tot.ventas)}</div>

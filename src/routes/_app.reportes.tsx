@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_app/reportes")({
   component: ReportesPage,
 });
 
-type Venta = { creada_en: string; total: number; metodo_pago: string; tipo_comprobante: string };
+type Venta = { creada_en: string; total: number; subtotal: number; descuento: number; metodo_pago: string; tipo_comprobante: string };
 type TopProd = { nombre: string; cantidad: number; total: number };
 const COLORS = ["#10b981", "#0ea5e9", "#f59e0b", "#8b5cf6", "#ef4444", "#ec4899"];
 
@@ -55,7 +55,7 @@ function ReportesPage() {
       }
 
       const { data: v, error: vErr } = await supabase.from("ventas")
-        .select("id,creada_en,total,metodo_pago,tipo_comprobante")
+        .select("id,creada_en,total,subtotal,descuento,metodo_pago,tipo_comprobante")
         .gte("creada_en", desdeIso)
         .lte("creada_en", hastaIso)
         .neq("estado", "ANULADA");
@@ -125,6 +125,7 @@ function ReportesPage() {
 
   const stats = useMemo(() => {
     const total = ventas.reduce((s, v) => s + Number(v.total), 0);
+    const totalDescuentos = ventas.reduce((s, v) => s + Number(v.descuento || 0), 0);
     const count = ventas.length;
     const promedio = count ? total / count : 0;
     const porMetodo: Record<string, number> = {};
@@ -139,7 +140,7 @@ function ReportesPage() {
       porDia[k].trans += 1;
     });
     return {
-      total, count, promedio,
+      total, count, promedio, totalDescuentos,
       metodos: Object.entries(porMetodo).map(([name, value]) => ({ name, value: Number(value.toFixed(2)) })),
       tipos: Object.entries(porTipo).map(([name, value]) => ({ name, value: Number(value.toFixed(2)) })),
       serie: Object.values(porDia).sort((a, b) => a.dia.localeCompare(b.dia)),
@@ -237,7 +238,11 @@ function ReportesPage() {
         </Card>
       )}
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+        <Card className="p-4 bg-gradient-to-br from-indigo-50 to-card border-indigo-200">
+          <div className="text-[11px] text-indigo-700 uppercase font-semibold">Descuentos</div>
+          <div className="text-2xl font-extrabold text-indigo-700 mt-1">{formatPEN(stats.totalDescuentos)}</div>
+        </Card>
         <Card className="p-4"><div className="text-[11px] text-muted-foreground uppercase font-semibold">Ventas</div><div className="text-2xl font-extrabold text-primary mt-1">{formatPEN(stats.total)}</div></Card>
         <Card className="p-4"><div className="text-[11px] text-muted-foreground uppercase font-semibold">Transacciones</div><div className="text-2xl font-extrabold mt-1">{stats.count}</div></Card>
         <Card className="p-4"><div className="text-[11px] text-muted-foreground uppercase font-semibold">Ticket promedio</div><div className="text-2xl font-extrabold mt-1">{formatPEN(stats.promedio)}</div></Card>
