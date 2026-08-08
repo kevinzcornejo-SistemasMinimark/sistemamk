@@ -1,4 +1,4 @@
-import { Menu, PanelLeftClose, LogOut, Wifi, WifiOff, Bell, BellDot } from "lucide-react";
+import { Menu, PanelLeftClose, LogOut, Wifi, WifiOff, Bell, BellDot, Package, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
@@ -104,6 +104,8 @@ export function Header({
       </div>
     </header>
   );
+}
+
 function NotificacionesPopover() {
   const fetchAlerts = useServerFn(getNotificacionesAlertas);
   const { data: alerts = [], isLoading } = useQuery({
@@ -205,5 +207,3 @@ function NotificacionesPopover() {
     </Popover>
   );
 }
-
-import { Package } from "lucide-react";
