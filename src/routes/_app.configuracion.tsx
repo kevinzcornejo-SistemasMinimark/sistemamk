@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Rocket, Store, Palette, FileText, Printer, Bell, Shield, Database,
   Save, RefreshCcw, Plus, CheckCircle2, Upload, Eye, Key, Download,
-  Trash2, AlertTriangle, Package
+  Trash2, AlertTriangle, Package, Calendar, Tag
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -118,6 +118,8 @@ function ConfigPage() {
         impresora_auto: "true",
         notif_stock_bajo: "true",
         notif_licencia: "true",
+        notif_vencimiento: "true",
+        notif_descuentos_grandes: "true",
         notif_resumen: "false",
         serie_boleta: "B001",
         serie_factura: "F001",
@@ -874,6 +876,18 @@ function ConfigPage() {
                   t: "Vencimiento de licencia",
                   d: "Alertas preventivas 7, 3 y 1 día antes del vencimiento para evitar interrupciones.",
                   icon: Shield
+                },
+                {
+                  k: "notif_vencimiento",
+                  t: "Vencimiento de productos",
+                  d: "Notificar 30 días antes del vencimiento de lotes de productos.",
+                  icon: Calendar
+                },
+                {
+                  k: "notif_descuentos_grandes",
+                  t: "Descuentos significativos",
+                  d: "Alertar cuando se apliquen descuentos mayores a S/ 20.00.",
+                  icon: Tag
                 },
                 {
                   k: "notif_resumen",
