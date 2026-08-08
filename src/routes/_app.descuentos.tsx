@@ -69,37 +69,39 @@ function DescuentosReporte() {
       const { data, error } = await q;
       if (error) throw error;
       const out = data ?? [];
-      // Respaldo: sumar las ventas con descuento que no tengan auditoría registrada
+      // Respaldo mejorado: encontrar ventas con descuento que no tengan registro en auditoría
       if (motivo === "__all__") {
         const yaAuditadas = new Set(out.map((r: any) => r.venta_id).filter(Boolean));
-        const { data: v } = await supabase
+        
+        // Consultamos ventas que tengan un valor en la columna 'descuento'
+        const { data: v, error: vErr } = await supabase
           .from("ventas")
-          .select("id, creada_en, subtotal, descuento, total")
-          .gte("descuento", 0.005)
+          .select("id, creada_en, subtotal, descuento, total, cajeros:auth_users(email)")
+          .gt("descuento", 0.005) // Mayor a 0
           .gte("creada_en", d1)
           .lte("creada_en", d2)
           .order("creada_en", { ascending: false });
-        const extra = (v ?? [])
-          .filter((r: any) => !yaAuditadas.has(r.id))
-          .map((r: any) => ({
-            id: `venta-${r.id}`,
-            creado_en: r.creada_en,
-            tipo: "monto",
-            aplicado_a: "total",
-            valor: r.descuento,
-            monto_descuento: r.descuento,
-            motivo: "Sin registro de motivo",
-            motivo_texto: null,
-            autorizado_por: null,
-            usuario_id: null,
-            venta_id: r.id,
-            producto_id: null,
-          }));
-        out.push(...extra);
-        out.sort(
-          (a: any, b: any) =>
-            new Date(b.creado_en).getTime() - new Date(a.creado_en).getTime(),
-        );
+
+        if (!vErr && v) {
+          const extra = v
+            .filter((r: any) => !yaAuditadas.has(r.id))
+            .map((r: any) => ({
+              id: `venta-${r.id}`,
+              creado_en: r.creada_en,
+              tipo: "monto",
+              aplicado_a: "total",
+              valor: r.descuento,
+              monto_descuento: r.descuento,
+              motivo: "Descuento en POS (Manual)",
+              motivo_texto: null,
+              autorizado_por: (r.cajeros as any)?.email ?? null,
+              usuario_id: null,
+              venta_id: r.id,
+              producto_id: null,
+            }));
+          out.push(...extra);
+          out.sort((a: any, b: any) => new Date(b.creado_en).getTime() - new Date(a.creado_en).getTime());
+        }
       }
       setRows(out);
     } catch (e: any) {
