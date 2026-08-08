@@ -98,6 +98,7 @@ type Venta = {
   serie: string;
   tipo_comprobante: string;
   total: number;
+  descuento: number;
   metodo_pago: string;
   estado: string;
   creada_en: string;
@@ -178,7 +179,7 @@ function TicketsPage() {
     setLoading(true);
     let qy = supabase
       .from("ventas")
-      .select("id,correlativo,serie,tipo_comprobante,total,metodo_pago,estado,creada_en,cajero_id,clientes(razon_social,nombres)")
+      .select("id,correlativo,serie,tipo_comprobante,total,descuento,metodo_pago,estado,creada_en,cajero_id,clientes(razon_social,nombres)")
       .order("creada_en", { ascending: false })
       .limit(5000);
     if (from) qy = qy.gte("creada_en", from.toISOString());
@@ -757,7 +758,7 @@ function TicketsPage() {
       <Card className="overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs uppercase">
-            <tr><th className="px-4 py-2">Comprobante</th><th className="px-4 py-2">Tipo</th><th className="px-4 py-2">Cliente</th><th className="px-4 py-2">Método</th><th className="px-4 py-2">Estado</th><th className="px-4 py-2">Fecha</th><th className="px-4 py-2 text-right">Total</th><th className="px-4 py-2 text-center">Acciones</th></tr>
+            <tr><th className="px-4 py-2">Comprobante</th><th className="px-4 py-2">Tipo</th><th className="px-4 py-2">Cliente</th><th className="px-4 py-2">Método</th><th className="px-4 py-2">Estado</th><th className="px-4 py-2 text-right">Descuento</th><th className="px-4 py-2 text-right">Total</th><th className="px-4 py-2 text-center">Acciones</th></tr>
           </thead>
           <tbody>
             {loading ? <tr><td colSpan={8} className="p-6 text-center text-muted-foreground">Cargando…</td></tr>
@@ -769,8 +770,8 @@ function TicketsPage() {
                 <td className="px-4 py-2">{v.clientes?.razon_social ?? v.clientes?.nombres ?? "—"}</td>
                 <td className="px-4 py-2"><MetodoPill metodo={v.metodo_pago} /></td>
                 <td className="px-4 py-2"><Badge variant={v.estado === "PAGADA" ? "default" : v.estado === "ANULADA" ? "destructive" : "secondary"}>{v.estado}</Badge></td>
-                <td className="px-4 py-2 text-xs">{new Date(v.creada_en).toLocaleString("es-PE")}</td>
-                <td className="px-4 py-2 text-right font-bold">{formatPEN(v.total)}</td>
+                <td className="px-4 py-2 text-right tabular-nums text-rose-600 font-medium">{v.descuento > 0 ? `-${formatPEN(v.descuento)}` : "—"}</td>
+                <td className="px-4 py-2 text-right font-bold tabular-nums">{formatPEN(v.total)}</td>
                 <td className="px-4 py-2 text-center">
                   <Button
                     size="sm"
