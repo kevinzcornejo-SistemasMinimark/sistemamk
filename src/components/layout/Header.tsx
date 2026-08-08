@@ -1,4 +1,4 @@
-import { Menu, PanelLeftClose, LogOut, Wifi, WifiOff, Bell, BellDot, Package, Shield } from "lucide-react";
+import { Menu, PanelLeftClose, LogOut, Wifi, WifiOff, Bell, BellDot, Package, Shield, Calendar, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
@@ -167,13 +167,21 @@ function NotificacionesPopover() {
                         "h-8 w-8 rounded-full grid place-items-center shrink-0",
                         alert.tipo === "stock"
                           ? "bg-amber-100 text-amber-600"
-                          : "bg-red-100 text-red-600"
+                          : alert.tipo === "licencia"
+                          ? "bg-red-100 text-red-600"
+                          : alert.tipo === "vencimiento"
+                          ? "bg-orange-100 text-orange-600"
+                          : "bg-blue-100 text-blue-600"
                       )}
                     >
                       {alert.tipo === "stock" ? (
                         <Package className="h-4 w-4" />
-                      ) : (
+                      ) : alert.tipo === "licencia" ? (
                         <Shield className="h-4 w-4" />
+                      ) : alert.tipo === "vencimiento" ? (
+                        <Calendar className="h-4 w-4" />
+                      ) : (
+                        <Tag className="h-4 w-4" />
                       )}
                     </div>
                     <div className="space-y-1 min-w-0">
