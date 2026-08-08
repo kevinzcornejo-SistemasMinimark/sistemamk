@@ -62,7 +62,7 @@ export function LicenseWidget({ collapsed }: { collapsed: boolean }) {
       title={tooltip}
     >
       <KeyRound className="h-4 w-4 shrink-0" />
-      <span className="truncate">{texto}</span>
+      <span className="truncate">el recordatorio mejoralo</span>
     </div>
   );
 }
