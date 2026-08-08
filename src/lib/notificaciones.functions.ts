@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { createClient } from "@supabase/supabase-js";
 
 export const getNotificacionesAlertas = createServerFn({ method: "GET" })
   .handler(async () => {
@@ -13,8 +14,6 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         return [];
       }
 
-      // Re-creamos el cliente dentro del handler para asegurar que las variables de entorno estén presentes
-      const { createClient } = await import("@supabase/supabase-js");
       const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRole, {
         auth: { autoRefreshToken: false, persistSession: false }
       });
@@ -26,10 +25,6 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         .eq("clave", "notif_stock_bajo")
         .maybeSingle();
 
-      if (configStockError) {
-        console.error("Error fetching configStock:", configStockError);
-      }
-
       if (configStock?.valor === "true") {
         const { data: prodsStock, error: prodsError } = await supabaseAdmin
           .from("productos")
@@ -37,10 +32,8 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
           .lt("stock", "stock_minimo")
           .eq("activo", true);
         
-        if (prodsError) {
-          console.error("Error fetching products for stock alert:", prodsError);
-        } else {
-          (prodsStock || []).forEach((p: any) => {
+        if (!prodsError && prodsStock) {
+          prodsStock.forEach((p: any) => {
             alerts.push({
               id: `stock-${p.id}`,
               tipo: "stock",
@@ -61,10 +54,6 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         .eq("clave", "notif_licencia")
         .maybeSingle();
 
-      if (configLicError) {
-        console.error("Error fetching configLic:", configLicError);
-      }
-
       if (configLic?.valor === "true") {
         const { data: lic, error: licError } = await supabaseAdmin
           .from("licencia")
@@ -72,9 +61,7 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
           .limit(1)
           .maybeSingle();
 
-        if (licError) {
-          console.error("Error fetching license:", licError);
-        } else if (lic?.fecha_vencimiento) {
+        if (!licError && lic?.fecha_vencimiento) {
           const d = (new Date(lic.fecha_vencimiento).getTime() - Date.now()) / 86400000;
           const dias = Math.floor(d);
           if (dias <= 7) {
