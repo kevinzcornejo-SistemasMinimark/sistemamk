@@ -10,6 +10,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatPEN } from "@/lib/format";
 import { exportToCSV, printHTML } from "@/lib/exporters";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { format, startOfDay, endOfDay, subDays } from "date-fns";
+import { es } from "date-fns/locale";
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
@@ -24,7 +28,8 @@ type Row = { fecha: string; ventas: number; compras: number; gastos: number };
 
 function Reportes2Page() {
   const { user, isDemo } = useAuth();
-  const [rango, setRango] = useState<7 | 15 | 30 | 90>(30);
+  const [rango, setRango] = useState<number | 'custom'>(30);
+  const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | undefined>(undefined);
   const [rows, setRows] = useState<Row[]>([]);
   const [tot, setTot] = useState({ ventas: 0, compras: 0, gastos: 0 });
   const [loading, setLoading] = useState(false);
@@ -34,14 +39,28 @@ function Reportes2Page() {
     if (isDemo || !user) return;
     setLoading(true); setErr(null);
     try {
-      const desde = new Date(); desde.setDate(desde.getDate() - rango);
-      const desdeIso = desde.toISOString();
-      const desdeDate = desde.toISOString().slice(0, 10);
+      let desdeIso: string;
+      let hastaIso = new Date().toISOString();
+      let desdeDate: string;
+
+      if (rango === 'custom' && dateRange?.from) {
+        const from = startOfDay(dateRange.from);
+        desdeIso = from.toISOString();
+        desdeDate = format(from, 'yyyy-MM-dd');
+        if (dateRange.to) {
+          hastaIso = endOfDay(dateRange.to).toISOString();
+        }
+      } else {
+        const dias = typeof rango === 'number' ? rango : 30;
+        const desde = startOfDay(subDays(new Date(), dias));
+        desdeIso = desde.toISOString();
+        desdeDate = format(desde, 'yyyy-MM-dd');
+      }
 
       const [vRes, cRes, gRes] = await Promise.all([
-        supabase.from("ventas").select("creada_en,total,estado").gte("creada_en", desdeIso).neq("estado", "ANULADA"),
-        supabase.from("compras").select("creada_en,total,estado").gte("creada_en", desdeIso),
-        supabase.from("gastos").select("fecha,monto").gte("fecha", desdeDate),
+        supabase.from("ventas").select("creada_en,total,estado").gte("creada_en", desdeIso).lte("creada_en", hastaIso).neq("estado", "ANULADA"),
+        supabase.from("compras").select("creada_en,total,estado").gte("creada_en", desdeIso).lte("creada_en", hastaIso),
+        supabase.from("gastos").select("fecha,monto").gte("fecha", desdeDate).lte("fecha", hastaIso.slice(0, 10)),
       ]);
       if (vRes.error) throw vRes.error;
       if (cRes.error) throw cRes.error;
@@ -82,7 +101,7 @@ function Reportes2Page() {
     }
   };
 
-  useEffect(() => { cargar(); /* eslint-disable-next-line */ }, [user?.id, isDemo, rango]);
+  useEffect(() => { cargar(); /* eslint-disable-next-line */ }, [user?.id, isDemo, rango, dateRange]);
 
   const utilidad = tot.ventas - tot.compras - tot.gastos;
   const margen = tot.ventas > 0 ? (utilidad / tot.ventas) * 100 : 0;
@@ -130,16 +149,45 @@ function Reportes2Page() {
           <h1 className="text-3xl font-extrabold tracking-tight flex items-center gap-2">
             <Scale className="h-7 w-7 text-primary" /> Reporte comparativo
           </h1>
-          <p className="text-muted-foreground">Ventas vs Compras vs Gastos — últimos {rango} días</p>
+          <p className="text-muted-foreground">
+            {rango === 'custom' && dateRange?.from 
+              ? `Periodo: ${format(dateRange.from, 'dd/MM/yy')} - ${dateRange.to ? format(dateRange.to, 'dd/MM/yy') : '...'}`
+              : `Ventas vs Compras vs Gastos — últimos ${rango} días`}
+          </p>
         </div>
-        <div className="flex gap-2 items-center">
-          <div className="flex gap-1 bg-card rounded-lg border p-1">
-            {([7, 15, 30, 90] as const).map((r) => (
+        <div className="flex gap-2 items-center flex-wrap">
+          <div className="flex gap-1 bg-card rounded-lg border p-1 flex-wrap">
+            {([1, 3, 7, 15, 30, 90] as const).map((r) => (
               <button key={r} onClick={() => setRango(r)}
-                className={`px-3 py-1.5 text-xs font-bold rounded-md ${rango === r ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}>
-                <Calendar className="h-3 w-3 inline mr-1" />{r}d
+                className={`px-3 py-1.5 text-xs font-bold rounded-md flex items-center gap-1 ${rango === r ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}>
+                <Calendar className="h-3 w-3" />{r}d
               </button>
             ))}
+            
+            <Popover>
+              <PopoverTrigger asChild>
+                <button 
+                  onClick={() => setRango('custom')}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-md flex items-center gap-1 ${rango === 'custom' ? "bg-primary text-primary-foreground" : "hover:bg-muted text-muted-foreground"}`}
+                >
+                  <Calendar className="h-3 w-3" />
+                  {rango === 'custom' && dateRange?.from 
+                    ? `${format(dateRange.from, 'dd/MM', { locale: es })}`
+                    : 'Rango'}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <CalendarComponent
+                  initialFocus
+                  mode="range"
+                  defaultMonth={dateRange?.from}
+                  selected={{ from: dateRange?.from, to: dateRange?.to }}
+                  onSelect={(range: any) => setDateRange(range)}
+                  numberOfMonths={2}
+                  locale={es}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
           <Button variant="outline" onClick={cargar} disabled={loading} className="font-semibold">
             <RefreshCw className={`h-4 w-4 mr-2 text-blue-600 ${loading ? "animate-spin" : ""}`} />Actualizar
