@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Rocket, Store, Palette, FileText, Printer, Bell, Shield, Database,
   Save, RefreshCcw, Plus, CheckCircle2, Upload, Eye, Key, Download,
-  Trash2, AlertTriangle,
+  Trash2, AlertTriangle, Package
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -850,20 +850,77 @@ function ConfigPage() {
 
         {/* ============ NOTIFICACIONES ============ */}
         <TabsContent value="notif" className="mt-4">
-          <Card className="p-6 space-y-3 max-w-2xl">
-            <h2 className="text-xl font-bold flex items-center gap-2"><Bell className="h-5 w-5 text-accent"/> Notificaciones</h2>
-            <p className="text-sm text-muted-foreground -mt-2">Configura las alertas del sistema</p>
-
-            {[
-              {k:"notif_stock_bajo",  t:"Alerta de stock bajo",     d:"Notificar cuando un producto tenga stock bajo"},
-              {k:"notif_licencia",    t:"Vencimiento de licencia",  d:"Alertar 7, 3 y 1 día antes del vencimiento"},
-              {k:"notif_resumen",     t:"Resumen de ventas",        d:"Notificación al cerrar caja"},
-            ].map((n)=>(
-              <div key={n.k} className="flex items-center justify-between rounded-lg bg-muted/60 p-4">
-                <div><div className="font-medium">{n.t}</div><div className="text-xs text-muted-foreground">{n.d}</div></div>
-                <Switch checked={cfg[n.k]==="true"} onCheckedChange={(v)=>set(n.k, String(v))}/>
+          <Card className="p-8 space-y-6 max-w-3xl border-border/60 shadow-sm">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                <Bell className="h-6 w-6 text-accent" />
               </div>
-            ))}
+              <div>
+                <h2 className="text-xl font-bold tracking-tight">Notificaciones</h2>
+                <p className="text-sm text-muted-foreground">Configura las alertas inteligentes del sistema</p>
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              {[
+                {
+                  k: "notif_stock_bajo",
+                  t: "Alerta de stock bajo",
+                  d: "Notificar automáticamente cuando un producto llegue a su límite mínimo configurado.",
+                  icon: Package
+                },
+                {
+                  k: "notif_licencia",
+                  t: "Vencimiento de licencia",
+                  d: "Alertas preventivas 7, 3 y 1 día antes del vencimiento para evitar interrupciones.",
+                  icon: Shield
+                },
+                {
+                  k: "notif_resumen",
+                  t: "Resumen de ventas",
+                  d: "Envío de reporte automático con los totales del día al realizar el cierre de caja.",
+                  icon: FileText
+                },
+              ].map((n) => {
+                const Icon = n.icon;
+                return (
+                  <div 
+                    key={n.k} 
+                    className="flex items-center justify-between rounded-xl border border-border/50 bg-muted/30 p-5 hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex gap-4 items-start">
+                      <div className="h-10 w-10 rounded-full bg-background border flex items-center justify-center shrink-0">
+                        <Icon className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <div className="font-bold text-base">{n.t}</div>
+                        <div className="text-sm text-muted-foreground max-w-md leading-relaxed">
+                          {n.d}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center">
+                      <Switch 
+                        checked={cfg[n.k] === "true"} 
+                        onCheckedChange={(v) => {
+                          set(n.k, String(v));
+                          // Despachamos evento para que el header se entere si lo desea
+                          window.dispatchEvent(new Event("config-updated"));
+                        }} 
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            
+            <div className="p-4 rounded-lg bg-blue-50/50 border border-blue-100 flex gap-3 items-start">
+              <div className="h-5 w-5 text-blue-500 shrink-0 mt-0.5">💡</div>
+              <p className="text-xs text-blue-700 leading-relaxed">
+                Las alertas se muestran en el panel de notificaciones de la barra superior en tiempo real. 
+                Asegúrate de configurar el stock mínimo en cada producto para que las alertas de stock sean precisas.
+              </p>
+            </div>
           </Card>
         </TabsContent>
 
