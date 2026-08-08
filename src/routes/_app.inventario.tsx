@@ -1,13 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Boxes, Search, AlertTriangle, FileSpreadsheet, Printer, PackagePlus } from "lucide-react";
+import { Boxes, Search, AlertTriangle, FileSpreadsheet, Printer, PackagePlus, RefreshCcw } from "lucide-react";
 import { useCatalog } from "@/hooks/useCatalog";
 import { formatPEN } from "@/lib/format";
 import { exportToCSV, printHTML } from "@/lib/exporters";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/inventario")({
   head: () => ({ meta: [{ title: "Inventario — POS Minimarket" }] }),
@@ -15,9 +17,16 @@ export const Route = createFileRoute("/_app/inventario")({
 });
 
 function InventarioPage() {
-  const { productos, loading } = useCatalog();
+  const { productos, loading, refresh: refetchCatalog } = useCatalog();
   const [q, setQ] = useState("");
   const [solo, setSolo] = useState<"todos" | "bajo" | "agotado" | "reponer">("todos");
+
+  // Notificar a la campana cuando se entra en inventario
+  useEffect(() => {
+    if (!loading) {
+      window.dispatchEvent(new Event("refresh-notifications"));
+    }
+  }, [loading]);
 
   const filtered = useMemo(() => {
     let list = productos;
@@ -95,6 +104,20 @@ function InventarioPage() {
           <p className="text-muted-foreground">Stock actual de productos y alertas</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={async () => {
+              await refetchCatalog();
+              window.dispatchEvent(new Event("refresh-notifications"));
+              toast.success("Inventario y notificaciones actualizadas");
+            }}
+            disabled={loading}
+            className="h-9 w-9"
+            title="Sincronizar todo ahora"
+          >
+            <RefreshCcw className={cn("h-4 w-4", loading && "animate-spin")} />
+          </Button>
           <Button variant="outline" onClick={exportarCSV} className="h-9 font-semibold">
             <FileSpreadsheet className="h-4 w-4 mr-2 text-emerald-600" />Excel
           </Button>
