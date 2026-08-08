@@ -3,7 +3,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export const getNotificacionesAlertas = createServerFn({ method: "GET" })
   .handler(async () => {
-    const alerts = [];
+    const alerts: any[] = [];
     
     // 1. Alertas de Stock Bajo
     const { data: configStock } = await supabaseAdmin
@@ -19,7 +19,7 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         .lt("stock", "stock_minimo")
         .eq("activo", true);
       
-      (prodsStock || []).forEach(p => {
+      (prodsStock || []).forEach((p: any) => {
         alerts.push({
           id: `stock-${p.id}`,
           tipo: "stock",
