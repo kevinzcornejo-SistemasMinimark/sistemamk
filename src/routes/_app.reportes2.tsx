@@ -68,11 +68,13 @@ function Reportes2Page() {
       const map: Record<string, Row> = {};
       const ensure = (k: string) => (map[k] ??= { fecha: k, ventas: 0, compras: 0, gastos: 0, descuentos: 0 });
 
-      let tV = 0, tC = 0, tG = 0;
+      let tV = 0, tC = 0, tG = 0, tD = 0;
       (vRes.data ?? []).forEach((r: any) => {
         const k = r.creada_en.slice(0, 10);
         ensure(k).ventas += Number(r.total);
+        ensure(k).descuentos += Number(r.descuento || 0);
         tV += Number(r.total);
+        tD += Number(r.descuento || 0);
       });
       (cRes.data ?? []).forEach((r: any) => {
         if (r.estado === "ANULADA") return;
