@@ -35,6 +35,7 @@ import { Route as AppClienteDisplayRouteImport } from './routes/_app.cliente-dis
 import { Route as AppCategoriasRouteImport } from './routes/_app.categorias'
 import { Route as AppCajaRouteImport } from './routes/_app.caja'
 import { Route as AppAjustesRouteImport } from './routes/_app.ajustes'
+import { Route as ApiPublicDebugNotificationsRouteImport } from './routes/api/public/debug-notifications'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -165,6 +166,12 @@ const AppAjustesRoute = AppAjustesRouteImport.update({
   path: '/ajustes',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiPublicDebugNotificationsRoute =
+  ApiPublicDebugNotificationsRouteImport.update({
+    id: '/api/public/debug-notifications',
+    path: '/api/public/debug-notifications',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -192,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/reportes2': typeof AppReportes2Route
   '/tickets': typeof AppTicketsRoute
   '/usuarios': typeof AppUsuariosRoute
+  '/api/public/debug-notifications': typeof ApiPublicDebugNotificationsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -219,6 +227,7 @@ export interface FileRoutesByTo {
   '/reportes2': typeof AppReportes2Route
   '/tickets': typeof AppTicketsRoute
   '/usuarios': typeof AppUsuariosRoute
+  '/api/public/debug-notifications': typeof ApiPublicDebugNotificationsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -248,6 +257,7 @@ export interface FileRoutesById {
   '/_app/reportes2': typeof AppReportes2Route
   '/_app/tickets': typeof AppTicketsRoute
   '/_app/usuarios': typeof AppUsuariosRoute
+  '/api/public/debug-notifications': typeof ApiPublicDebugNotificationsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -277,6 +287,7 @@ export interface FileRouteTypes {
     | '/reportes2'
     | '/tickets'
     | '/usuarios'
+    | '/api/public/debug-notifications'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -304,6 +315,7 @@ export interface FileRouteTypes {
     | '/reportes2'
     | '/tickets'
     | '/usuarios'
+    | '/api/public/debug-notifications'
   id:
     | '__root__'
     | '/'
@@ -332,12 +344,14 @@ export interface FileRouteTypes {
     | '/_app/reportes2'
     | '/_app/tickets'
     | '/_app/usuarios'
+    | '/api/public/debug-notifications'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
+  ApiPublicDebugNotificationsRoute: typeof ApiPublicDebugNotificationsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -524,6 +538,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAjustesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/api/public/debug-notifications': {
+      id: '/api/public/debug-notifications'
+      path: '/api/public/debug-notifications'
+      fullPath: '/api/public/debug-notifications'
+      preLoaderRoute: typeof ApiPublicDebugNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -585,7 +606,18 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
+  ApiPublicDebugNotificationsRoute: ApiPublicDebugNotificationsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
