@@ -46,36 +46,36 @@ export async function registrarVenta(input: RegistrarVentaInput) {
     .single();
   if (vErr || !venta) throw vErr ?? new Error("No se pudo crear la venta");
 
-  // Auditoría de descuento (best-effort — no rompe la venta si falla)
+  // Auditoría de descuento (mejorada para asegurar el registro)
   const montoDesc = Math.round(Number(input.descuento_info?.montoDescuento ?? 0) * 100) / 100;
-  if (input.descuento_info && montoDesc > 0) {
+  const descuentoManual = Math.round(Number(input.subtotal - input.total) * 100) / 100;
+  
+  if ((input.descuento_info && montoDesc > 0) || (descuentoManual > 0.005)) {
     try {
       const isUuid = (v?: string | null) =>
         !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+      
+      const finalMonto = montoDesc > 0 ? montoDesc : descuentoManual;
+      
       const { error: audErr } = await supabase.from("descuentos_auditoria").insert({
         venta_id: venta.id,
         usuario_id: isUuid(input.cajero_id) ? input.cajero_id : null,
-        tipo: input.descuento_info.tipo,
-        aplicado_a: input.descuento_info.aplicadoA,
-        producto_id: isUuid(input.descuento_info.productoId) ? input.descuento_info.productoId : null,
-        valor: Number(input.descuento_info.valor),
-        monto_descuento: montoDesc,
+        tipo: input.descuento_info?.tipo ?? "monto",
+        aplicado_a: input.descuento_info?.aplicadoA ?? "total",
+        producto_id: isUuid(input.descuento_info?.productoId) ? (input.descuento_info?.productoId ?? null) : null,
+        valor: Number(input.descuento_info?.valor ?? finalMonto),
+        monto_descuento: finalMonto,
         motivo:
-          input.descuento_info.motivo === "Otro"
-            ? (input.descuento_info.motivoTexto ?? "Otro")
-            : input.descuento_info.motivo,
-        motivo_texto: input.descuento_info.motivoTexto ?? null,
-        autorizado_por: input.descuento_info.autorizadoPor ?? null,
+          input.descuento_info?.motivo === "Otro"
+            ? (input.descuento_info?.motivoTexto ?? "Otro")
+            : (input.descuento_info?.motivo ?? "Descuento en Venta"),
+        motivo_texto: input.descuento_info?.motivoTexto ?? null,
+        autorizado_por: input.descuento_info?.autorizadoPor ?? null,
       });
-      if (audErr) {
-        console.error("Auditoría de descuento:", audErr);
-        toast.warning(
-          `Venta registrada, pero el descuento no se guardó en el reporte: ${audErr.message}`,
-        );
-      }
+
+      if (audErr) console.error("Error al registrar auditoría de descuento:", audErr);
     } catch (e) {
-      // Ignorar si la tabla no existe todavía
-      console.warn("No se pudo registrar auditoría de descuento:", e);
+      console.warn("Error crítico en auditoría de descuento:", e);
     }
   }
 
