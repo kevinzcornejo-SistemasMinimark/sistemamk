@@ -32,7 +32,15 @@ function ComprasPage() {
   const [proveedores, setProveedores] = useState<{ id: string; razon_social: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
-  const [f, setF] = useState<any>({ tipo_comprobante: "FACTURA", fecha_emision: new Date().toISOString().slice(0, 10), metodo_pago: "EFECTIVO" });
+  const [f, setF] = useState<any>({ 
+    tipo_comprobante: "FACTURA", 
+    fecha_emision: new Intl.DateTimeFormat("es-PE", { timeZone: "America/Lima", year: "numeric", month: "2-digit", day: "2-digit" })
+      .format(new Date())
+      .split("/")
+      .reverse()
+      .join("-"), 
+    metodo_pago: "EFECTIVO" 
+  });
   const [lineas, setLineas] = useState<Linea[]>([]);
   const [alertas, setAlertas] = useState<{ i: number; nombre: string; tipo: "venta" | "menor"; nuevo: number; anterior: number }[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -239,7 +247,15 @@ function ComprasPage() {
       toast.success("Compra registrada. Stock, lotes y kardex actualizados");
     }
 
-    setOpen(false); setLineas([]); setF({ tipo_comprobante: "FACTURA", fecha_emision: new Date().toISOString().slice(0, 10), metodo_pago: "EFECTIVO" });
+    setOpen(false); setLineas([]); setF({ 
+      tipo_comprobante: "FACTURA", 
+      fecha_emision: new Intl.DateTimeFormat("es-PE", { timeZone: "America/Lima", year: "numeric", month: "2-digit", day: "2-digit" })
+        .format(new Date())
+        .split("/")
+        .reverse()
+        .join("-"), 
+      metodo_pago: "EFECTIVO" 
+    });
     refresh();
     void load();
     void loadLotes();
