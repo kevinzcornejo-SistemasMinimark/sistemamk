@@ -159,18 +159,7 @@ function LoginPage() {
             </Button>
           </div>
 
-          <Button
-            variant="secondary"
-            className="w-full mt-4"
-            onClick={() => {
-              enterDemo();
-              toast.success("Modo demo activado");
-              navigate({ to: "/pos" });
-            }}
-          >
-            <Sparkles className="h-4 w-4 mr-2" />
-            Entrar en modo demo
-          </Button>
+          {/* El botón de modo demo ha sido removido a petición del usuario para evitar confusiones */}
           </Card>
         </div>
       </div>
