@@ -397,7 +397,7 @@ function POSPage() {
         tipo_comprobante: data.tipo_comprobante as "BOLETA" | "FACTURA" | "TICKET",
         serie: data.serie,
         pagos: data.pagos,
-        subtotal: cart.totales.subtotal,
+        subtotal: cart.totales.bruto - cart.totales.descuentoAplicado - cart.totales.igv,
         igv: cart.totales.igv,
         total: cart.totales.total,
         cajero_id: user.id,
