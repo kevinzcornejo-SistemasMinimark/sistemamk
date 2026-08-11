@@ -544,7 +544,7 @@ function TicketsPage() {
       setReprintingId(v.id);
       const { data: det, error } = await supabase
         .from("venta_items")
-        .select("cantidad,precio_unitario,descuento,total,producto_id,productos(id,nombre,precio_venta,afecto_igv)")
+        .select("cantidad,precio_unitario,descuento,total,producto_id,productos(id,nombre,precio_venta,afecto_igv),ventas(descuento)")
         .eq("venta_id", v.id);
       if (error) throw error;
       const items = (det ?? []).map((d: any) => ({
@@ -566,6 +566,14 @@ function TicketsPage() {
       const tipo = (v.tipo_comprobante === "FACTURA" || v.tipo_comprobante === "BOLETA")
         ? v.tipo_comprobante
         : "TICKET";
+
+      // Intentar obtener el motivo del descuento desde la auditoría
+      const { data: aud } = await supabase
+        .from("descuentos_auditoria")
+        .select("motivo")
+        .eq("venta_id", v.id)
+        .maybeSingle();
+
       setReprintData({
         tipo: tipo as TicketData["tipo"],
         serie: v.serie,
@@ -575,8 +583,11 @@ function TicketsPage() {
         subtotal,
         igv,
         total,
+        descuento: Number(v.descuento || 0),
+        descuentoMotivo: aud?.motivo || undefined,
         metodoPago: v.metodo_pago,
         cliente: v.clientes?.razon_social ?? v.clientes?.nombres ?? undefined,
+        cajero: cajerosMap[v.cajero_id || ""] || undefined,
       });
       setReprintOpen(true);
     } catch (e: any) {
