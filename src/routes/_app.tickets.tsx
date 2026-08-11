@@ -179,7 +179,7 @@ function TicketsPage() {
     setLoading(true);
     let qy = supabase
       .from("ventas")
-      .select("id,correlativo,serie,tipo_comprobante,total,descuento,metodo_pago,estado,creada_en,cajero_id,clientes(razon_social,nombres)")
+      .select("id,correlativo,serie,tipo_comprobante,total,subtotal,igv,descuento,metodo_pago,estado,creada_en,cajero_id,clientes(razon_social,nombres)")
       .order("creada_en", { ascending: false })
       .limit(5000);
     if (from) qy = qy.gte("creada_en", from.toISOString());
@@ -564,11 +564,10 @@ function TicketsPage() {
         .eq("venta_id", v.id)
         .maybeSingle();
 
-      const firstVenta = (det as any)?.[0]?.ventas;
-      const descuentoTotal = Number(aud?.monto_descuento || firstVenta?.descuento || v.descuento || 0);
+      const descuentoTotal = Number(aud?.monto_descuento || v.descuento || 0);
       const total = Number(v.total);
-      const igv = Number(firstVenta?.igv || 0);
-      const subtotal = Number(firstVenta?.subtotal || (total - igv));
+      const igv = Number(v.igv || 0);
+      const subtotal = Number(v.subtotal || (total - igv));
       const bruto = Number(subtotal + igv + descuentoTotal);
       const tipo = (v.tipo_comprobante === "FACTURA" || v.tipo_comprobante === "BOLETA")
         ? v.tipo_comprobante
@@ -782,7 +781,7 @@ function TicketsPage() {
                 <td className="px-4 py-2">{v.clientes?.razon_social ?? v.clientes?.nombres ?? "—"}</td>
                 <td className="px-4 py-2"><MetodoPill metodo={v.metodo_pago} /></td>
                 <td className="px-4 py-2"><Badge variant={v.estado === "PAGADA" ? "default" : v.estado === "ANULADA" ? "destructive" : "secondary"}>{v.estado}</Badge></td>
-                <td className="px-4 py-2 text-right tabular-nums text-rose-600 font-medium">{v.descuento > 0 ? `-${formatPEN(v.descuento)}` : "—"}</td>
+                <td className="px-4 py-2 text-right tabular-nums text-rose-600 font-medium">{Number(v.descuento || 0) > 0 ? `-${formatPEN(v.descuento)}` : "—"}</td>
                 <td className="px-4 py-2 text-right font-bold tabular-nums">{formatPEN(v.total)}</td>
                 <td className="px-4 py-2 text-center">
                   <Button
