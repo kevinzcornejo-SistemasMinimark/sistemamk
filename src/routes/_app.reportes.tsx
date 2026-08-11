@@ -9,7 +9,7 @@ import { formatPEN } from "@/lib/format";
 import { exportToCSV, printHTML } from "@/lib/exporters";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { format, startOfDay, endOfDay, subDays } from "date-fns";
+import { format, startOfDay, endOfDay, subDays, addHours } from "date-fns";
 import { es } from "date-fns/locale";
 import {
   BarChart, Bar, PieChart, Pie, Cell, LineChart, Line,
@@ -41,7 +41,8 @@ function ReportesPage() {
     setLoading(true); setErrorMsg(null);
     try {
       let desdeIso: string;
-      let hastaIso = new Date().toISOString();
+      // Ajuste para considerar el día completo en America/Lima
+      let hastaIso = endOfDay(new Date()).toISOString();
 
       if (rango === 'custom' && dateRange?.from) {
         desdeIso = startOfDay(dateRange.from).toISOString();
@@ -65,7 +66,8 @@ function ReportesPage() {
       // Agrupar por hora del día
       const hh: Record<string, number> = {};
       (v ?? []).forEach((row: any) => {
-        const h = new Date(row.creada_en).getHours().toString().padStart(2, "0");
+        // Ajuste manual de hora para el reporte visual (UTC a Lima: -5h)
+        const h = format(addHours(new Date(row.creada_en), -5), "HH");
         hh[h] = (hh[h] ?? 0) + Number(row.total);
       });
       setPorHora(
@@ -134,7 +136,8 @@ function ReportesPage() {
     ventas.forEach((v) => {
       porMetodo[v.metodo_pago] = (porMetodo[v.metodo_pago] ?? 0) + Number(v.total);
       porTipo[v.tipo_comprobante] = (porTipo[v.tipo_comprobante] ?? 0) + Number(v.total);
-      const k = v.creada_en.slice(0, 10);
+      // Ajuste de fecha para el reporte visual (UTC a Lima: -5h)
+      const k = format(addHours(new Date(v.creada_en), -5), "yyyy-MM-dd");
       if (!porDia[k]) porDia[k] = { dia: k.slice(5), ventas: 0, trans: 0 };
       porDia[k].ventas += Number(v.total);
       porDia[k].trans += 1;

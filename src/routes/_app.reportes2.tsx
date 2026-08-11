@@ -12,7 +12,7 @@ import { formatPEN } from "@/lib/format";
 import { exportToCSV, printHTML } from "@/lib/exporters";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { format, startOfDay, endOfDay, subDays } from "date-fns";
+import { format, startOfDay, endOfDay, subDays, addHours } from "date-fns";
 import { es } from "date-fns/locale";
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
@@ -40,7 +40,7 @@ function Reportes2Page() {
     setLoading(true); setErr(null);
     try {
       let desdeIso: string;
-      let hastaIso = new Date().toISOString();
+      let hastaIso = endOfDay(new Date()).toISOString();
       let desdeDate: string;
 
       if (rango === 'custom' && dateRange?.from) {
@@ -70,7 +70,7 @@ function Reportes2Page() {
 
       let tV = 0, tC = 0, tG = 0, tD = 0;
       (vRes.data ?? []).forEach((r: any) => {
-        const k = r.creada_en.slice(0, 10);
+        const k = format(addHours(new Date(r.creada_en), -5), "yyyy-MM-dd");
         ensure(k).ventas += Number(r.total);
         ensure(k).descuentos += Number(r.descuento || 0);
         tV += Number(r.total);
@@ -78,7 +78,7 @@ function Reportes2Page() {
       });
       (cRes.data ?? []).forEach((r: any) => {
         if (r.estado === "ANULADA") return;
-        const k = r.creada_en.slice(0, 10);
+        const k = format(addHours(new Date(r.creada_en), -5), "yyyy-MM-dd");
         ensure(k).compras += Number(r.total);
         tC += Number(r.total);
       });

@@ -13,6 +13,7 @@ export const calcIGV = (totalConIgv: number) =>
 
 export const formatDate = (d: string | Date) =>
   new Date(d).toLocaleDateString("es-PE", {
+    timeZone: "America/Lima",
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
