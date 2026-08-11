@@ -32,7 +32,7 @@ export async function registrarVenta(input: RegistrarVentaInput) {
       serie: input.serie,
       cliente_id: input.cliente_id ?? null,
       cajero_id: input.cajero_id ?? null,
-      subtotal: input.subtotal,
+      subtotal: Number(input.subtotal || 0),
       descuento: Number(input.descuento_info?.montoDescuento || 0),
       igv: input.igv,
       total: input.total,
