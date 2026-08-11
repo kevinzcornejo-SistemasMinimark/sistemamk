@@ -53,7 +53,7 @@ function LoginPage() {
             </div>
             <div>
               <h1 className="text-3xl font-extrabold tracking-tight">{biz.nombre}</h1>
-              <p className="text-muted-foreground">Punto de venta para tu bodega 🇵🇪</p>
+              <p className="text-muted-foreground">Punto de venta para tu bodega PE</p>
             </div>
           </div>
           <ul className="space-y-3 text-sm">

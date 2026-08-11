@@ -59,9 +59,9 @@ export const mockProductos: MockProducto[] = [
 
 export const mockBusiness = {
   ruc: "20123456789",
-  razon_social: "Minimarket La Esquina S.A.C.",
-  nombre_comercial: "Minimarket La Esquina",
-  direccion: "Av. Los Próceres 123, Lima",
+  razon_social: "LA COOP",
+  nombre_comercial: "LA COOP",
+  direccion: "Pórtico Urb Sol de Cieneguilla",
   moneda: "PEN",
   igv: 18,
 };
