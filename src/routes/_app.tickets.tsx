@@ -539,12 +539,12 @@ function TicketsPage() {
     setPreset("hoy"); setDesde(""); setHasta("");
   };
 
-  const reimprimir = async (v: Venta) => {
+  const reimprimir = async (v: any) => {
     try {
       setReprintingId(v.id);
       const { data: det, error } = await supabase
         .from("venta_items")
-        .select("cantidad,precio_unitario,descuento,total,producto_id,productos(id,nombre,precio_venta,afecto_igv),ventas(descuento)")
+        .select("cantidad,precio_unitario,descuento,total,producto_id,productos(id,nombre,precio_venta,afecto_igv),ventas(descuento, subtotal, igv)")
         .eq("venta_id", v.id);
       if (error) throw error;
       const items = (det ?? []).map((d: any) => ({
@@ -558,11 +558,10 @@ function TicketsPage() {
         descuento: Number(d.descuento ?? 0),
       }));
       const total = Number(v.total);
-      const igv = items.reduce((s, i: any) => {
-        const linea = i.producto.precio_venta * i.cantidad - i.descuento;
-        return s + (i.producto.igv ? linea - linea / 1.18 : 0);
-      }, 0);
-      const subtotal = total - igv;
+      const firstVenta = (det as any)?.[0]?.ventas;
+      const descuentoTotal = Number(aud?.monto_descuento || firstVenta?.descuento || v.descuento || 0);
+      const subtotal = Number(firstVenta?.subtotal || (total - (firstVenta?.igv || 0)));
+      const igv = Number(firstVenta?.igv || 0);
       const tipo = (v.tipo_comprobante === "FACTURA" || v.tipo_comprobante === "BOLETA")
         ? v.tipo_comprobante
         : "TICKET";
@@ -583,7 +582,7 @@ function TicketsPage() {
         subtotal,
         igv,
         total,
-        descuento: Number(aud?.monto_descuento || v.descuento || 0),
+        descuento: descuentoTotal,
         descuentoMotivo: aud?.motivo || undefined,
         metodoPago: v.metodo_pago,
         cliente: v.clientes?.razon_social ?? v.clientes?.nombres ?? undefined,
