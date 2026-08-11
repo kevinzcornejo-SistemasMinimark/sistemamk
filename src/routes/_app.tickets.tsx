@@ -567,10 +567,10 @@ function TicketsPage() {
         ? v.tipo_comprobante
         : "TICKET";
 
-      // Intentar obtener el motivo del descuento desde la auditoría
+      // Intentar obtener el detalle del descuento desde la auditoría
       const { data: aud } = await supabase
         .from("descuentos_auditoria")
-        .select("motivo")
+        .select("motivo, monto_descuento")
         .eq("venta_id", v.id)
         .maybeSingle();
 
@@ -583,7 +583,7 @@ function TicketsPage() {
         subtotal,
         igv,
         total,
-        descuento: Number(v.descuento || 0),
+        descuento: Number(aud?.monto_descuento || v.descuento || 0),
         descuentoMotivo: aud?.motivo || undefined,
         metodoPago: v.metodo_pago,
         cliente: v.clientes?.razon_social ?? v.clientes?.nombres ?? undefined,
