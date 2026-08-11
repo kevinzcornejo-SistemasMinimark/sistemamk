@@ -407,7 +407,10 @@ function POSPage() {
         total: cart.totales.total,
         cajero_id: user.id,
         caja_id: cajaAbierta?.id ?? null,
-        descuento_info: cart.descuentoInfo,
+        descuento_info: {
+          ...cart.descuentoInfo,
+          montoDescuento: cart.totales.descuentoAplicado,
+        },
         observaciones: data.nombre_cliente
           ? `Cliente: ${data.nombre_cliente}${data.documento_cliente ? ` · Doc: ${data.documento_cliente}` : ""}`
           : undefined,
