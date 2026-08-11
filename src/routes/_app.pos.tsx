@@ -107,7 +107,12 @@ function POSPage() {
         .select("id,nombre,descripcion,precio_combo,activo,temporal,fecha_inicio,fecha_fin,combo_items(producto_id,cantidad,descuenta_stock)")
         .eq("activo", true)
         .order("nombre");
-      const hoy = new Date().toISOString().slice(0, 10);
+      const hoy = new Intl.DateTimeFormat("es-PE", { 
+        timeZone: "America/Lima", 
+        year: "numeric", 
+        month: "2-digit", 
+        day: "2-digit" 
+      }).format(new Date()).split("/").reverse().join("-");
       const vigentes = (data ?? []).filter((c: any) =>
         !c.temporal ||
         ((!c.fecha_inicio || c.fecha_inicio <= hoy) && (!c.fecha_fin || c.fecha_fin >= hoy)),
@@ -358,7 +363,7 @@ function POSPage() {
     const baseTicket = {
       tipo: data.tipo_comprobante as TicketData["tipo"],
       serie: data.serie,
-      fecha: new Date(),
+      fecha: new Date(new Intl.DateTimeFormat("en-US", { timeZone: "America/Lima", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).format(new Date())),
       items: cart.items,
       subtotal: cart.totales.subtotal,
       igv: cart.totales.igv,
