@@ -110,7 +110,7 @@ function LoginPage() {
             onClick={() => {
               enterDemo();
               toast.success("Modo demo activado");
-              navigate({ to: "/dashboard" });
+              navigate({ to: "/pos" });
             }}
           >
             <Sparkles className="h-4 w-4 mr-2" />
