@@ -407,10 +407,20 @@ function POSPage() {
         total: cart.totales.total,
         cajero_id: user.id,
         caja_id: cajaAbierta?.id ?? null,
-        descuento_info: {
-          ...cart.descuentoInfo,
-          montoDescuento: cart.totales.descuentoAplicado,
-        },
+        descuento_info: cart.descuentoInfo
+          ? {
+              ...cart.descuentoInfo,
+              montoDescuento: cart.totales.descuentoAplicado,
+            }
+          : cart.totales.descuentoAplicado > 0
+            ? {
+                tipo: "monto",
+                valor: cart.totales.descuentoAplicado,
+                aplicadoA: "total",
+                montoDescuento: cart.totales.descuentoAplicado,
+                motivo: "Descuento en Venta",
+              }
+            : null,
         observaciones: data.nombre_cliente
           ? `Cliente: ${data.nombre_cliente}${data.documento_cliente ? ` · Doc: ${data.documento_cliente}` : ""}`
           : undefined,
