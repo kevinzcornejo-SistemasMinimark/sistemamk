@@ -781,7 +781,7 @@ function TicketsPage() {
                 <td className="px-4 py-2">{v.clientes?.razon_social ?? v.clientes?.nombres ?? "—"}</td>
                 <td className="px-4 py-2"><MetodoPill metodo={v.metodo_pago} /></td>
                 <td className="px-4 py-2"><Badge variant={v.estado === "PAGADA" ? "default" : v.estado === "ANULADA" ? "destructive" : "secondary"}>{v.estado}</Badge></td>
-                <td className="px-4 py-2 text-right tabular-nums text-rose-600 font-medium">{v.descuento > 0 ? `-${formatPEN(v.descuento)}` : "—"}</td>
+                <td className="px-4 py-2 text-right tabular-nums text-rose-600 font-medium">{Number(v.descuento || 0) > 0 ? `-${formatPEN(v.descuento)}` : "—"}</td>
                 <td className="px-4 py-2 text-right font-bold tabular-nums">{formatPEN(v.total)}</td>
                 <td className="px-4 py-2 text-center">
                   <Button
