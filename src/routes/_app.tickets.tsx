@@ -557,6 +557,13 @@ function TicketsPage() {
         cantidad: Number(d.cantidad),
         descuento: Number(d.descuento ?? 0),
       }));
+      // Intentar obtener el detalle del descuento desde la auditoría
+      const { data: aud } = await supabase
+        .from("descuentos_auditoria")
+        .select("motivo, monto_descuento")
+        .eq("venta_id", v.id)
+        .maybeSingle();
+
       const total = Number(v.total);
       const firstVenta = (det as any)?.[0]?.ventas;
       const descuentoTotal = Number(aud?.monto_descuento || firstVenta?.descuento || v.descuento || 0);
@@ -565,13 +572,6 @@ function TicketsPage() {
       const tipo = (v.tipo_comprobante === "FACTURA" || v.tipo_comprobante === "BOLETA")
         ? v.tipo_comprobante
         : "TICKET";
-
-      // Intentar obtener el detalle del descuento desde la auditoría
-      const { data: aud } = await supabase
-        .from("descuentos_auditoria")
-        .select("motivo, monto_descuento")
-        .eq("venta_id", v.id)
-        .maybeSingle();
 
       setReprintData({
         tipo: tipo as TicketData["tipo"],
