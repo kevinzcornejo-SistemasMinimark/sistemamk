@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Store, Sparkles } from "lucide-react";
+import { Store, Sparkles, Phone, MapPin, FileText } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +24,7 @@ function LoginPage() {
 
   useEffect(() => {
     if (!loading && (user || isDemo)) {
-      navigate({ to: "/dashboard" });
+      navigate({ to: "/pos" });
     }
   }, [user, isDemo, loading, navigate]);
 
@@ -44,19 +44,55 @@ function LoginPage() {
       <div className="w-full max-w-5xl grid md:grid-cols-2 gap-8 items-center">
         <div className="hidden md:block space-y-6">
           <div className="flex items-center gap-3">
-            <div className="h-14 w-14 rounded-2xl bg-primary text-primary-foreground grid place-items-center shadow-lg overflow-hidden">
+            <div className="h-14 w-14 rounded-2xl bg-white text-primary grid place-items-center shadow-lg overflow-hidden border border-border/50">
               {biz.logo ? (
-                <img src={biz.logo} alt="logo" className="h-full w-full object-cover" />
+                <img src={biz.logo} alt="logo" className="h-full w-full object-contain p-1" />
               ) : (
                 <Store className="h-7 w-7" />
               )}
             </div>
             <div>
               <h1 className="text-3xl font-extrabold tracking-tight">{biz.nombre}</h1>
-              <p className="text-muted-foreground">Punto de venta para tu bodega 🇵🇪</p>
+              <p className="text-muted-foreground">Punto de venta para tu bodega PE</p>
             </div>
           </div>
-          <ul className="space-y-3 text-sm">
+          <div className="space-y-4 bg-white/50 backdrop-blur-sm p-5 rounded-2xl border border-border/40 shadow-sm">
+            <h3 className="font-bold text-lg text-primary flex items-center gap-2">
+              <Store className="h-5 w-5" /> Información de la Empresa
+            </h3>
+            <div className="grid grid-cols-1 gap-3 text-sm">
+              <div className="flex items-center gap-3 p-2 hover:bg-white rounded-lg transition-colors">
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                  <FileText className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase font-bold text-muted-foreground leading-none">R.U.C.</p>
+                  <p className="font-semibold">{biz.ruc}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-2 hover:bg-white rounded-lg transition-colors">
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                  <MapPin className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase font-bold text-muted-foreground leading-none">Dirección</p>
+                  <p className="font-semibold">{biz.direccion}</p>
+                </div>
+              </div>
+              {biz.telefono && (
+                <div className="flex items-center gap-3 p-2 hover:bg-white rounded-lg transition-colors">
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                    <Phone className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground leading-none">Teléfono</p>
+                    <p className="font-semibold">{biz.telefono}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          <ul className="space-y-2 text-sm">
             {[
               "Ventas rápidas con lector de código de barras",
               "Boletas, facturas y tickets con IGV 18%",
@@ -71,8 +107,27 @@ function LoginPage() {
           </ul>
         </div>
 
-        <Card className="p-6 md:p-8 shadow-xl border-border/60">
-          <h2 className="text-xl font-bold mb-1">Bienvenido</h2>
+        <div className="flex flex-col gap-4">
+          <div className="md:hidden space-y-4 bg-white/50 backdrop-blur-sm p-4 rounded-xl border border-border/40 mb-2">
+            <h3 className="font-bold text-sm text-primary flex items-center gap-2">
+              <Store className="h-4 w-4" /> {biz.nombre}
+            </h3>
+            <div className="grid grid-cols-2 gap-2 text-[10px]">
+              <div className="flex items-center gap-2">
+                <FileText className="h-3 w-3 text-primary" />
+                <span className="font-semibold">{biz.ruc}</span>
+              </div>
+              {biz.telefono && (
+                <div className="flex items-center gap-2">
+                  <Phone className="h-3 w-3 text-primary" />
+                  <span className="font-semibold">{biz.telefono}</span>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <Card className="p-6 md:p-8 shadow-xl border-border/60">
+            <h2 className="text-xl font-bold mb-1">Bienvenido</h2>
           <p className="text-sm text-muted-foreground mb-6">
             Inicia sesión con tu correo y contraseña. Las nuevas cuentas las crea el administrador.
           </p>
@@ -110,13 +165,14 @@ function LoginPage() {
             onClick={() => {
               enterDemo();
               toast.success("Modo demo activado");
-              navigate({ to: "/dashboard" });
+              navigate({ to: "/pos" });
             }}
           >
             <Sparkles className="h-4 w-4 mr-2" />
             Entrar en modo demo
           </Button>
-        </Card>
+          </Card>
+        </div>
       </div>
     </div>
   );
