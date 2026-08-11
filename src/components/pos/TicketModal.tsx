@@ -168,7 +168,7 @@ export function TicketModal({
               </tbody>
             </table>
             <hr className="my-2 border-t border-dashed border-black" />
-            {ticket.descuento && ticket.descuento > 0 ? (
+            {Number(ticket.descuento || 0) > 0 ? (
               <>
                 <div className="row flex justify-between text-xs font-bold">
                   <span>IMPORTE</span>
@@ -195,7 +195,7 @@ export function TicketModal({
               <span>TOTAL S/.</span>
               <span className="tabular-nums">{ticket.total.toFixed(2)}</span>
             </div>
-            {ticket.descuento && ticket.descuento > 0 ? (
+            {Number(ticket.descuento || 0) > 0 ? (
               <div className="center text-center text-[12px] font-extrabold">
                 USTED AHORRÓ: {formatPEN(ticket.descuento)}
               </div>
