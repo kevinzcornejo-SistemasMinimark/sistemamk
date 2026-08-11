@@ -46,7 +46,7 @@ function LoginPage() {
           <div className="flex items-center gap-3">
             <div className="h-14 w-14 rounded-2xl bg-[#9333ea] text-primary-foreground grid place-items-center shadow-lg overflow-hidden">
               {biz.logo ? (
-                <img src={biz.logo} alt="logo" className="h-full w-full object-cover" />
+                <img src={biz.logo} alt="logo" className="h-full w-full object-contain p-1" />
               ) : (
                 <Store className="h-7 w-7" />
               )}
