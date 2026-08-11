@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Store, Sparkles } from "lucide-react";
+import { Store, Sparkles, Phone, MapPin, FileText } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,7 +56,43 @@ function LoginPage() {
               <p className="text-muted-foreground">Punto de venta para tu bodega PE</p>
             </div>
           </div>
-          <ul className="space-y-3 text-sm">
+          <div className="space-y-4 bg-white/50 backdrop-blur-sm p-5 rounded-2xl border border-border/40 shadow-sm">
+            <h3 className="font-bold text-lg text-primary flex items-center gap-2">
+              <Store className="h-5 w-5" /> Información de la Empresa
+            </h3>
+            <div className="grid grid-cols-1 gap-3 text-sm">
+              <div className="flex items-center gap-3 p-2 hover:bg-white rounded-lg transition-colors">
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                  <FileText className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase font-bold text-muted-foreground leading-none">R.U.C.</p>
+                  <p className="font-semibold">{biz.ruc}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-2 hover:bg-white rounded-lg transition-colors">
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                  <MapPin className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase font-bold text-muted-foreground leading-none">Dirección</p>
+                  <p className="font-semibold">{biz.direccion}</p>
+                </div>
+              </div>
+              {biz.telefono && (
+                <div className="flex items-center gap-3 p-2 hover:bg-white rounded-lg transition-colors">
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                    <Phone className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground leading-none">Teléfono</p>
+                    <p className="font-semibold">{biz.telefono}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          <ul className="space-y-2 text-sm">
             {[
               "Ventas rápidas con lector de código de barras",
               "Boletas, facturas y tickets con IGV 18%",
