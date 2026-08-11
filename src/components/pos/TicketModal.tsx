@@ -171,9 +171,9 @@ export function TicketModal({
             {Number(ticket.descuento || 0) > 0 ? (
               <>
                 <div className="row flex justify-between text-xs font-bold">
-                  <span>IMPORTE</span>
+                  <span>BRUTO</span>
                   <span className="tabular-nums">
-                    {formatPEN(ticket.bruto ?? ticket.subtotal + ticket.igv + (ticket.descuento || 0))}
+                    {formatPEN(ticket.bruto ?? (Number(ticket.total) + Number(ticket.descuento)))}
                   </span>
                 </div>
                 <div className="row flex justify-between text-xs font-extrabold">
