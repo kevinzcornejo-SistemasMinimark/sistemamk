@@ -100,7 +100,7 @@ function LoginPage() {
               "Inventario, caja, compras y reportes en un solo lugar",
             ].map((t) => (
               <li key={t} className="flex items-start gap-2">
-                <span className="mt-1 h-2 w-2 rounded-full bg-[#9333ea]" />
+                <span className="mt-1 h-2 w-2 rounded-full bg-primary" />
                 <span>{t}</span>
               </li>
             ))}
@@ -154,7 +154,7 @@ function LoginPage() {
                 onKeyDown={(e) => e.key === "Enter" && handle()}
               />
             </div>
-            <Button className="w-full bg-[#9333ea] hover:bg-[#7e22ce]" disabled={submitting} onClick={handle}>
+            <Button className="w-full" disabled={submitting} onClick={handle}>
               {submitting ? "Ingresando…" : "Ingresar"}
             </Button>
           </div>
