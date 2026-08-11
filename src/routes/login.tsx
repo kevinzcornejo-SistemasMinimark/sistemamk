@@ -44,7 +44,7 @@ function LoginPage() {
       <div className="w-full max-w-5xl grid md:grid-cols-2 gap-8 items-center">
         <div className="hidden md:block space-y-6">
           <div className="flex items-center gap-3">
-            <div className="h-14 w-14 rounded-2xl bg-[#9333ea] text-primary-foreground grid place-items-center shadow-lg overflow-hidden">
+            <div className="h-14 w-14 rounded-2xl bg-white text-primary grid place-items-center shadow-lg overflow-hidden border border-border/50">
               {biz.logo ? (
                 <img src={biz.logo} alt="logo" className="h-full w-full object-contain p-1" />
               ) : (
@@ -109,6 +109,7 @@ function LoginPage() {
             className="w-full mt-4"
             onClick={() => {
               enterDemo();
+              window.localStorage.setItem('role', 'admin'); // Forzar rol de admin en demo
               toast.success("Modo demo activado");
               navigate({ to: "/pos" });
             }}
