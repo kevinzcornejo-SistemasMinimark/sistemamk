@@ -109,7 +109,6 @@ function LoginPage() {
             className="w-full mt-4"
             onClick={() => {
               enterDemo();
-              window.localStorage.setItem('role', 'admin'); // Forzar rol de admin en demo
               toast.success("Modo demo activado");
               navigate({ to: "/pos" });
             }}
