@@ -584,6 +584,7 @@ function TicketsPage() {
         igv,
         total,
         descuento: descuentoTotal,
+        bruto: bruto,
         descuentoMotivo: aud?.motivo || undefined,
         metodoPago: v.metodo_pago,
         cliente: v.clientes?.razon_social ?? v.clientes?.nombres ?? undefined,
