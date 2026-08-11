@@ -44,7 +44,7 @@ function LoginPage() {
       <div className="w-full max-w-5xl grid md:grid-cols-2 gap-8 items-center">
         <div className="hidden md:block space-y-6">
           <div className="flex items-center gap-3">
-            <div className="h-14 w-14 rounded-2xl bg-primary text-primary-foreground grid place-items-center shadow-lg overflow-hidden">
+            <div className="h-14 w-14 rounded-2xl bg-[#9333ea] text-primary-foreground grid place-items-center shadow-lg overflow-hidden">
               {biz.logo ? (
                 <img src={biz.logo} alt="logo" className="h-full w-full object-cover" />
               ) : (
@@ -64,7 +64,7 @@ function LoginPage() {
               "Inventario, caja, compras y reportes en un solo lugar",
             ].map((t) => (
               <li key={t} className="flex items-start gap-2">
-                <span className="mt-1 h-2 w-2 rounded-full bg-primary" />
+                <span className="mt-1 h-2 w-2 rounded-full bg-[#9333ea]" />
                 <span>{t}</span>
               </li>
             ))}
@@ -99,7 +99,7 @@ function LoginPage() {
                 onKeyDown={(e) => e.key === "Enter" && handle()}
               />
             </div>
-            <Button className="w-full" disabled={submitting} onClick={handle}>
+            <Button className="w-full bg-[#9333ea] hover:bg-[#7e22ce]" disabled={submitting} onClick={handle}>
               {submitting ? "Ingresando…" : "Ingresar"}
             </Button>
           </div>
