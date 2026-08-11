@@ -107,8 +107,27 @@ function LoginPage() {
           </ul>
         </div>
 
-        <Card className="p-6 md:p-8 shadow-xl border-border/60">
-          <h2 className="text-xl font-bold mb-1">Bienvenido</h2>
+        <div className="flex flex-col gap-4">
+          <div className="md:hidden space-y-4 bg-white/50 backdrop-blur-sm p-4 rounded-xl border border-border/40 mb-2">
+            <h3 className="font-bold text-sm text-primary flex items-center gap-2">
+              <Store className="h-4 w-4" /> {biz.nombre}
+            </h3>
+            <div className="grid grid-cols-2 gap-2 text-[10px]">
+              <div className="flex items-center gap-2">
+                <FileText className="h-3 w-3 text-primary" />
+                <span className="font-semibold">{biz.ruc}</span>
+              </div>
+              {biz.telefono && (
+                <div className="flex items-center gap-2">
+                  <Phone className="h-3 w-3 text-primary" />
+                  <span className="font-semibold">{biz.telefono}</span>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <Card className="p-6 md:p-8 shadow-xl border-border/60">
+            <h2 className="text-xl font-bold mb-1">Bienvenido</h2>
           <p className="text-sm text-muted-foreground mb-6">
             Inicia sesión con tu correo y contraseña. Las nuevas cuentas las crea el administrador.
           </p>
@@ -152,7 +171,8 @@ function LoginPage() {
             <Sparkles className="h-4 w-4 mr-2" />
             Entrar en modo demo
           </Button>
-        </Card>
+          </Card>
+        </div>
       </div>
     </div>
   );
