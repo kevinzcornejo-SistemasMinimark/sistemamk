@@ -24,7 +24,7 @@ function LoginPage() {
 
   useEffect(() => {
     if (!loading && (user || isDemo)) {
-      navigate({ to: "/dashboard" });
+      navigate({ to: "/pos" });
     }
   }, [user, isDemo, loading, navigate]);
 
