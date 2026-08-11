@@ -564,11 +564,12 @@ function TicketsPage() {
         .eq("venta_id", v.id)
         .maybeSingle();
 
-      const total = Number(v.total);
       const firstVenta = (det as any)?.[0]?.ventas;
       const descuentoTotal = Number(aud?.monto_descuento || firstVenta?.descuento || v.descuento || 0);
-      const subtotal = Number(firstVenta?.subtotal || (total - (firstVenta?.igv || 0)));
+      const total = Number(v.total);
       const igv = Number(firstVenta?.igv || 0);
+      const subtotal = Number(firstVenta?.subtotal || (total - igv));
+      const bruto = Number(subtotal + igv + descuentoTotal);
       const tipo = (v.tipo_comprobante === "FACTURA" || v.tipo_comprobante === "BOLETA")
         ? v.tipo_comprobante
         : "TICKET";
@@ -583,6 +584,7 @@ function TicketsPage() {
         igv,
         total,
         descuento: descuentoTotal,
+        bruto: bruto,
         descuentoMotivo: aud?.motivo || undefined,
         metodoPago: v.metodo_pago,
         cliente: v.clientes?.razon_social ?? v.clientes?.nombres ?? undefined,
