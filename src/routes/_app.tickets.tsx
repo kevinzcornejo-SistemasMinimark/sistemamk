@@ -179,7 +179,7 @@ function TicketsPage() {
     setLoading(true);
     let qy = supabase
       .from("ventas")
-      .select("id,correlativo,serie,tipo_comprobante,total,descuento,metodo_pago,estado,creada_en,cajero_id,clientes(razon_social,nombres)")
+      .select("id,correlativo,serie,tipo_comprobante,total,subtotal,igv,descuento,metodo_pago,estado,creada_en,cajero_id,clientes(razon_social,nombres)")
       .order("creada_en", { ascending: false })
       .limit(5000);
     if (from) qy = qy.gte("creada_en", from.toISOString());
