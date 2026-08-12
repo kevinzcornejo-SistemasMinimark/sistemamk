@@ -85,7 +85,9 @@ export function Header({
           {role ?? "—"}
         </Badge>
 
-        <NotificacionesPopover />
+        <div className="z-50">
+          <NotificacionesPopover />
+        </div>
 
         <div className="hidden md:block text-xs text-muted-foreground max-w-[160px] truncate">
           {user?.email ?? (isDemo ? "Modo demo" : "")}
