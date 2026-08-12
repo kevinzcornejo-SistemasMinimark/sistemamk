@@ -85,8 +85,7 @@ export function Header({
           {role ?? "—"}
         </Badge>
 
-        {/* Notificaciones temporalmente deshabilitadas */}
-        {/* <NotificacionesPopover /> */}
+        <NotificacionesPopover />
 
         <div className="hidden md:block text-xs text-muted-foreground max-w-[160px] truncate">
           {user?.email ?? (isDemo ? "Modo demo" : "")}
