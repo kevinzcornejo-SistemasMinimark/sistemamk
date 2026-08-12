@@ -249,17 +249,29 @@ function DescuentosReporte() {
               ) : rows.map((r) => (
                 <tr key={r.id} className="border-t">
                   <td className="px-3 py-2 whitespace-nowrap">{new Date(r.creado_en).toLocaleString("es-PE")}</td>
-                  <td className="px-3 py-2 uppercase text-xs font-bold">{r.tipo}</td>
-                  <td className="px-3 py-2 uppercase text-xs">{r.aplicado_a}</td>
-                  <td className="px-3 py-2 tabular-nums">
+                  <td className="px-3 py-2">
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase border ${
+                      r.tipo === 'porcentaje' 
+                        ? 'bg-blue-100 text-blue-700 border-blue-200' 
+                        : 'bg-orange-100 text-orange-700 border-orange-200'
+                    }`}>
+                      {r.tipo}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2 uppercase text-[10px] font-medium text-muted-foreground">{r.aplicado_a}</td>
+                  <td className="px-3 py-2 tabular-nums font-semibold">
                     {r.tipo === "porcentaje" ? `${Number(r.valor).toFixed(0)}%` : formatPEN(Number(r.valor))}
                   </td>
-                  <td className="px-3 py-2 text-right tabular-nums font-bold text-emerald-600">
+                  <td className="px-3 py-2 text-right tabular-nums font-black text-emerald-600 bg-emerald-50/30">
                     {formatPEN(Number(r.monto_descuento))}
                   </td>
-                  <td className="px-3 py-2">{r.motivo === "Otro" ? r.motivo_texto : r.motivo}</td>
-                  <td className="px-3 py-2 text-xs">{r.autorizado_por ?? "—"}</td>
-                  <td className="px-3 py-2 text-xs font-mono">{r.venta_id ? String(r.venta_id).slice(0, 8) : "—"}</td>
+                  <td className="px-3 py-2">
+                    <span className="font-semibold text-slate-700">
+                      {r.motivo === "Otro" ? r.motivo_texto : r.motivo}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2 text-xs text-muted-foreground font-medium">{r.autorizado_por ?? "—"}</td>
+                  <td className="px-3 py-2 text-xs font-mono text-blue-600/70">{r.venta_id ? String(r.venta_id).slice(0, 8) : "—"}</td>
                 </tr>
               ))}
             </tbody>
