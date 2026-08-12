@@ -19,38 +19,41 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         auth: { autoRefreshToken: false, persistSession: false }
       });
 
-      // Obtener notificaciones ya gestionadas
+      // 1. Obtener notificaciones ya gestionadas
       const { data: gestionadas } = await supabaseAdmin
         .from("notificaciones_gestion")
         .select("notificacion_id");
       
       const gestionadasIds = new Set(gestionadas?.map(g => g.notificacion_id) || []);
       
-      // 1. Alertas de Stock Bajo
+      // 2. Alertas de Stock Bajo
+      // Verificamos si la configuración permite stock bajo (por defecto sí)
       const { data: configStock } = await supabaseAdmin
         .from("configuracion")
         .select("valor")
         .eq("clave", "notif_stock_bajo")
         .maybeSingle();
 
-      if (configStock?.valor !== "false") {
-        const { data: prodsStock } = await supabaseAdmin
+      if (!configStock || configStock.valor !== "false") {
+        const { data: prodsStock, error: errStock } = await supabaseAdmin
           .from("productos")
           .select("id, nombre, stock, stock_minimo, unidad")
-          .lt("stock", "stock_minimo")
           .eq("activo", true);
         
         if (prodsStock) {
           prodsStock.forEach((p: any) => {
+            const stockActual = Number(p.stock || 0);
+            const stockMin = Number(p.stock_minimo || 0);
             const id = `stock-${p.id}`;
-            if (!gestionadasIds.has(id)) {
+
+            if (stockActual < stockMin && !gestionadasIds.has(id)) {
               alerts.push({
                 id,
                 tipo: "stock",
                 titulo: "Stock Bajo",
-                mensaje: `El producto ${p.nombre} tiene stock ${p.stock} (mínimo ${p.stock_minimo}).`,
-                stock: p.stock,
-                unidad: p.unidad,
+                mensaje: `El producto ${p.nombre} tiene stock ${stockActual} (mínimo ${stockMin}).`,
+                stock: stockActual,
+                unidad: p.unidad || "unid",
                 fecha: new Date().toISOString(),
                 prioridad: 1,
                 urgenciaLabel: "Crítico",
@@ -61,8 +64,8 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         }
       }
 
-      // 2. Alertas de Lotes por Vencer
-      const { data: lotes } = await supabaseAdmin
+      // 3. Alertas de Lotes por Vencer
+      const { data: lotes, error: errLotes } = await supabaseAdmin
         .from("lotes")
         .select("id, fecha_vencimiento, producto_id, productos(nombre, unidad), stock_actual, lote_codigo")
         .gt("stock_actual", 0)
@@ -77,8 +80,9 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
             const diffMs = fVenc.getTime() - hoy.getTime();
             const diffDays = Math.ceil(diffMs / (1000 * 3600 * 24));
             
+            // Alertar si faltan 30 días o menos, o si ya venció
             if (diffDays <= 30) {
-              const productName = (l.productos as any)?.nombre || "producto";
+              const productName = (l.productos as any)?.nombre || "Producto desconocido";
               const unidad = (l.productos as any)?.unidad || "unid";
               const loteInfo = l.lote_codigo ? ` (Lote: ${l.lote_codigo})` : "";
               
@@ -101,6 +105,7 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         });
       }
 
+      // 4. Ordenar por prioridad (menor número = más urgente)
       return alerts.sort((a, b) => a.prioridad - b.prioridad);
     } catch (err) {
       console.error("Error in getNotificacionesAlertas:", err);
@@ -120,7 +125,7 @@ export const resolverNotificacion = createServerFn({ method: "POST" })
 
     const { error } = await supabaseAdmin
       .from("notificaciones_gestion")
-      .insert({ notificacion_id: data.id });
+      .upsert({ notificacion_id: data.id }, { onConflict: 'notificacion_id' });
 
     if (error) throw new Error(error.message);
     return { success: true };
