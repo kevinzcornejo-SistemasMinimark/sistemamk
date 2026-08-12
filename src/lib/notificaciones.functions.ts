@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { supabase } from "@/integrations/supabase/client";
 
 export const getNotificacionesAlertas = createServerFn({ method: "GET" })
   .handler(async () => {
@@ -17,20 +17,10 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         gestionadasOmitidas: 0
       };
       
-      const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-      const supabaseServiceRole = process.env.SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
-
-      if (!supabaseUrl || !supabaseServiceRole) {
-        console.error("Missing Supabase Admin credentials");
-        return { alerts: [], stats, debug: "Error: Faltan credenciales de Supabase Admin." };
-      }
-
-      const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRole, {
-        auth: { autoRefreshToken: false, persistSession: false }
-      });
+      const supabaseClient = supabase;
 
       // 1. Obtener notificaciones ya gestionadas
-      const { data: gestionadas } = await supabaseAdmin
+      const { data: gestionadas } = await supabaseClient
         .from("notificaciones_gestion")
         .select("notificacion_id");
       
@@ -38,7 +28,7 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
       stats.gestionadasOmitidas = gestionadasIds.size;
       
       // 2. Alertas de Stock Bajo
-      const { data: prodsStock } = await supabaseAdmin
+      const { data: prodsStock } = await supabaseClient
         .from("productos")
         .select("id, nombre, stock, stock_minimo, activo, unidad");
       
@@ -75,7 +65,7 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
       }
 
       // 3. Alertas de Lotes
-      const { data: lotes } = await supabaseAdmin
+      const { data: lotes } = await supabaseClient
         .from("lotes")
         .select("id, fecha_vencimiento, producto_id, productos(nombre, unidad), stock_actual, lote_codigo");
 
@@ -139,19 +129,7 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
 export const resolverNotificacion = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ id: z.string() }).parse(data))
   .handler(async ({ data }) => {
-    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-    const supabaseServiceRole = process.env.SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
-    
-    if (!supabaseUrl || !supabaseServiceRole) {
-      // If no real DB, just return success for demo
-      return { success: true };
-    }
-
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRole, {
-      auth: { autoRefreshToken: false, persistSession: false }
-    });
-
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from("notificaciones_gestion")
       .upsert({ notificacion_id: data.id }, { onConflict: 'notificacion_id' });
 
