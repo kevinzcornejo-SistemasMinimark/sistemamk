@@ -157,9 +157,10 @@ function LoginPage() {
             <Button className="w-full" disabled={submitting} onClick={handle}>
               {submitting ? "Ingresando…" : "Ingresar"}
             </Button>
+            <Button variant="outline" className="w-full" onClick={enterDemo}>
+              Ingresar como Demo
+            </Button>
           </div>
-
-          {/* El botón de modo demo ha sido removido a petición del usuario para evitar confusiones */}
           </Card>
         </div>
       </div>

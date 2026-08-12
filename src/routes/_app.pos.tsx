@@ -92,7 +92,7 @@ function POSPage() {
   const [descuentoOpen, setDescuentoOpen] = useState(false);
   const [servicioTipo, setServicioTipo] = useState<ServicioTipo | null>(null);
   const [ticket, setTicket] = useState<TicketData | null>(null);
-  const [kiosko, setKiosko] = useState(true);
+  const [kiosko, setKiosko] = useState(false);
   const [escuchando, setEscuchando] = useState(false);
   const [ayudaOpen, setAyudaOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);

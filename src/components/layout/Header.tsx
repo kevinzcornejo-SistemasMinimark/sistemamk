@@ -36,7 +36,7 @@ export function Header({
   }, []);
 
   return (
-    <header className="h-12 border-b bg-card/80 backdrop-blur flex items-center px-3 md:px-4 gap-2 sticky top-0 z-[60]">
+    <header className="h-12 border-b bg-card flex items-center px-3 md:px-4 gap-2 sticky top-0 z-[100] w-full">
       <Button
         variant="ghost"
         size="icon"
@@ -133,7 +133,7 @@ function NotificacionesPopover() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative h-9 w-9">
+        <Button variant="ghost" size="icon" className="relative h-9 w-9 flex items-center justify-center">
           {noLeidas > 0 ? (
             <>
               <BellDot className="h-5 w-5 text-accent animate-pulse" />
@@ -146,7 +146,7 @@ function NotificacionesPopover() {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-96 p-0 overflow-hidden shadow-xl border-border/60 z-[70]">
+      <PopoverContent align="end" className="w-[calc(100vw-2rem)] sm:w-96 p-0 overflow-hidden shadow-xl border-border/60 z-[9999]">
         <div className="p-4 border-b bg-muted/30 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h3 className="font-bold text-sm">Alertas activas ({alerts.length})</h3>
