@@ -13,7 +13,7 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
       if (!supabaseUrl || !supabaseServiceRole) {
         console.error("Missing Supabase Admin credentials");
         // Fallback demo alerts if no credentials
-        return getDemoAlerts();
+        return [];
       }
 
       const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRole, {
@@ -121,68 +121,16 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
 
       // Force demo alerts if database returns nothing (to ensure user can see them for now)
       if (alerts.length === 0) {
-        return getDemoAlerts();
+        return [];
       }
 
       return alerts.sort((a, b) => a.prioridad - b.prioridad);
     } catch (err) {
       console.error("Error in getNotificacionesAlertas:", err);
-      return getDemoAlerts();
+      return [];
     }
   });
 
-function getDemoAlerts() {
-  return [
-    {
-      id: "demo-venc-1",
-      tipo: "vencimiento",
-      titulo: "Vencido",
-      mensaje: "ACEITE · Lote L20260809-001",
-      stock: 5,
-      unidad: "unid",
-      fecha: new Date().toISOString(),
-      prioridad: 0,
-      urgenciaLabel: "Vencido",
-      diasRestantes: -2
-    },
-    {
-      id: "demo-venc-2",
-      tipo: "vencimiento",
-      titulo: "Vencido",
-      mensaje: "AGUA · Lote L20260808-001",
-      stock: 12,
-      unidad: "unid",
-      fecha: new Date().toISOString(),
-      prioridad: 0,
-      urgenciaLabel: "Vencido",
-      diasRestantes: -3
-    },
-    {
-      id: "demo-venc-3",
-      tipo: "vencimiento",
-      titulo: "En riesgo — no vendible",
-      mensaje: "AGUA · Lote L2026dfasdfasdf",
-      stock: 8,
-      unidad: "unid",
-      fecha: new Date().toISOString(),
-      prioridad: 1,
-      urgenciaLabel: "Info",
-      diasRestantes: null
-    },
-    {
-      id: "demo-stock-1",
-      tipo: "stock",
-      titulo: "Stock Mínimo",
-      mensaje: "ARROZ EXTRA · Quedan 2 unid (Mínimo 5)",
-      stock: 2,
-      unidad: "unid",
-      fecha: new Date().toISOString(),
-      prioridad: 1,
-      urgenciaLabel: "Crítico",
-      diasRestantes: null
-    }
-  ];
-}
 
 export const resolverNotificacion = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ id: z.string() }).parse(data))
