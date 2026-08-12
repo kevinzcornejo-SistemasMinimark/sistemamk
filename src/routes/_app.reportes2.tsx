@@ -113,6 +113,7 @@ function Reportes2Page() {
     { name: "Ventas", value: Number(tot.ventas.toFixed(2)) },
     { name: "Compras", value: Number(tot.compras.toFixed(2)) },
     { name: "Gastos", value: Number(tot.gastos.toFixed(2)) },
+    { name: "Descuentos", value: Number(tot.descuentos.toFixed(2)) },
   ]), [tot]);
 
   const exportarCSV = () => {
@@ -252,6 +253,7 @@ function Reportes2Page() {
               <Tooltip formatter={(v: number) => formatPEN(v)} contentStyle={{ borderRadius: 8 }} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Line type="monotone" dataKey="ventas" stroke="#10b981" strokeWidth={3} dot={{ r: 3 }} name="Ventas" />
+              <Line type="monotone" dataKey="descuentos" stroke="#8b5cf6" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 3 }} name="Descuentos" />
               <Line type="monotone" dataKey="compras" stroke="#0ea5e9" strokeWidth={2} dot={{ r: 3 }} name="Compras" />
               <Line type="monotone" dataKey="gastos" stroke="#ef4444" strokeWidth={2} dot={{ r: 3 }} name="Gastos" />
             </LineChart>
@@ -271,6 +273,7 @@ function Reportes2Page() {
                 <Tooltip formatter={(v: number) => formatPEN(v)} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
                 <Bar dataKey="ventas" fill="#10b981" radius={[4, 4, 0, 0]} name="Ventas" />
+                <Bar dataKey="descuentos" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="Descuentos" />
                 <Bar dataKey="compras" fill="#0ea5e9" radius={[4, 4, 0, 0]} name="Compras" />
                 <Bar dataKey="gastos" fill="#ef4444" radius={[4, 4, 0, 0]} name="Gastos" />
               </BarChart>
@@ -288,6 +291,7 @@ function Reportes2Page() {
                   <Cell fill="#10b981" />
                   <Cell fill="#0ea5e9" />
                   <Cell fill="#ef4444" />
+                  <Cell fill="#8b5cf6" />
                 </Pie>
                 <Tooltip formatter={(v: number) => formatPEN(v)} />
               </PieChart>
@@ -304,6 +308,7 @@ function Reportes2Page() {
               <tr>
                 <th className="py-2">Fecha</th>
                 <th className="py-2 text-right">Ventas</th>
+                <th className="py-2 text-right text-indigo-600">Descuentos</th>
                 <th className="py-2 text-right">Compras</th>
                 <th className="py-2 text-right">Gastos</th>
                 <th className="py-2 text-right">Utilidad</th>
@@ -311,13 +316,14 @@ function Reportes2Page() {
             </thead>
             <tbody>
               {rows.length === 0 ? (
-                <tr><td colSpan={5} className="py-6 text-center text-muted-foreground">Sin movimientos en el periodo</td></tr>
+                <tr><td colSpan={6} className="py-6 text-center text-muted-foreground">Sin movimientos en el periodo</td></tr>
               ) : rows.map((r) => {
                 const u = r.ventas - r.compras - r.gastos;
                 return (
                   <tr key={r.fecha} className="border-t">
                     <td className="py-2 font-medium">{r.fecha}</td>
                     <td className="py-2 text-right text-emerald-600 font-semibold">{formatPEN(r.ventas)}</td>
+                    <td className="py-2 text-right text-indigo-600 font-medium">{formatPEN(r.descuentos)}</td>
                     <td className="py-2 text-right text-sky-600 font-semibold">{formatPEN(r.compras)}</td>
                     <td className="py-2 text-right text-red-600 font-semibold">{formatPEN(r.gastos)}</td>
                     <td className={`py-2 text-right font-extrabold ${u >= 0 ? "text-emerald-700" : "text-red-700"}`}>{formatPEN(u)}</td>
@@ -330,6 +336,7 @@ function Reportes2Page() {
                 <tr>
                   <td className="py-2">TOTAL</td>
                   <td className="py-2 text-right text-emerald-700">{formatPEN(tot.ventas)}</td>
+                  <td className="py-2 text-right text-indigo-700">{formatPEN(tot.descuentos)}</td>
                   <td className="py-2 text-right text-sky-700">{formatPEN(tot.compras)}</td>
                   <td className="py-2 text-right text-red-700">{formatPEN(tot.gastos)}</td>
                   <td className={`py-2 text-right ${utilidad >= 0 ? "text-emerald-700" : "text-red-700"}`}>{formatPEN(utilidad)}</td>
