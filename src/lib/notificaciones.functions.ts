@@ -22,7 +22,7 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
 
 
       // 1. Obtener notificaciones ya gestionadas
-      const { data: gestionadas } = await supabaseAdmin
+      const { data: gestionadas } = await supabaseClient
         .from("notificaciones_gestion")
         .select("notificacion_id");
       
@@ -30,7 +30,7 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
       stats.gestionadasOmitidas = gestionadasIds.size;
       
       // 2. Alertas de Stock Bajo
-      const { data: prodsStock } = await supabaseAdmin
+      const { data: prodsStock } = await supabaseClient
         .from("productos")
         .select("id, nombre, stock, stock_minimo, activo, unidad");
       
@@ -44,30 +44,9 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
           const stockMin = Number(p.stock_minimo || 0);
           
           if (stockMin > 0) stats.conStockMinimoConfig++;
-
-          if (stockActual < stockMin) {
-            stats.bajoStock++;
-            const id = `stock-${p.id}`;
-            if (!gestionadasIds.has(id)) {
-              alerts.push({
-                id,
-                tipo: "stock",
-                titulo: "Stock Mínimo",
-                mensaje: `El producto ${p.nombre} tiene stock bajo: ${stockActual} (mínimo ${stockMin}).`,
-                stock: stockActual,
-                unidad: p.unidad || "unid",
-                fecha: new Date().toISOString(),
-                prioridad: 1,
-                urgenciaLabel: "Crítico",
-                diasRestantes: null
-              });
-            }
-          }
-        });
-      }
-
+...
       // 3. Alertas de Lotes
-      const { data: lotes } = await supabaseAdmin
+      const { data: lotes } = await supabaseClient
         .from("lotes")
         .select("id, fecha_vencimiento, producto_id, productos(nombre, unidad), stock_actual, lote_codigo");
 
@@ -131,19 +110,7 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
 export const resolverNotificacion = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ id: z.string() }).parse(data))
   .handler(async ({ data }) => {
-    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-    const supabaseServiceRole = process.env.SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
-    
-    if (!supabaseUrl || !supabaseServiceRole) {
-      // If no real DB, just return success for demo
-      return { success: true };
-    }
-
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRole, {
-      auth: { autoRefreshToken: false, persistSession: false }
-    });
-
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from("notificaciones_gestion")
       .upsert({ notificacion_id: data.id }, { onConflict: 'notificacion_id' });
 
