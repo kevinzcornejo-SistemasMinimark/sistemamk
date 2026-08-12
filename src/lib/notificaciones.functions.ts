@@ -110,9 +110,20 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
       const finalAlerts = alerts.sort((a, b) => a.prioridad - b.prioridad);
       console.log(`Retrieved ${finalAlerts.length} alerts for notifications panel`);
       return finalAlerts;
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error in getNotificacionesAlertas:", err);
-      return [];
+      // Retornar una alerta de error para diagnosticar en el UI si es necesario
+      return [{
+        id: "error-diag",
+        tipo: "error",
+        titulo: "Error de Conexión",
+        mensaje: `No se pudieron cargar las alertas: ${err?.message || "Error desconocido"}`,
+        prioridad: 0,
+        urgenciaLabel: "Error",
+        stock: 0,
+        unidad: "-",
+        fecha: new Date().toISOString()
+      }];
     }
   });
 
