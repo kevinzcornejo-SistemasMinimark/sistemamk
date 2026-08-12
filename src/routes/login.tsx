@@ -15,7 +15,7 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
-  const { user, signIn, enterDemo, isDemo, loading } = useAuth();
+  const { user, signIn, isDemo, loading } = useAuth();
   const navigate = useNavigate();
   const biz = useBusinessInfo();
   const [email, setEmail] = useState("");
@@ -156,9 +156,6 @@ function LoginPage() {
             </div>
             <Button className="w-full" disabled={submitting} onClick={handle}>
               {submitting ? "Ingresando…" : "Ingresar"}
-            </Button>
-            <Button variant="outline" className="w-full" onClick={enterDemo}>
-              Ingresar como Demo
             </Button>
           </div>
           </Card>
