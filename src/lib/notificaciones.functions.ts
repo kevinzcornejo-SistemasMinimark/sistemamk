@@ -88,7 +88,7 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
               alerts.push({
                 id,
                 tipo: "vencimiento",
-                titulo: diffDays <= 0 ? "Producto Vencido" : "Próximo a Vencer",
+                titulo: isNaN(diffDays) ? "Revisar Vencimiento" : diffDays <= 0 ? "Producto Vencido" : "Próximo a Vencer",
                 mensaje: diffDays <= 0 
                   ? `El producto ${productName}${loteInfo} venció el ${l.fecha_vencimiento}.` 
                   : `El producto ${productName}${loteInfo} vence en ${diffDays} días.`,
