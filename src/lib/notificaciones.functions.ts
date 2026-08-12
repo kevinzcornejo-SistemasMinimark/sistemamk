@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { supabase } from "@/integrations/supabase/client";
 
 export const getNotificacionesAlertas = createServerFn({ method: "GET" })
   .handler(async () => {
@@ -17,17 +17,9 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         gestionadasOmitidas: 0
       };
       
-      const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-      const supabaseServiceRole = process.env.SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
+      // Usamos el cliente estándar (RLS aplicará según el usuario autenticado)
+      const supabaseClient = supabase;
 
-      if (!supabaseUrl || !supabaseServiceRole) {
-        console.error("Missing Supabase Admin credentials");
-        return { alerts: [], stats, debug: "Error: Faltan credenciales de Supabase Admin." };
-      }
-
-      const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRole, {
-        auth: { autoRefreshToken: false, persistSession: false }
-      });
 
       // 1. Obtener notificaciones ya gestionadas
       const { data: gestionadas } = await supabaseAdmin
