@@ -36,7 +36,7 @@ export function Header({
   }, []);
 
   return (
-    <header className="h-12 border-b bg-card/80 backdrop-blur flex items-center px-3 md:px-4 gap-2 sticky top-0 z-50">
+    <header className="h-12 border-b bg-card/80 backdrop-blur flex items-center px-3 md:px-4 gap-2 sticky top-0 z-[60]">
       <Button
         variant="ghost"
         size="icon"
@@ -146,7 +146,7 @@ function NotificacionesPopover() {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-96 p-0 overflow-hidden shadow-xl border-border/60 z-[100]">
+      <PopoverContent align="end" className="w-96 p-0 overflow-hidden shadow-xl border-border/60 z-[70]">
         <div className="p-4 border-b bg-muted/30 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h3 className="font-bold text-sm">Alertas Críticas</h3>
