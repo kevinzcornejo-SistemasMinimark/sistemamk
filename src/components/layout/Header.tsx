@@ -149,7 +149,7 @@ function NotificacionesPopover() {
       <PopoverContent align="end" className="w-96 p-0 overflow-hidden shadow-xl border-border/60 z-[70]">
         <div className="p-4 border-b bg-muted/30 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h3 className="font-bold text-sm">Alertas Críticas</h3>
+            <h3 className="font-bold text-sm">Alertas activas ({alerts.length})</h3>
             <Button 
               variant="ghost" 
               size="icon" 
