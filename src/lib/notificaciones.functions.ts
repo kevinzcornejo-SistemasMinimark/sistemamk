@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { z } from "zod";
 import { z } from "zod";
 
 export const getNotificacionesAlertas = createServerFn({ method: "GET" })
