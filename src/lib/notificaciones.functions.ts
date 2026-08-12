@@ -17,9 +17,7 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         gestionadasOmitidas: 0
       };
       
-      // Usamos el cliente estándar (RLS aplicará según el usuario autenticado)
       const supabaseClient = supabase;
-
 
       // 1. Obtener notificaciones ya gestionadas
       const { data: gestionadas } = await supabaseClient
@@ -44,7 +42,28 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
           const stockMin = Number(p.stock_minimo || 0);
           
           if (stockMin > 0) stats.conStockMinimoConfig++;
-...
+
+          if (stockActual < stockMin) {
+            stats.bajoStock++;
+            const id = `stock-${p.id}`;
+            if (!gestionadasIds.has(id)) {
+              alerts.push({
+                id,
+                tipo: "stock",
+                titulo: "Stock Mínimo",
+                mensaje: `El producto ${p.nombre} tiene stock bajo: ${stockActual} (mínimo ${stockMin}).`,
+                stock: stockActual,
+                unidad: p.unidad || "unid",
+                fecha: new Date().toISOString(),
+                prioridad: 1,
+                urgenciaLabel: "Crítico",
+                diasRestantes: null
+              });
+            }
+          }
+        });
+      }
+
       // 3. Alertas de Lotes
       const { data: lotes } = await supabaseClient
         .from("lotes")
