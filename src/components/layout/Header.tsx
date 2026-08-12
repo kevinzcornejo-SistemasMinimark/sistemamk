@@ -133,7 +133,7 @@ function NotificacionesPopover() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative h-9 w-9">
+        <Button variant="ghost" size="icon" className="relative h-9 w-9 flex items-center justify-center">
           {noLeidas > 0 ? (
             <>
               <BellDot className="h-5 w-5 text-accent animate-pulse" />
