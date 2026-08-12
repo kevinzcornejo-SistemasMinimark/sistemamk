@@ -10,8 +10,6 @@ import { getNotificacionesAlertas, resolverNotificacion } from "@/lib/notificaci
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
-import { formatDistanceToNow } from "date-fns";
-import { es } from "date-fns/locale";
 
 export function Header({
   onToggleSidebar,
@@ -38,7 +36,7 @@ export function Header({
   }, []);
 
   return (
-    <header className="h-12 border-b bg-card/80 backdrop-blur flex items-center px-3 md:px-4 gap-2 sticky top-0 z-30">
+    <header className="h-12 border-b bg-card/80 backdrop-blur flex items-center px-3 md:px-4 gap-2 sticky top-0 z-[60]">
       <Button
         variant="ghost"
         size="icon"
@@ -135,7 +133,7 @@ function NotificacionesPopover() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
+        <Button variant="ghost" size="icon" className="relative h-9 w-9">
           {noLeidas > 0 ? (
             <>
               <BellDot className="h-5 w-5 text-accent animate-pulse" />
@@ -148,7 +146,7 @@ function NotificacionesPopover() {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-96 p-0 overflow-hidden shadow-xl border-border/60">
+      <PopoverContent align="end" className="w-96 p-0 overflow-hidden shadow-xl border-border/60 z-[70]">
         <div className="p-4 border-b bg-muted/30 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h3 className="font-bold text-sm">Alertas Críticas</h3>
