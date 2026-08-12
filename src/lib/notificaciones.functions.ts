@@ -19,10 +19,10 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         auth: { autoRefreshToken: false, persistSession: false }
       });
 
-      // Obtener notificaciones ya gestionadas para filtrarlas o marcarlas
+      // Obtener notificaciones ya gestionadas
       const { data: gestionadas } = await supabaseAdmin
         .from("notificaciones_gestion")
-        .select("notificacion_id, gestionado_en");
+        .select("notificacion_id");
       
       const gestionadasIds = new Set(gestionadas?.map(g => g.notificacion_id) || []);
       
@@ -52,7 +52,7 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
                 stock: p.stock,
                 unidad: p.unidad,
                 fecha: new Date().toISOString(),
-                prioridad: 1, // Alta
+                prioridad: 1,
                 urgenciaLabel: "Crítico",
                 diasRestantes: null
               });
@@ -93,7 +93,7 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
                 unidad: unidad,
                 fecha: new Date().toISOString(),
                 diasRestantes: diffDays,
-                prioridad: diffDays <= 0 ? 0 : diffDays <= 7 ? 1 : 2, // 0 = Inmediato, 1 = Alta, 2 = Media
+                prioridad: diffDays <= 0 ? 0 : diffDays <= 7 ? 1 : 2,
                 urgenciaLabel: diffDays <= 0 ? "Vencido" : diffDays <= 7 ? "Crítico" : "Advertencia"
               });
             }
@@ -101,7 +101,6 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         });
       }
 
-      // Ordenar por prioridad (menor número = más urgente)
       return alerts.sort((a, b) => a.prioridad - b.prioridad);
     } catch (err) {
       console.error("Error in getNotificacionesAlertas:", err);
@@ -111,7 +110,7 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
 
 export const resolverNotificacion = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ id: z.string() }).parse(data))
-  .handler(async ({ data, request }) => {
+  .handler(async ({ data }) => {
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
     const supabaseServiceRole = process.env.SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
     
@@ -121,11 +120,7 @@ export const resolverNotificacion = createServerFn({ method: "POST" })
 
     const { error } = await supabaseAdmin
       .from("notificaciones_gestion")
-      .insert({
-        notificacion_id: data.id,
-        // En un entorno real, extraeríamos el userId del contexto de auth del server fn
-        // Por simplicidad en esta iteración, permitimos el insert
-      });
+      .insert({ notificacion_id: data.id });
 
     if (error) throw new Error(error.message);
     return { success: true };
