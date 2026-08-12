@@ -168,6 +168,18 @@ function getDemoAlerts() {
       prioridad: 1,
       urgenciaLabel: "Info",
       diasRestantes: null
+    },
+    {
+      id: "demo-stock-1",
+      tipo: "stock",
+      titulo: "Stock Mínimo",
+      mensaje: "ARROZ EXTRA · Quedan 2 unid (Mínimo 5)",
+      stock: 2,
+      unidad: "unid",
+      fecha: new Date().toISOString(),
+      prioridad: 1,
+      urgenciaLabel: "Crítico",
+      diasRestantes: null
     }
   ];
 }
