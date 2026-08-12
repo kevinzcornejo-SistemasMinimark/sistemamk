@@ -146,7 +146,7 @@ function NotificacionesPopover() {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-96 p-0 overflow-hidden shadow-xl border-border/60 z-[70]">
+      <PopoverContent align="end" className="w-[calc(100vw-2rem)] sm:w-96 p-0 overflow-hidden shadow-xl border-border/60 z-[110]">
         <div className="p-4 border-b bg-muted/30 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h3 className="font-bold text-sm">Alertas activas ({alerts.length})</h3>
