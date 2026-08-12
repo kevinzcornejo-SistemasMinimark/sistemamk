@@ -50,8 +50,8 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
               alerts.push({
                 id,
                 tipo: "stock",
-                titulo: "Stock Bajo",
-                mensaje: `El producto ${p.nombre} tiene stock ${stockActual} (mínimo ${stockMin}).`,
+                titulo: "Stock Mínimo",
+                mensaje: `El producto ${p.nombre} tiene stock bajo: ${stockActual} (mínimo ${stockMin}).`,
                 stock: stockActual,
                 unidad: p.unidad || "unid",
                 fecha: new Date().toISOString(),
@@ -167,6 +167,18 @@ function getDemoAlerts() {
       fecha: new Date().toISOString(),
       prioridad: 1,
       urgenciaLabel: "Info",
+      diasRestantes: null
+    },
+    {
+      id: "demo-stock-1",
+      tipo: "stock",
+      titulo: "Stock Mínimo",
+      mensaje: "ARROZ EXTRA · Quedan 2 unid (Mínimo 5)",
+      stock: 2,
+      unidad: "unid",
+      fecha: new Date().toISOString(),
+      prioridad: 1,
+      urgenciaLabel: "Crítico",
       diasRestantes: null
     }
   ];
