@@ -8,17 +8,7 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
     try {
       const alerts: any[] = [];
       
-      const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "https://placeholder.supabase.co";
-      const supabaseServiceRole = process.env.SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || "placeholder";
-
-      if (!supabaseUrl || !supabaseServiceRole) {
-        console.error("Missing Supabase Admin credentials");
-        return [];
-      }
-
-      const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRole, {
-        auth: { autoRefreshToken: false, persistSession: false }
-      });
+      const supabaseAdmin = supabase;
 
       // 1. Obtener notificaciones ya gestionadas
       const { data: gestionadas } = await supabaseAdmin
