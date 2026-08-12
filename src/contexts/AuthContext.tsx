@@ -57,23 +57,19 @@ interface AuthCtx {
   can: (modulo: string) => boolean;
   refreshPermisos: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
-  enterDemo: () => void;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthCtx | undefined>(undefined);
 
-const DEMO_KEY = "minimarket_demo_mode";
+
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
   const [permisos, setPermisos] = useState<string[]>([]);
-  const [isDemo, setIsDemo] = useState(
-    typeof window !== "undefined" &&
-      window.localStorage.getItem(DEMO_KEY) === "1",
-  );
+  const [isDemo] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchRoleAndPerms = useCallback(async (u: User) => {
@@ -134,16 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return error ? { error: error.message } : {};
   };
 
-  const enterDemo = () => {
-    if (typeof window !== "undefined") localStorage.setItem(DEMO_KEY, "1");
-    setIsDemo(true);
-    setRole("administrador");
-    setPermisos(MODULOS.map((m) => m.key));
-  };
-
   const signOut = async () => {
-    if (typeof window !== "undefined") localStorage.removeItem(DEMO_KEY);
-    setIsDemo(false);
     await supabase.auth.signOut();
     setRole(null);
     setPermisos([]);
@@ -173,7 +160,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         can,
         refreshPermisos,
         signIn,
-        enterDemo,
+        
         signOut,
       }}
     >
