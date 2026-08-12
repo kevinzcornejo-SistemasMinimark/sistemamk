@@ -109,12 +109,17 @@ function NotificacionesPopover() {
   const queryClient = useQueryClient();
   const fetchAlerts = useServerFn(getNotificacionesAlertas);
   const markResolved = useServerFn(resolverNotificacion);
+  const [showDebug, setShowDebug] = useState(false);
 
-  const { data: alerts = [], isLoading, refetch } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ["notificaciones-alertas"],
     queryFn: () => fetchAlerts(),
     refetchInterval: 60000 * 5,
   });
+
+  const alerts = Array.isArray(data) ? data : (data?.alerts || []);
+  const stats = (!Array.isArray(data) && data?.stats) ? (data.stats as any) : null;
+  const debugMsg = !Array.isArray(data) ? data?.debug : null;
 
   const mutation = useMutation({
     mutationFn: (id: string) => markResolved({ data: { id } }),
@@ -160,6 +165,15 @@ function NotificacionesPopover() {
             >
               <Bell className={cn("h-3 w-3", isLoading && "animate-spin")} />
             </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-6 w-6" 
+              onClick={() => setShowDebug(!showDebug)}
+              title="Diagnóstico"
+            >
+              <Info className="h-3 w-3" />
+            </Button>
           </div>
           {noLeidas > 0 && (
             <Badge variant="destructive" className="text-[10px] animate-pulse">
@@ -167,7 +181,31 @@ function NotificacionesPopover() {
             </Badge>
           )}
         </div>
-        <div className="max-h-[450px] overflow-y-auto">
+
+        {showDebug && stats && (
+          <div className="p-3 bg-blue-50/50 border-b text-[10px] space-y-2 animate-in fade-in slide-in-from-top-1">
+            <div className="font-bold text-blue-700 flex justify-between items-center">
+              <span>Panel de Diagnóstico</span>
+              <span className="text-[9px] font-normal">{debugMsg}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+              <div className="flex justify-between"><span>Total Productos:</span> <b>{stats.totalProductos}</b></div>
+              <div className="flex justify-between"><span>Activos:</span> <b>{stats.productosActivos}</b></div>
+              <div className="flex justify-between"><span>Con Stock Mín:</span> <b>{stats.conStockMinimoConfig}</b></div>
+              <div className="flex justify-between"><span>Bajo el Mín:</span> <b className="text-amber-700">{stats.bajoStock}</b></div>
+              <div className="separator col-span-2 border-t my-1 border-blue-200/50"></div>
+              <div className="flex justify-between"><span>Lotes Totales:</span> <b>{stats.lotesAnalizados}</b></div>
+              <div className="flex justify-between"><span>Con Stock:</span> <b>{stats.lotesConStock}</b></div>
+              <div className="flex justify-between"><span>Próximos Venc:</span> <b className="text-amber-700">{stats.lotesProximosVencer}</b></div>
+              <div className="flex justify-between"><span>Omitidos (Check):</span> <b>{stats.gestionadasOmitidas}</b></div>
+            </div>
+            <p className="text-[9px] text-muted-foreground italic mt-2 border-t pt-1">
+              * El sistema omite productos inactivos, lotes sin stock o alertas marcadas con el "check".
+            </p>
+          </div>
+        )}
+
+        <div className="max-h-[400px] overflow-y-auto">
           {isLoading ? (
             <div className="p-8 text-center text-xs text-muted-foreground">
               Analizando inventario…
