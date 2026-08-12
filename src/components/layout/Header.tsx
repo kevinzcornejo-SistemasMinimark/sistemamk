@@ -107,6 +107,7 @@ export function Header({
 }
 
 function NotificacionesPopover() {
+  const navigate = useNavigate();
   const fetchAlerts = useServerFn(getNotificacionesAlertas);
   const { data: alerts = [], isLoading, refetch } = useQuery({
     queryKey: ["notificaciones-alertas"],
