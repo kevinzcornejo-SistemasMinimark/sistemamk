@@ -132,15 +132,16 @@ function ReportesPage() {
     const promedio = count ? total / count : 0;
     const porMetodo: Record<string, number> = {};
     const porTipo: Record<string, number> = {};
-    const porDia: Record<string, { dia: string; ventas: number; trans: number }> = {};
+    const porDia: Record<string, { dia: string; ventas: number; trans: number; descuentos: number }> = {};
     ventas.forEach((v) => {
       porMetodo[v.metodo_pago] = (porMetodo[v.metodo_pago] ?? 0) + Number(v.total);
       porTipo[v.tipo_comprobante] = (porTipo[v.tipo_comprobante] ?? 0) + Number(v.total);
       // Ajuste de fecha para el reporte visual (UTC a Lima: -5h)
       const k = format(addHours(new Date(v.creada_en), -5), "yyyy-MM-dd");
-      if (!porDia[k]) porDia[k] = { dia: k.slice(5), ventas: 0, trans: 0 };
+      if (!porDia[k]) porDia[k] = { dia: k.slice(5), ventas: 0, trans: 0, descuentos: 0 };
       porDia[k].ventas += Number(v.total);
       porDia[k].trans += 1;
+      porDia[k].descuentos += Number(v.descuento || 0);
     });
     return {
       total, count, promedio, totalDescuentos,
@@ -267,6 +268,7 @@ function ReportesPage() {
               <Tooltip formatter={(v: number) => formatPEN(v)} contentStyle={{ borderRadius: 8 }} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Line type="monotone" dataKey="ventas" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} name="Ventas (S/)" />
+              <Line type="monotone" dataKey="descuentos" stroke="#8b5cf6" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 3 }} name="Descuentos (S/)" />
               <Line type="monotone" dataKey="trans" stroke="#0ea5e9" strokeWidth={2} dot={{ r: 3 }} name="Transacciones" yAxisId="right" />
               <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} />
             </LineChart>
