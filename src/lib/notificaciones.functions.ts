@@ -75,9 +75,9 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         lotes.forEach((l: any) => {
           const id = `venc-${l.id}`;
           if (!gestionadasIds.has(id)) {
-            const fVenc = new Date(l.fecha_vencimiento);
-            const diffMs = fVenc.getTime() - hoy.getTime();
-            const diffDays = Math.ceil(diffMs / (1000 * 3600 * 24));
+            const fVenc = l.fecha_vencimiento ? new Date(l.fecha_vencimiento) : null;
+            const diffMs = fVenc ? fVenc.getTime() - hoy.getTime() : null;
+            const diffDays = diffMs !== null ? Math.ceil(diffMs / (1000 * 3600 * 24)) : NaN;
             
             // Alertar si faltan 30 días o menos, o si ya venció
             if (diffDays <= 30 || isNaN(diffDays)) {
