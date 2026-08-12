@@ -118,7 +118,7 @@ function NotificacionesPopover() {
   });
 
   const alerts = Array.isArray(data) ? data : (data?.alerts || []);
-  const stats = !Array.isArray(data) ? data?.stats : null;
+  const stats = (!Array.isArray(data) && data?.stats) ? (data.stats as any) : null;
   const debugMsg = !Array.isArray(data) ? data?.debug : null;
 
   const mutation = useMutation({
