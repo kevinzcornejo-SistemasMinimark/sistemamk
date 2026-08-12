@@ -88,7 +88,7 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
       if (configVenc?.valor !== "false") { // Por defecto true
         const { data: lotes, error: lotesError } = await supabaseAdmin
           .from("lotes")
-          .select("id, fecha_vencimiento, producto_id, productos(nombre), stock_actual")
+          .select("id, fecha_vencimiento, producto_id, productos(nombre), stock_actual, lote_codigo")
           .gt("stock_actual", 0)
           .not("fecha_vencimiento", "is", null);
 
@@ -99,13 +99,16 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
             const diffDays = Math.ceil((fVenc.getTime() - hoy.getTime()) / (1000 * 3600 * 24));
             
             if (diffDays <= 30) {
+              const productName = (l.productos as any)?.nombre || "producto";
+              const loteInfo = l.lote_codigo ? ` (Lote: ${l.lote_codigo})` : "";
+              
               alerts.push({
                 id: `venc-${l.id}`,
                 tipo: "vencimiento",
                 titulo: diffDays <= 0 ? "Producto Vencido" : "Próximo a Vencer",
                 mensaje: diffDays <= 0 
-                  ? `El lote de ${(l.productos as any)?.nombre || "producto"} ha vencido.` 
-                  : `El lote de ${(l.productos as any)?.nombre || "producto"} vence en ${diffDays} días.`,
+                  ? `El producto ${productName}${loteInfo} ha vencido el ${l.fecha_vencimiento}.` 
+                  : `El producto ${productName}${loteInfo} vence en ${diffDays} días (${l.fecha_vencimiento}).`,
                 fecha: new Date().toISOString(),
                 leida: false,
                 prioridad: diffDays <= 7 ? "alta" : "media"
