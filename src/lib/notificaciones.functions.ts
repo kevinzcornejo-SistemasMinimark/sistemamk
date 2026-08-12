@@ -88,7 +88,7 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
       if (configVenc?.valor !== "false") { // Por defecto true
         const { data: lotes, error: lotesError } = await supabaseAdmin
           .from("lotes")
-          .select("id, fecha_vencimiento, producto_id, productos(nombre)")
+          .select("id, fecha_vencimiento, producto_id, productos(nombre), stock_actual")
           .gt("stock_actual", 0)
           .not("fecha_vencimiento", "is", null);
 

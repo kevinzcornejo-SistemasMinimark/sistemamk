@@ -85,8 +85,7 @@ export function Header({
           {role ?? "—"}
         </Badge>
 
-        {/* Notificaciones temporalmente deshabilitadas */}
-        {/* <NotificacionesPopover /> */}
+        <NotificacionesPopover />
 
         <div className="hidden md:block text-xs text-muted-foreground max-w-[160px] truncate">
           {user?.email ?? (isDemo ? "Modo demo" : "")}
@@ -108,6 +107,7 @@ export function Header({
 }
 
 function NotificacionesPopover() {
+  const navigate = useNavigate();
   const fetchAlerts = useServerFn(getNotificacionesAlertas);
   const { data: alerts = [], isLoading, refetch } = useQuery({
     queryKey: ["notificaciones-alertas"],
@@ -176,8 +176,15 @@ function NotificacionesPopover() {
               {alerts.map((alert: any) => (
                 <div
                   key={alert.id}
+                  onClick={() => {
+                    if (alert.tipo === 'vencimiento') {
+                      navigate({ to: '/lotes' });
+                    } else if (alert.tipo === 'stock') {
+                      navigate({ to: '/inventario' });
+                    }
+                  }}
                   className={cn(
-                    "p-4 hover:bg-muted/50 transition-colors cursor-default",
+                    "p-4 hover:bg-muted/50 transition-colors cursor-pointer",
                     !alert.leida && "bg-accent/5"
                   )}
                 >
