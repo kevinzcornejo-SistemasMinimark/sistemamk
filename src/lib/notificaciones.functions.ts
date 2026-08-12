@@ -121,12 +121,7 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
 export const resolverNotificacion = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ id: z.string() }).parse(data))
   .handler(async ({ data }) => {
-    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "https://placeholder.supabase.co";
-    const supabaseServiceRole = process.env.SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || "placeholder";
-    
-    const supabaseAdmin = createClient(supabaseUrl!, supabaseServiceRole!, {
-      auth: { autoRefreshToken: false, persistSession: false }
-    });
+    const supabaseAdmin = supabase;
 
     const { error } = await supabaseAdmin
       .from("notificaciones_gestion")
