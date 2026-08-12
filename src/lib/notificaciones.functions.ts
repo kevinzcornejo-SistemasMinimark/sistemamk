@@ -24,10 +24,9 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         .from("notificaciones_gestion")
         .select("notificacion_id");
       
-      const gestionadasIds = new Set(gestionadas?.map(g => g.notificacion_id) || []);
+      const gestionadasIds = new Set(gestionadas?.map((g: any) => g.notificacion_id) || []);
       
       // 2. Alertas de Stock Bajo
-      // Verificamos si la configuración permite stock bajo (por defecto sí)
       const { data: configStock } = await supabaseAdmin
         .from("configuracion")
         .select("valor")
@@ -35,7 +34,7 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         .maybeSingle();
 
       if (!configStock || configStock.valor !== "false") {
-        const { data: prodsStock, error: errStock } = await supabaseAdmin
+        const { data: prodsStock } = await supabaseAdmin
           .from("productos")
           .select("id, nombre, stock, stock_minimo, unidad")
           .eq("activo", true);
@@ -64,24 +63,22 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         }
       }
 
-      // 3. Alertas de Lotes por Vencer
-      const { data: lotes, error: errLotes } = await supabaseAdmin
+      // 3. Alertas de Lotes
+      const { data: lotes } = await supabaseAdmin
         .from("lotes")
         .select("id, fecha_vencimiento, producto_id, productos(nombre, unidad), stock_actual, lote_codigo")
-        .gt("stock_actual", 0)
-        .not("fecha_vencimiento", "is", null);
+        .gt("stock_actual", 0);
 
       if (lotes) {
         const hoy = new Date();
         lotes.forEach((l: any) => {
           const id = `venc-${l.id}`;
           if (!gestionadasIds.has(id)) {
-            const fVenc = new Date(l.fecha_vencimiento);
-            const diffMs = fVenc.getTime() - hoy.getTime();
-            const diffDays = Math.ceil(diffMs / (1000 * 3600 * 24));
+            const fVenc = l.fecha_vencimiento ? new Date(l.fecha_vencimiento) : null;
+            const diffMs = fVenc ? fVenc.getTime() - hoy.getTime() : null;
+            const diffDays = diffMs !== null ? Math.ceil(diffMs / (1000 * 3600 * 24)) : NaN;
             
-            // Alertar si faltan 30 días o menos, o si ya venció
-            if (diffDays <= 30) {
+            if (diffDays <= 30 || isNaN(diffDays)) {
               const productName = (l.productos as any)?.nombre || "Producto desconocido";
               const unidad = (l.productos as any)?.unidad || "unid";
               const loteInfo = l.lote_codigo ? ` (Lote: ${l.lote_codigo})` : "";
@@ -89,23 +86,24 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
               alerts.push({
                 id,
                 tipo: "vencimiento",
-                titulo: diffDays <= 0 ? "Producto Vencido" : "Próximo a Vencer",
-                mensaje: diffDays <= 0 
-                  ? `El producto ${productName}${loteInfo} venció el ${l.fecha_vencimiento}.` 
-                  : `El producto ${productName}${loteInfo} vence en ${diffDays} días.`,
+                titulo: isNaN(diffDays) ? "Revisar Vencimiento" : diffDays <= 0 ? "Producto Vencido" : "Próximo a Vencer",
+                mensaje: isNaN(diffDays)
+                  ? `El producto ${productName}${loteInfo} no tiene fecha de vencimiento definida.`
+                  : diffDays <= 0 
+                    ? `El producto ${productName}${loteInfo} venció el ${l.fecha_vencimiento}.` 
+                    : `El producto ${productName}${loteInfo} vence en ${diffDays} días.`,
                 stock: l.stock_actual,
                 unidad: unidad,
                 fecha: new Date().toISOString(),
-                diasRestantes: diffDays,
-                prioridad: diffDays <= 0 ? 0 : diffDays <= 7 ? 1 : 2,
-                urgenciaLabel: diffDays <= 0 ? "Vencido" : diffDays <= 7 ? "Crítico" : "Advertencia"
+                diasRestantes: isNaN(diffDays) ? null : diffDays,
+                prioridad: isNaN(diffDays) ? 2 : diffDays <= 0 ? 0 : diffDays <= 7 ? 1 : 2,
+                urgenciaLabel: isNaN(diffDays) ? "Info" : diffDays <= 0 ? "Vencido" : diffDays <= 7 ? "Crítico" : "Advertencia"
               });
             }
           }
         });
       }
 
-      // 4. Ordenar por prioridad (menor número = más urgente)
       return alerts.sort((a, b) => a.prioridad - b.prioridad);
     } catch (err) {
       console.error("Error in getNotificacionesAlertas:", err);
@@ -119,7 +117,9 @@ export const resolverNotificacion = createServerFn({ method: "POST" })
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
     const supabaseServiceRole = process.env.SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
     
-    const supabaseAdmin = createClient(supabaseUrl!, supabaseServiceRole!, {
+    if (!supabaseUrl || !supabaseServiceRole) throw new Error("Missing Supabase Admin credentials");
+
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRole, {
       auth: { autoRefreshToken: false, persistSession: false }
     });
 
