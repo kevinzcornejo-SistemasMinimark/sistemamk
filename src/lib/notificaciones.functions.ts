@@ -80,7 +80,7 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
             const diffDays = Math.ceil(diffMs / (1000 * 3600 * 24));
             
             // Alertar si faltan 30 días o menos, o si ya venció
-            if (diffDays <= 30) {
+            if (diffDays <= 30 || isNaN(diffDays)) {
               const productName = (l.productos as any)?.nombre || "Producto desconocido";
               const unidad = (l.productos as any)?.unidad || "unid";
               const loteInfo = l.lote_codigo ? ` (Lote: ${l.lote_codigo})` : "";
