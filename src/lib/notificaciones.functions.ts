@@ -97,9 +97,9 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
                 stock: l.stock_actual,
                 unidad: unidad,
                 fecha: new Date().toISOString(),
-                diasRestantes: diffDays,
-                prioridad: diffDays <= 0 ? 0 : diffDays <= 7 ? 1 : 2,
-                urgenciaLabel: diffDays <= 0 ? "Vencido" : diffDays <= 7 ? "Crítico" : "Advertencia"
+                diasRestantes: isNaN(diffDays) ? null : diffDays,
+                prioridad: isNaN(diffDays) ? 2 : diffDays <= 0 ? 0 : diffDays <= 7 ? 1 : 2,
+                urgenciaLabel: isNaN(diffDays) ? "Info" : diffDays <= 0 ? "Vencido" : diffDays <= 7 ? "Crítico" : "Advertencia"
               });
             }
           }
