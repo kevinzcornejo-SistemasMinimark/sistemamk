@@ -107,7 +107,9 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
       }
 
       // 4. Ordenar por prioridad (menor número = más urgente)
-      return alerts.sort((a, b) => a.prioridad - b.prioridad);
+      const finalAlerts = alerts.sort((a, b) => a.prioridad - b.prioridad);
+      console.log(`Retrieved ${finalAlerts.length} alerts for notifications panel`);
+      return finalAlerts;
     } catch (err) {
       console.error("Error in getNotificacionesAlertas:", err);
       return [];
