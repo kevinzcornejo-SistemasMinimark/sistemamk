@@ -97,24 +97,8 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         });
       }
 
-      // 4. Ordenar por prioridad (menor número = más urgente)
-      // Test: agregar una notificación manual si no hay nada
-      if (alerts.length === 0) {
-        alerts.push({
-          id: "test-venc",
-          tipo: "vencimiento",
-          titulo: "Test de Alerta",
-          mensaje: "Esta es una alerta de prueba para verificar visibilidad.",
-          stock: 10,
-          unidad: "unid",
-          fecha: new Date().toISOString(),
-          prioridad: 0,
-          urgenciaLabel: "Vencido",
-          diasRestantes: -1
-        });
-      }
-
       const finalAlerts = alerts.sort((a, b) => a.prioridad - b.prioridad);
+      return finalAlerts;
       return finalAlerts;
     } catch (err: any) {
       console.error("Error in getNotificacionesAlertas:", err);
