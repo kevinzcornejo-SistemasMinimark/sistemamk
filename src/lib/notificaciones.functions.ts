@@ -68,8 +68,7 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
       const { data: lotes, error: errLotes } = await supabaseAdmin
         .from("lotes")
         .select("id, fecha_vencimiento, producto_id, productos(nombre, unidad), stock_actual, lote_codigo")
-        .gt("stock_actual", 0)
-        .not("fecha_vencimiento", "is", null);
+        .gt("stock_actual", 0);
 
       if (lotes) {
         const hoy = new Date();
