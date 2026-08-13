@@ -178,13 +178,16 @@ function UsuariosPage() {
     setSaving(true);
     try {
       // Usar cliente sin persistencia para no reemplazar la sesión del admin
+      // Nota: Si el registro requiere confirmación de email en Supabase, 
+      // el usuario aparecerá como no confirmado hasta que se cambie el ajuste en el Dashboard.
       const { data, error } = await supabaseSignup.auth.signUp({
         email: nEmail,
         password: nPass,
         options: {
-          data: { nombre: nNombre },
-          emailRedirectTo:
-            typeof window !== "undefined" ? `${window.location.origin}/login` : undefined,
+          data: { 
+            nombre: nNombre,
+            email_confirmed: true // Intentar forzar confirmación si la política lo permite
+          },
         },
       });
       if (error) throw error;
@@ -306,7 +309,7 @@ function UsuariosPage() {
             <UserCog className="h-6 w-6 text-primary" /> Usuarios y permisos
           </h1>
           <p className="text-muted-foreground">
-            Crea cuentas con correo y contraseña y define a qué módulos pueden acceder.
+            Crea cuentas con correo y contraseña. Los usuarios pueden entrar directamente (asegúrate de desactivar "Confirm Email" en Supabase Auth).
           </p>
         </div>
         <div className="flex gap-2">
