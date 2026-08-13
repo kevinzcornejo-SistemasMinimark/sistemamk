@@ -56,9 +56,10 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
       }
 
 
-      const { data: gestionadas } = await supabase
+      const { data: gestionadas } = await client
         .from("notificaciones_gestion")
         .select("notificacion_id");
+
       
       const gestionadasIds = new Set(gestionadas?.map((g: any) => g.notificacion_id) || []);
       stats.gestionadasOmitidas = gestionadasIds.size;
