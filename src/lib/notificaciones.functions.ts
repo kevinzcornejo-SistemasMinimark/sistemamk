@@ -34,18 +34,27 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
       
       const client = supabase; 
       
-      // 0. Check RLS (Prueba rápida de lectura)
+      // 0. Check RLS (Prueba rápida de lectura y escritura)
       const testRLS = async () => {
-        const results = { productos: "ok", lotes: "ok", gestion: "ok" };
+        const results = { productos: "desconocido", lotes: "desconocido", gestion: "desconocido" };
         
+        // Productos - Lectura
         const { error: pErr } = await client.from("productos").select("id").limit(1);
-        if (pErr) results.productos = `error: ${pErr.code || pErr.message}`;
+        results.productos = pErr ? `Err: ${pErr.code || pErr.message}` : "Lectura OK";
 
+        // Lotes - Lectura
         const { error: lErr } = await client.from("lotes").select("id").limit(1);
-        if (lErr) results.lotes = `error: ${lErr.code || lErr.message}`;
+        results.lotes = lErr ? `Err: ${lErr.code || lErr.message}` : "Lectura OK";
 
+        // Gestión - Lectura y Escritura (esta tabla requiere escritura para marcar como gestionado)
         const { error: gErr } = await client.from("notificaciones_gestion").select("notificacion_id").limit(1);
-        if (gErr) results.gestion = `error: ${gErr.code || gErr.message}`;
+        if (gErr) {
+          results.gestion = `Err: ${gErr.code || gErr.message}`;
+        } else {
+          // Intentar un check de escritura silencioso (upsert de un ID inexistente que no afecte)
+          const { error: gWriteErr } = await client.from("notificaciones_gestion").upsert({ notificacion_id: 'check-permisos' }).select();
+          results.gestion = gWriteErr ? "Lectura OK / Escritura FAIL" : "Lectura/Escritura OK";
+        }
 
         return results;
       };
