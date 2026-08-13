@@ -204,6 +204,26 @@ function NotificacionesPopover() {
               <div className="flex justify-between"><span>Con Stock:</span> <b>{stats.lotesConStock}</b></div>
               <div className="flex justify-between"><span>Próximos Venc:</span> <b className="text-amber-700">{stats.lotesProximosVencer}</b></div>
               <div className="flex justify-between"><span>Omitidos (Check):</span> <b>{stats.gestionadasOmitidas}</b></div>
+              <div className="separator col-span-2 border-t my-1 border-blue-200/50"></div>
+              <div className="font-bold text-blue-700 col-span-2 mb-1">Estado de Permisos (RLS):</div>
+              <div className="flex justify-between">
+                <span>Productos:</span> 
+                <b className={cn(stats.rls?.productos === "ok" ? "text-emerald-600" : "text-destructive")}>
+                  {stats.rls?.productos}
+                </b>
+              </div>
+              <div className="flex justify-between">
+                <span>Lotes:</span> 
+                <b className={cn(stats.rls?.lotes === "ok" ? "text-emerald-600" : "text-destructive")}>
+                  {stats.rls?.lotes}
+                </b>
+              </div>
+              <div className="flex justify-between col-span-2">
+                <span>Gestión Alertas:</span> 
+                <b className={cn(stats.rls?.gestion === "ok" ? "text-emerald-600" : "text-destructive")}>
+                  {stats.rls?.gestion}
+                </b>
+              </div>
             </div>
             <p className="text-[9px] text-muted-foreground italic mt-2 border-t pt-1">
               * El sistema omite productos inactivos, lotes sin stock o alertas marcadas con el "check".
