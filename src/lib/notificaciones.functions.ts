@@ -27,8 +27,17 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         gestionadasOmitidas: 0
       };
       
-      // Intentar obtener una respuesta rápida para ver si el servidor ve algo
-      const { data: prodsStock, error: prodsError } = await supabase
+      // Intentar usar service role si está disponible para evitar problemas de RLS en el servidor
+      // Si no, usar el cliente estándar (que podría fallar si la sesión no se propaga)
+      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      const client = serviceKey 
+        ? createClient(import.meta.env.VITE_SUPABASE_URL, serviceKey)
+        : supabase;
+
+      console.log("Servidor: Usando cliente " + (serviceKey ? "ADMIN" : "ESTÁNDAR"));
+
+      // 1. Productos
+      const { data: prodsStock, error: prodsError } = await client
         .from("productos")
         .select("id, nombre, stock, stock_minimo, activo, unidad");
       
@@ -37,13 +46,15 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         throw prodsError;
       }
 
-      const { data: lotes, error: lotesError } = await supabase
+      // 2. Lotes
+      const { data: lotes, error: lotesError } = await client
         .from("lotes")
         .select("id, fecha_vencimiento, producto_id, productos(nombre, unidad), cantidad_actual, numero_lote");
 
       if (lotesError) {
         console.error("Error en servidor fetching lotes:", lotesError);
       }
+
 
       const { data: gestionadas } = await supabase
         .from("notificaciones_gestion")
