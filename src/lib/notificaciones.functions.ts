@@ -1,6 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { createClient } from "@supabase/supabase-js";
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// Cliente administrativo para bypass RLS solo en el servidor si es necesario
+// NOTA: En un Worker de Cloudflare, process.env es accesible dentro del handler.
+
 
 // Mantenemos como server function pero aseguramos que use el cliente con la sesión actual
 export const getNotificacionesAlertas = createServerFn({ method: "GET" })
