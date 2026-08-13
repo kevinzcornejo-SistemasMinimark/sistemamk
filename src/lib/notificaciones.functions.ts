@@ -2,8 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 
+// Mantenemos como server function pero aseguramos que use el cliente con la sesión actual
 export const getNotificacionesAlertas = createServerFn({ method: "GET" })
   .handler(async () => {
+    console.log("Iniciando getNotificacionesAlertas en el servidor...");
     try {
       const alerts: any[] = [];
       const stats = {
@@ -17,36 +19,40 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         gestionadasOmitidas: 0
       };
       
-      const supabaseClient = supabase;
-
-      // 1. Obtener notificaciones ya gestionadas
-      const { data: gestionadas, error: gestError } = await supabaseClient
-        .from("notificaciones_gestion")
-        .select("notificacion_id");
-      
-      if (gestError) console.error("Error fetching gestionadas:", gestError);
-      
-      const gestionadasIds = new Set(gestionadas?.map((g: any) => g.notificacion_id) || []);
-      stats.gestionadasOmitidas = gestionadasIds.size;
-      
-      // 2. Alertas de Stock Bajo
-      const { data: prodsStock, error: prodsError } = await supabaseClient
+      // Intentar obtener una respuesta rápida para ver si el servidor ve algo
+      const { data: prodsStock, error: prodsError } = await supabase
         .from("productos")
         .select("id, nombre, stock, stock_minimo, activo, unidad");
       
-      if (prodsError) console.error("Error fetching productos:", prodsError);
+      if (prodsError) {
+        console.error("Error en servidor fetching productos:", prodsError);
+        throw prodsError;
+      }
+
+      const { data: lotes, error: lotesError } = await supabase
+        .from("lotes")
+        .select("id, fecha_vencimiento, producto_id, productos(nombre, unidad), cantidad_actual, numero_lote");
+
+      if (lotesError) {
+        console.error("Error en servidor fetching lotes:", lotesError);
+      }
+
+      const { data: gestionadas } = await supabase
+        .from("notificaciones_gestion")
+        .select("notificacion_id");
       
-      if (prodsStock && prodsStock.length > 0) {
+      const gestionadasIds = new Set(gestionadas?.map((g: any) => g.notificacion_id) || []);
+      stats.gestionadasOmitidas = gestionadasIds.size;
+
+      // Procesar productos
+      if (prodsStock) {
         stats.totalProductos = prodsStock.length;
         prodsStock.forEach((p: any) => {
           if (!p.activo) return;
           stats.productosActivos++;
-          
           const stockActual = Number(p.stock || 0);
           const stockMin = Number(p.stock_minimo || 0);
-          
           if (stockMin > 0) stats.conStockMinimoConfig++;
-
           if (stockActual < stockMin) {
             stats.bajoStock++;
             const id = `stock-${p.id}`;
@@ -68,21 +74,14 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         });
       }
 
-      // 3. Alertas de Lotes
-      const { data: lotes, error: lotesError } = await supabaseClient
-        .from("lotes")
-        .select("id, fecha_vencimiento, producto_id, productos(nombre, unidad), cantidad_actual, numero_lote");
-
-      if (lotesError) console.error("Error fetching lotes:", lotesError);
-
-      if (lotes && lotes.length > 0) {
+      // Procesar lotes
+      if (lotes) {
         stats.lotesAnalizados = lotes.length;
         const hoy = new Date();
         lotes.forEach((l: any) => {
           const stockLote = Number(l.cantidad_actual || 0);
           if (stockLote <= 0) return;
           stats.lotesConStock++;
-
           const fVenc = l.fecha_vencimiento ? new Date(l.fecha_vencimiento) : null;
           const diffMs = fVenc ? fVenc.getTime() - hoy.getTime() : null;
           const diffDays = diffMs !== null ? Math.ceil(diffMs / (1000 * 3600 * 24)) : NaN;
@@ -91,25 +90,17 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
             stats.lotesProximosVencer++;
             const id = `venc-${l.id}`;
             if (!gestionadasIds.has(id)) {
-              let titulo = isNaN(diffDays) ? "En riesgo — no vendible" : diffDays <= 0 ? "Vencido" : "Próximo a Vencer";
+              let titulo = isNaN(diffDays) ? "En riesgo" : diffDays <= 0 ? "Vencido" : "Próximo a Vencer";
               let urgenciaLabel = isNaN(diffDays) ? "Info" : diffDays <= 0 ? "Vencido" : diffDays <= 7 ? "Crítico" : "Advertencia";
               let prioridad = isNaN(diffDays) ? 1 : diffDays <= 0 ? 0 : diffDays <= 7 ? 1 : 2;
-              
-              const productName = (l.productos as any)?.nombre || "Producto desconocido";
-              const unidad = (l.productos as any)?.unidad || "unid";
-              let mensaje = isNaN(diffDays) 
-                ? `${productName} · Lote ${l.numero_lote || 'N/A'}`
-                : diffDays <= 0 
-                  ? `${productName} · Lote ${l.numero_lote || 'N/A'}`
-                  : `${productName} · Lote ${l.numero_lote || 'N/A'} (Vence en ${diffDays} días)`;
-
+              const productName = (l.productos as any)?.nombre || "Producto";
               alerts.push({
                 id,
                 tipo: "vencimiento",
                 titulo,
-                mensaje,
+                mensaje: `${productName} · Lote ${l.numero_lote || 'N/A'} ${isNaN(diffDays) ? '' : (diffDays <= 0 ? '(Vencido)' : `(Vence en ${diffDays} días)`)}`,
                 stock: stockLote,
-                unidad: unidad,
+                unidad: (l.productos as any)?.unidad || "unid",
                 fecha: new Date().toISOString(),
                 diasRestantes: isNaN(diffDays) ? null : diffDays,
                 prioridad,
@@ -120,20 +111,16 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         });
       }
 
-      console.log("Notificaciones stats:", stats);
-      console.log("Notificaciones alerts count:", alerts.length);
-
       return { 
         alerts: alerts.sort((a, b) => a.prioridad - b.prioridad),
         stats,
-        debug: `OK: Analizados ${stats.totalProductos} productos y ${stats.lotesAnalizados} lotes. Detectadas ${alerts.length} alertas.`
+        debug: `Servidor: ${stats.totalProductos} productos y ${stats.lotesAnalizados} lotes detectados.`
       };
-    } catch (err) {
-      console.error("Error in getNotificacionesAlertas:", err);
+    } catch (err: any) {
       return { 
         alerts: [], 
         stats: { totalProductos: 0, lotesAnalizados: 0 }, 
-        debug: `Error: ${err instanceof Error ? err.message : String(err)}` 
+        debug: `Error Servidor: ${err.message || String(err)}` 
       };
     }
   });
@@ -144,7 +131,6 @@ export const resolverNotificacion = createServerFn({ method: "POST" })
     const { error } = await supabase
       .from("notificaciones_gestion")
       .upsert({ notificacion_id: data.id }, { onConflict: 'notificacion_id' });
-
     if (error) throw new Error(error.message);
     return { success: true };
   });

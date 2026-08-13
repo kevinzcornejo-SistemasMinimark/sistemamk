@@ -113,8 +113,14 @@ function NotificacionesPopover() {
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["notificaciones-alertas"],
-    queryFn: () => fetchAlerts(),
-    refetchInterval: 60000 * 5,
+    queryFn: async () => {
+      console.log("Header: Llamando a fetchAlertas...");
+      const res = await fetchAlerts();
+      console.log("Header: Respuesta de alertas:", res);
+      return res;
+    },
+    refetchInterval: 30000, // Cada 30 segundos
+    staleTime: 0, // Siempre considerar obsoletos para forzar refresco
   });
 
   const alerts = Array.isArray(data) ? data : (data?.alerts || []);
