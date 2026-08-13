@@ -178,13 +178,16 @@ function UsuariosPage() {
     setSaving(true);
     try {
       // Usar cliente sin persistencia para no reemplazar la sesión del admin
+      // Nota: Si el registro requiere confirmación de email en Supabase, 
+      // el usuario aparecerá como no confirmado hasta que se cambie el ajuste en el Dashboard.
       const { data, error } = await supabaseSignup.auth.signUp({
         email: nEmail,
         password: nPass,
         options: {
-          data: { nombre: nNombre },
-          emailRedirectTo:
-            typeof window !== "undefined" ? `${window.location.origin}/login` : undefined,
+          data: { 
+            nombre: nNombre,
+            email_confirmed: true // Intentar forzar confirmación si la política lo permite
+          },
         },
       });
       if (error) throw error;
