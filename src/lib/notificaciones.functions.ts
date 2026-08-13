@@ -20,19 +20,23 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
       const supabaseClient = supabase;
 
       // 1. Obtener notificaciones ya gestionadas
-      const { data: gestionadas } = await supabaseClient
+      const { data: gestionadas, error: gestError } = await supabaseClient
         .from("notificaciones_gestion")
         .select("notificacion_id");
+      
+      if (gestError) console.error("Error fetching gestionadas:", gestError);
       
       const gestionadasIds = new Set(gestionadas?.map((g: any) => g.notificacion_id) || []);
       stats.gestionadasOmitidas = gestionadasIds.size;
       
       // 2. Alertas de Stock Bajo
-      const { data: prodsStock } = await supabaseClient
+      const { data: prodsStock, error: prodsError } = await supabaseClient
         .from("productos")
         .select("id, nombre, stock, stock_minimo, activo, unidad");
       
-      if (prodsStock) {
+      if (prodsError) console.error("Error fetching productos:", prodsError);
+      
+      if (prodsStock && prodsStock.length > 0) {
         stats.totalProductos = prodsStock.length;
         prodsStock.forEach((p: any) => {
           if (!p.activo) return;
@@ -65,11 +69,13 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
       }
 
       // 3. Alertas de Lotes
-      const { data: lotes } = await supabaseClient
+      const { data: lotes, error: lotesError } = await supabaseClient
         .from("lotes")
         .select("id, fecha_vencimiento, producto_id, productos(nombre, unidad), cantidad_actual, numero_lote");
 
-      if (lotes) {
+      if (lotesError) console.error("Error fetching lotes:", lotesError);
+
+      if (lotes && lotes.length > 0) {
         stats.lotesAnalizados = lotes.length;
         const hoy = new Date();
         lotes.forEach((l: any) => {
@@ -114,17 +120,23 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         });
       }
 
+      console.log("Notificaciones stats:", stats);
+      console.log("Notificaciones alerts count:", alerts.length);
+
       return { 
         alerts: alerts.sort((a, b) => a.prioridad - b.prioridad),
         stats,
-        debug: `OK: Analizados ${stats.totalProductos} productos y ${stats.lotesAnalizados} lotes.`
+        debug: `OK: Analizados ${stats.totalProductos} productos y ${stats.lotesAnalizados} lotes. Detectadas ${alerts.length} alertas.`
       };
     } catch (err) {
       console.error("Error in getNotificacionesAlertas:", err);
-      return { alerts: [], stats: {}, debug: `Error: ${err instanceof Error ? err.message : String(err)}` };
+      return { 
+        alerts: [], 
+        stats: { totalProductos: 0, lotesAnalizados: 0 }, 
+        debug: `Error: ${err instanceof Error ? err.message : String(err)}` 
+      };
     }
   });
-
 
 export const resolverNotificacion = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ id: z.string() }).parse(data))
