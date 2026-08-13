@@ -222,19 +222,19 @@ function NotificacionesPopover() {
               <div className="font-bold text-blue-700 col-span-2 mb-1">Estado de Permisos (RLS):</div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">public.productos:</span> 
-                <b className={cn(stats.rls?.productos?.includes("OK") ? "text-emerald-600" : "text-destructive")}>
+                <b className={cn(stats.rls?.productos === "Lectura OK" ? "text-emerald-600 font-bold" : "text-destructive font-bold")}>
                   {stats.rls?.productos}
                 </b>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">public.lotes:</span> 
-                <b className={cn(stats.rls?.lotes?.includes("OK") ? "text-emerald-600" : "text-destructive")}>
+                <b className={cn(stats.rls?.lotes === "Lectura OK" ? "text-emerald-600 font-bold" : "text-destructive font-bold")}>
                   {stats.rls?.lotes}
                 </b>
               </div>
               <div className="flex justify-between col-span-2">
                 <span className="text-muted-foreground">public.notificaciones_gestion:</span> 
-                <b className={cn(stats.rls?.gestion?.includes("Lectura/Escritura OK") ? "text-emerald-600" : stats.rls?.gestion?.includes("OK") ? "text-amber-600" : "text-destructive")}>
+                <b className={cn(stats.rls?.gestion === "Lectura/Escritura OK" ? "text-emerald-600 font-bold" : stats.rls?.gestion === "Lectura OK" ? "text-amber-600 font-bold" : "text-destructive font-bold")}>
                   {stats.rls?.gestion}
                 </b>
               </div>
