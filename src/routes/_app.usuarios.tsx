@@ -309,7 +309,7 @@ function UsuariosPage() {
             <UserCog className="h-6 w-6 text-primary" /> Usuarios y permisos
           </h1>
           <p className="text-muted-foreground">
-            Crea cuentas con correo y contraseña y define a qué módulos pueden acceder.
+            Crea cuentas con correo y contraseña. Los usuarios pueden entrar directamente (asegúrate de desactivar "Confirm Email" en Supabase Auth).
           </p>
         </div>
         <div className="flex gap-2">
