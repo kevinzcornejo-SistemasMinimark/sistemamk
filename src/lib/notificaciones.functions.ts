@@ -1,6 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { createClient } from "@supabase/supabase-js";
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// Cliente administrativo para bypass RLS solo en el servidor si es necesario
+// NOTA: En un Worker de Cloudflare, process.env es accesible dentro del handler.
+
 
 // Mantenemos como server function pero aseguramos que use el cliente con la sesión actual
 export const getNotificacionesAlertas = createServerFn({ method: "GET" })
@@ -19,8 +27,17 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         gestionadasOmitidas: 0
       };
       
-      // Intentar obtener una respuesta rápida para ver si el servidor ve algo
-      const { data: prodsStock, error: prodsError } = await supabase
+      // Intentar usar service role si está disponible para evitar problemas de RLS en el servidor
+      // Si no, usar el cliente estándar (que podría fallar si la sesión no se propaga)
+      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      const client = serviceKey 
+        ? createClient(import.meta.env.VITE_SUPABASE_URL, serviceKey)
+        : supabase;
+
+      console.log("Servidor: Usando cliente " + (serviceKey ? "ADMIN" : "ESTÁNDAR"));
+
+      // 1. Productos
+      const { data: prodsStock, error: prodsError } = await client
         .from("productos")
         .select("id, nombre, stock, stock_minimo, activo, unidad");
       
@@ -29,7 +46,8 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         throw prodsError;
       }
 
-      const { data: lotes, error: lotesError } = await supabase
+      // 2. Lotes
+      const { data: lotes, error: lotesError } = await client
         .from("lotes")
         .select("id, fecha_vencimiento, producto_id, productos(nombre, unidad), cantidad_actual, numero_lote");
 
@@ -37,9 +55,11 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         console.error("Error en servidor fetching lotes:", lotesError);
       }
 
-      const { data: gestionadas } = await supabase
+
+      const { data: gestionadas } = await client
         .from("notificaciones_gestion")
         .select("notificacion_id");
+
       
       const gestionadasIds = new Set(gestionadas?.map((g: any) => g.notificacion_id) || []);
       stats.gestionadasOmitidas = gestionadasIds.size;
@@ -128,9 +148,15 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
 export const resolverNotificacion = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ id: z.string() }).parse(data))
   .handler(async ({ data }) => {
-    const { error } = await supabase
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const client = serviceKey 
+      ? createClient(import.meta.env.VITE_SUPABASE_URL, serviceKey)
+      : supabase;
+
+    const { error } = await client
       .from("notificaciones_gestion")
       .upsert({ notificacion_id: data.id }, { onConflict: 'notificacion_id' });
+
     if (error) throw new Error(error.message);
     return { success: true };
   });
