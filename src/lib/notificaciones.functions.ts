@@ -146,10 +146,7 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
 export const resolverNotificacion = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ id: z.string() }).parse(data))
   .handler(async ({ data }) => {
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    const client = serviceKey 
-      ? createClient(import.meta.env.VITE_SUPABASE_URL, serviceKey)
-      : supabase;
+    const client = supabase;
 
     const { error } = await client
       .from("notificaciones_gestion")
