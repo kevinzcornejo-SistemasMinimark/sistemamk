@@ -36,7 +36,7 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
       
       // 0. Check RLS (Prueba rápida de lectura y escritura)
       const testRLS = async () => {
-        const results: Record<string, string> = { productos: "desconocido", lotes: "desconocido", gestion: "desconocido" };
+        const results = { productos: "desconocido", lotes: "desconocido", gestion: "desconocido" };
         
         // Productos - Lectura
         const { error: pErr } = await client.from("productos").select("id").limit(1);
