@@ -67,13 +67,13 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
       // 3. Alertas de Lotes
       const { data: lotes } = await supabaseClient
         .from("lotes")
-        .select("id, fecha_vencimiento, producto_id, productos(nombre, unidad), stock_actual, lote_codigo");
+        .select("id, fecha_vencimiento, producto_id, productos(nombre, unidad), cantidad_actual, numero_lote");
 
       if (lotes) {
         stats.lotesAnalizados = lotes.length;
         const hoy = new Date();
         lotes.forEach((l: any) => {
-          const stockLote = Number(l.stock_actual || 0);
+          const stockLote = Number(l.cantidad_actual || 0);
           if (stockLote <= 0) return;
           stats.lotesConStock++;
 
@@ -92,10 +92,10 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
               const productName = (l.productos as any)?.nombre || "Producto desconocido";
               const unidad = (l.productos as any)?.unidad || "unid";
               let mensaje = isNaN(diffDays) 
-                ? `${productName} · Lote ${l.lote_codigo || 'N/A'}`
+                ? `${productName} · Lote ${l.numero_lote || 'N/A'}`
                 : diffDays <= 0 
-                  ? `${productName} · Lote ${l.lote_codigo || 'N/A'}`
-                  : `${productName} · Lote ${l.lote_codigo || 'N/A'} (Vence en ${diffDays} días)`;
+                  ? `${productName} · Lote ${l.numero_lote || 'N/A'}`
+                  : `${productName} · Lote ${l.numero_lote || 'N/A'} (Vence en ${diffDays} días)`;
 
               alerts.push({
                 id,
