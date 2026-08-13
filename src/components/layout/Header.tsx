@@ -191,7 +191,21 @@ function NotificacionesPopover() {
         {showDebug && stats && (
           <div className="p-3 bg-blue-50/50 border-b text-[10px] space-y-2 animate-in fade-in slide-in-from-top-1">
             <div className="font-bold text-blue-700 flex justify-between items-center">
-              <span>Panel de Diagnóstico</span>
+              <div className="flex items-center gap-2">
+                <span>Panel de Diagnóstico</span>
+                <Button 
+                  variant="link" 
+                  size="sm" 
+                  className="h-auto p-0 text-[9px] text-blue-600 hover:text-blue-800 font-normal underline"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    refetch();
+                  }}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Consultando..." : "Reintentar diagnóstico"}
+                </Button>
+              </div>
               <span className="text-[9px] font-normal">{debugMsg}</span>
             </div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1">
