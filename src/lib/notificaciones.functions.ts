@@ -24,15 +24,34 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         lotesAnalizados: 0,
         lotesConStock: 0,
         lotesProximosVencer: 0,
-        gestionadasOmitidas: 0
+        gestionadasOmitidas: 0,
+        rls: {
+          productos: "desconocido",
+          lotes: "desconocido",
+          gestion: "desconocido"
+        }
       };
       
-      // Preferir el cliente con la sesión del usuario para respetar RLS y auditoría.
-      // Si el Service Role está presente y hay errores de permiso, se puede usar como fallback.
-      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
       const client = supabase; 
       
-      console.log("Servidor: Usando cliente con sesión de usuario (RLS activo)");
+      // 0. Check RLS (Prueba rápida de lectura)
+      const testRLS = async () => {
+        const results = { productos: "ok", lotes: "ok", gestion: "ok" };
+        
+        const { error: pErr } = await client.from("productos").select("id").limit(1);
+        if (pErr) results.productos = `error: ${pErr.code || pErr.message}`;
+
+        const { error: lErr } = await client.from("lotes").select("id").limit(1);
+        if (lErr) results.lotes = `error: ${lErr.code || lErr.message}`;
+
+        const { error: gErr } = await client.from("notificaciones_gestion").select("notificacion_id").limit(1);
+        if (gErr) results.gestion = `error: ${gErr.code || gErr.message}`;
+
+        return results;
+      };
+
+      stats.rls = await testRLS();
+      console.log("Servidor: Estado RLS:", stats.rls);
 
       // 1. Productos
       const { data: prodsStock, error: prodsError } = await client
