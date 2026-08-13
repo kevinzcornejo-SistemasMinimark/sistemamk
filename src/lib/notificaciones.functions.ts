@@ -27,14 +27,12 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
         gestionadasOmitidas: 0
       };
       
-      // Intentar usar service role si está disponible para evitar problemas de RLS en el servidor
-      // Si no, usar el cliente estándar (que podría fallar si la sesión no se propaga)
+      // Preferir el cliente con la sesión del usuario para respetar RLS y auditoría.
+      // Si el Service Role está presente y hay errores de permiso, se puede usar como fallback.
       const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-      const client = serviceKey 
-        ? createClient(import.meta.env.VITE_SUPABASE_URL, serviceKey)
-        : supabase;
-
-      console.log("Servidor: Usando cliente " + (serviceKey ? "ADMIN" : "ESTÁNDAR"));
+      const client = supabase; 
+      
+      console.log("Servidor: Usando cliente con sesión de usuario (RLS activo)");
 
       // 1. Productos
       const { data: prodsStock, error: prodsError } = await client
@@ -148,10 +146,7 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
 export const resolverNotificacion = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ id: z.string() }).parse(data))
   .handler(async ({ data }) => {
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    const client = serviceKey 
-      ? createClient(import.meta.env.VITE_SUPABASE_URL, serviceKey)
-      : supabase;
+    const client = supabase;
 
     const { error } = await client
       .from("notificaciones_gestion")
