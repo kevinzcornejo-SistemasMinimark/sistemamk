@@ -61,23 +61,33 @@ function DescuentosReporte() {
       const { desde: d1, hasta: d2 } = rangoFechas(rango, desde, hasta);
       let q = supabase
         .from("descuentos_auditoria")
-        .select("id, creado_en, tipo, aplicado_a, valor, monto_descuento, motivo, motivo_texto, autorizado_por, usuario_id, venta_id, producto_id, ventas(serie, correlativo)")
+        .select(`
+          id, creado_en, tipo, aplicado_a, valor, monto_descuento, motivo, motivo_texto, autorizado_por, usuario_id, venta_id, producto_id,
+          ventas:venta_id (serie, correlativo)
+        `)
         .gte("creado_en", d1)
         .lte("creado_en", d2)
         .order("creado_en", { ascending: false });
+      
       if (motivo !== "__all__") q = q.eq("motivo", motivo);
+      
       const { data, error } = await q;
       if (error) throw error;
-      const out = data ?? [];
+      
+      const out: any[] = (data ?? []).map((r: any) => ({
+        ...r,
+        // Supabase returns an object for the single relation
+        ticket: r.ventas ? `${r.ventas.serie}-${String(r.ventas.correlativo ?? "").padStart(8, "0")}` : null
+      }));
+
       // Respaldo mejorado: encontrar ventas con descuento que no tengan registro en auditoría
       if (motivo === "__all__") {
         const yaAuditadas = new Set(out.map((r: any) => r.venta_id).filter(Boolean));
         
-        // Consultamos ventas que tengan un valor en la columna 'descuento'
         const { data: v, error: vErr } = await supabase
           .from("ventas")
-          .select("id, creada_en, subtotal, descuento, total, cajeros:auth_users(email)")
-          .gt("descuento", 0.005) // Mayor a 0
+          .select("id, creada_en, serie, correlativo, subtotal, descuento, total, cajeros:auth_users(email)")
+          .gt("descuento", 0.005)
           .gte("creada_en", d1)
           .lte("creada_en", d2)
           .order("creada_en", { ascending: false });
@@ -87,7 +97,6 @@ function DescuentosReporte() {
             .filter((r: any) => !yaAuditadas.has(r.id))
             .map((r: any) => ({
               id: `venta-${r.id}`,
-              ventas: { serie: r.serie, correlativo: r.correlativo },
               creado_en: r.creada_en,
               tipo: "monto",
               aplicado_a: "total",
@@ -99,6 +108,7 @@ function DescuentosReporte() {
               usuario_id: null,
               venta_id: r.id,
               producto_id: null,
+              ticket: `${r.serie}-${String(r.correlativo ?? "").padStart(8, "0")}`
             }));
           out.push(...extra);
           out.sort((a: any, b: any) => new Date(b.creado_en).getTime() - new Date(a.creado_en).getTime());
@@ -106,7 +116,6 @@ function DescuentosReporte() {
       }
       setRows(out);
     } catch (e: any) {
-      // Si la tabla no existe todavía
       if (String(e?.message ?? "").includes("does not exist") || e?.code === "42P01") {
         toast.error("Ejecuta el SQL sql/descuentos-auditoria.sql en tu base de datos");
       } else {
@@ -134,7 +143,7 @@ function DescuentosReporte() {
         Descuento: Number(r.monto_descuento).toFixed(2),
         Motivo: r.motivo === "Otro" ? r.motivo_texto : r.motivo,
         Autorizador: r.autorizado_por ?? "",
-        Ticket: r.ventas ? `${r.ventas.serie}-${String(r.ventas.correlativo ?? "").padStart(8, "0")}` : (r.venta_id ?? ""),
+        Ticket: r.ticket ?? (r.venta_id ?? ""),
         Usuario: r.usuario_id ?? "",
       })),
     );
@@ -273,10 +282,7 @@ function DescuentosReporte() {
                   </td>
                   <td className="px-3 py-2 text-xs text-muted-foreground font-medium">{r.autorizado_por ?? "—"}</td>
                   <td className="px-3 py-2 text-xs font-mono text-blue-600/70">
-                    {r.ventas 
-                      ? `${r.ventas.serie}-${String(r.ventas.correlativo ?? "").padStart(8, "0")}` 
-                      : (r.venta_id ? String(r.venta_id).slice(0, 8) : "—")
-                    }
+                    {r.ticket ?? (r.venta_id ? String(r.venta_id).slice(0, 8) : "—")}
                   </td>
                 </tr>
               ))}
