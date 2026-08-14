@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatPEN } from "@/lib/format";
 import { exportToCSV } from "@/lib/exporters";
 import { toast } from "sonner";
+import { TicketModal } from "@/components/pos/TicketModal";
 
 export const Route = createFileRoute("/_app/descuentos")({
   head: () => ({ meta: [{ title: "Reporte de Descuentos — POS Minimarket" }] }),
@@ -54,6 +55,59 @@ function DescuentosReporte() {
   const [motivo, setMotivo] = useState<string>("__all__");
   const [loading, setLoading] = useState(false);
   const [rows, setRows] = useState<any[]>([]);
+  const [reprintData, setReprintData] = useState<any>(null);
+  const [reprintOpen, setReprintOpen] = useState(false);
+
+  // Escuchar evento de reimpresión
+  useEffect(() => {
+    const handleReprint = async (e: any) => {
+      const vid = e.detail.ventaId;
+      if (!vid) return;
+      
+      setLoading(true);
+      try {
+        const { data: v, error } = await supabase
+          .from("ventas")
+          .select("*, ventas_items(*, productos(*)), clientes(*), perfiles:cajero_id(nombre)")
+          .eq("id", vid)
+          .single();
+        
+        if (error) throw error;
+        if (!v) return;
+
+        const ticketData = {
+          tipo: v.tipo_comprobante as any,
+          serie: v.serie,
+          correlativo: v.correlativo,
+          fecha: new Date(v.creada_en),
+          items: (v.ventas_items ?? []).map((i: any) => ({
+            producto: i.productos,
+            cantidad: i.cantidad,
+            precio: i.precio_unitario,
+            descuento: i.descuento || 0
+          })),
+          subtotal: v.subtotal,
+          igv: v.igv,
+          total: v.total,
+          metodoPago: v.metodo_pago,
+          cliente: v.clientes?.razon_social || v.clientes?.nombres,
+          documentoCliente: v.clientes?.numero_documento,
+          cajero: v.perfiles?.nombre,
+          descuento: v.descuento
+        };
+
+        setReprintData(ticketData);
+        setReprintOpen(true);
+      } catch (err: any) {
+        toast.error("Error al cargar ticket: " + err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    window.addEventListener('pos:reimprimir', handleReprint);
+    return () => window.removeEventListener('pos:reimprimir', handleReprint);
+  }, []);
 
   const load = async () => {
     setLoading(true);
@@ -281,8 +335,25 @@ function DescuentosReporte() {
                     </span>
                   </td>
                   <td className="px-3 py-2 text-xs text-muted-foreground font-medium">{r.autorizado_por ?? "—"}</td>
-                  <td className="px-3 py-2 text-xs font-mono text-blue-600/70">
-                    {r.ticket ?? (r.venta_id ? String(r.venta_id).slice(0, 8) : "—")}
+                  <td className="px-3 py-2 text-xs font-mono">
+                    <div className="flex items-center gap-2">
+                      <span className="text-blue-600 font-bold">{r.ticket ?? (r.venta_id ? String(r.venta_id).slice(0, 8) : "—")}</span>
+                      {r.venta_id && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                          onClick={() => {
+                            // Activamos la reimpresión buscando la venta
+                            const event = new CustomEvent('pos:reimprimir', { detail: { ventaId: r.venta_id } });
+                            window.dispatchEvent(event);
+                          }}
+                          title="Reimprimir Ticket"
+                        >
+                          <RefreshCw className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -290,6 +361,12 @@ function DescuentosReporte() {
           </table>
         </div>
       </Card>
+
+      <TicketModal
+        open={reprintOpen}
+        onOpenChange={setReprintOpen}
+        ticket={reprintData}
+      />
     </div>
   );
 }
