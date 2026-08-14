@@ -61,7 +61,7 @@ function DescuentosReporte() {
       const { desde: d1, hasta: d2 } = rangoFechas(rango, desde, hasta);
       let q = supabase
         .from("descuentos_auditoria")
-        .select("id, creado_en, tipo, aplicado_a, valor, monto_descuento, motivo, motivo_texto, autorizado_por, usuario_id, venta_id, producto_id")
+        .select("id, creado_en, tipo, aplicado_a, valor, monto_descuento, motivo, motivo_texto, autorizado_por, usuario_id, venta_id, producto_id, ventas(serie, correlativo)")
         .gte("creado_en", d1)
         .lte("creado_en", d2)
         .order("creado_en", { ascending: false });
@@ -87,6 +87,7 @@ function DescuentosReporte() {
             .filter((r: any) => !yaAuditadas.has(r.id))
             .map((r: any) => ({
               id: `venta-${r.id}`,
+              ventas: { serie: r.serie, correlativo: r.correlativo },
               creado_en: r.creada_en,
               tipo: "monto",
               aplicado_a: "total",
@@ -133,7 +134,7 @@ function DescuentosReporte() {
         Descuento: Number(r.monto_descuento).toFixed(2),
         Motivo: r.motivo === "Otro" ? r.motivo_texto : r.motivo,
         Autorizador: r.autorizado_por ?? "",
-        Venta: r.venta_id ?? "",
+        Ticket: r.ventas ? `${r.ventas.serie}-${String(r.ventas.correlativo ?? "").padStart(8, "0")}` : (r.venta_id ?? ""),
         Usuario: r.usuario_id ?? "",
       })),
     );
@@ -238,7 +239,7 @@ function DescuentosReporte() {
                 <th className="px-3 py-2 font-bold text-right">Descuento</th>
                 <th className="px-3 py-2 font-bold">Motivo</th>
                 <th className="px-3 py-2 font-bold">Autorizador</th>
-                <th className="px-3 py-2 font-bold">Venta</th>
+                <th className="px-3 py-2 font-bold">Ticket</th>
               </tr>
             </thead>
             <tbody>
@@ -271,7 +272,12 @@ function DescuentosReporte() {
                     </span>
                   </td>
                   <td className="px-3 py-2 text-xs text-muted-foreground font-medium">{r.autorizado_por ?? "—"}</td>
-                  <td className="px-3 py-2 text-xs font-mono text-blue-600/70">{r.venta_id ? String(r.venta_id).slice(0, 8) : "—"}</td>
+                  <td className="px-3 py-2 text-xs font-mono text-blue-600/70">
+                    {r.ventas 
+                      ? `${r.ventas.serie}-${String(r.ventas.correlativo ?? "").padStart(8, "0")}` 
+                      : (r.venta_id ? String(r.venta_id).slice(0, 8) : "—")
+                    }
+                  </td>
                 </tr>
               ))}
             </tbody>
