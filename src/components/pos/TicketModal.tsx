@@ -229,9 +229,9 @@ export function TicketModal({
           </Button>
           <Button
             onClick={() => handlePrint()}
-            className="h-14 px-6 text-base font-extrabold flex-1 bg-emerald-500 hover:bg-emerald-600 text-white"
+            className="h-14 px-8 text-lg font-extrabold flex-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg border-2 border-emerald-500/20"
           >
-            <Printer className="h-5 w-5 mr-2" /> Imprimir ticket
+            <Printer className="h-6 w-6 mr-3" /> Reimprimir
           </Button>
         </DialogFooter>
       </DialogContent>
