@@ -776,7 +776,15 @@ function TicketsPage() {
             : filtered.length === 0 ? <tr><td colSpan={8} className="p-6 text-center text-muted-foreground">Sin ventas</td></tr>
             : filtered.map((v) => (
               <tr key={v.id} className="border-t">
-                <td className="px-4 py-2 font-mono text-xs">{v.serie}-{String(v.correlativo).padStart(8, "0")}</td>
+                <td className="px-4 py-2 font-mono text-xs">
+                  <button 
+                    onClick={() => reimprimir(v)} 
+                    className="hover:text-primary hover:underline transition-colors text-left"
+                    title="Vista previa / Reimprimir"
+                  >
+                    {v.serie}-{String(v.correlativo).padStart(8, "0")}
+                  </button>
+                </td>
                 <td className="px-4 py-2"><Badge variant="secondary">{v.tipo_comprobante}</Badge></td>
                 <td className="px-4 py-2">{v.clientes?.razon_social ?? v.clientes?.nombres ?? "—"}</td>
                 <td className="px-4 py-2"><MetodoPill metodo={v.metodo_pago} /></td>
