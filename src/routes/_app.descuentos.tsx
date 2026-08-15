@@ -69,7 +69,7 @@ function DescuentosReporte() {
         // Primero obtenemos la venta base
         const { data: v, error: vError } = await supabase
           .from("ventas")
-          .select("*, clientes(*), perfiles:cajero_id(nombre)")
+          .select("*, clientes(*)")
           .eq("id", vid)
           .single();
         
@@ -84,6 +84,16 @@ function DescuentosReporte() {
 
         if (iError) throw iError;
 
+        // Buscamos el nombre del cajero por separado para evitar errores de relación en el caché
+        let nombreCajero = "";
+        if (v.cajero_id) {
+          const { data: p } = await supabase
+            .from("perfiles")
+            .select("nombre")
+            .eq("id", v.cajero_id)
+            .maybeSingle();
+          if (p?.nombre) nombreCajero = p.nombre;
+        }
 
         const ticketData = {
           tipo: v.tipo_comprobante as any,
@@ -102,7 +112,7 @@ function DescuentosReporte() {
           metodoPago: v.metodo_pago,
           cliente: v.clientes?.razon_social || v.clientes?.nombres,
           documentoCliente: v.clientes?.numero_documento,
-          cajero: v.perfiles?.nombre,
+          cajero: nombreCajero,
           descuento: v.descuento
         };
 
