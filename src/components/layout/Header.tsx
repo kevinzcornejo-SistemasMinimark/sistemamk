@@ -85,7 +85,8 @@ export function Header({
 
         <NotificacionesPopover />
 
-        <div className="hidden md:block text-xs font-bold text-foreground max-w-[200px] truncate">
+        <div className="hidden md:block text-sm font-black text-foreground max-w-[250px] truncate bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
+          <span className="text-primary mr-1">Vendedor:</span>
           {profile?.nombre || user?.email?.split('@')[0] || (isDemo ? "Modo demo" : "")}
         </div>
         <Button
