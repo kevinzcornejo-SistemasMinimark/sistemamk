@@ -354,11 +354,14 @@ function POSPage() {
     nombre_cliente?: string;
     pagos: { metodo: string; monto: number }[];
   }) => {
+    if (procesandoVenta) return;
     if (bloqueada && !isDemo) {
       toast.error("Licencia vencida — Llamar al creador Kevin MG Solutions");
       setCheckoutOpen(false);
       return;
     }
+    try {
+      setProcesandoVenta(true);
     const metodoPrincipal = data.pagos.length > 1
       ? "MIXTO"
       : (data.pagos[0]?.metodo ?? "EFECTIVO");
@@ -438,6 +441,8 @@ function POSPage() {
       );
     } catch (e: any) {
       toast.error(e?.message ?? "Error al registrar la venta");
+    } finally {
+      setProcesandoVenta(false);
     }
   };
 
