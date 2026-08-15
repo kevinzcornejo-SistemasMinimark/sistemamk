@@ -414,7 +414,7 @@ function ProductoModal({
           stock: 0,
           stock_minimo: 0,
           unidad: "UNIDAD",
-          afecto_igv: true,
+          afecto_igv: false,
           activo: true,
         },
       );
