@@ -85,9 +85,9 @@ export function Header({
 
         <NotificacionesPopover />
 
-        <div className="hidden md:flex flex-col items-end mr-2 bg-primary/5 px-4 py-1.5 rounded-lg border border-primary/20 shadow-sm">
-          <span className="text-[10px] uppercase tracking-widest text-primary/60 font-black leading-none mb-0.5">Vendedor Activo</span>
-          <span className="text-base font-black text-foreground leading-none tracking-tight">
+        <div className="hidden lg:flex flex-col items-center absolute left-1/2 -translate-x-1/2 bg-primary/10 px-6 py-2 rounded-xl border-2 border-primary/30 shadow-md min-w-[200px]">
+          <span className="text-[11px] uppercase tracking-[0.2em] text-primary font-black leading-none mb-1">Vendedor Activo</span>
+          <span className="text-xl font-black text-foreground leading-none tracking-tighter drop-shadow-sm">
             {profile?.nombre || user?.email?.split('@')[0] || (isDemo ? "Modo demo" : "")}
           </span>
         </div>
