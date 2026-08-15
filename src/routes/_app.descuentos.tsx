@@ -66,21 +66,31 @@ function DescuentosReporte() {
       
       setLoading(true);
       try {
-        const { data: v, error } = await supabase
+        // Primero obtenemos la venta base
+        const { data: v, error: vError } = await supabase
           .from("ventas")
-          .select("*, ventas_items(*, productos(*)), clientes(*), perfiles:cajero_id(nombre)")
+          .select("*, clientes(*), perfiles:cajero_id(nombre)")
           .eq("id", vid)
           .single();
         
-        if (error) throw error;
+        if (vError) throw vError;
         if (!v) return;
+
+        // Luego obtenemos los items por separado para evitar errores de relación en el caché de PostgREST
+        const { data: items, error: iError } = await supabase
+          .from("ventas_items")
+          .select("*, productos(*)")
+          .eq("venta_id", vid);
+
+        if (iError) throw iError;
+
 
         const ticketData = {
           tipo: v.tipo_comprobante as any,
           serie: v.serie,
           correlativo: v.correlativo,
           fecha: new Date(v.creada_en),
-          items: (v.ventas_items ?? []).map((i: any) => ({
+          items: (items ?? []).map((i: any) => ({
             producto: i.productos,
             cantidad: i.cantidad,
             precio: i.precio_unitario,
