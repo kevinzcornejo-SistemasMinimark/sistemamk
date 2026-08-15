@@ -112,6 +112,9 @@ function ProductosPage() {
       setOpen(false);
       return;
     }
+    if (!p.nombre?.trim()) return toast.error("El nombre es obligatorio");
+    if (!p.categoria_id) return toast.error("La categoría es obligatoria");
+
     const pc = Number(p.precio_compra ?? 0);
     const pv = Number(p.precio_venta ?? 0);
     if (pv < pc) {
