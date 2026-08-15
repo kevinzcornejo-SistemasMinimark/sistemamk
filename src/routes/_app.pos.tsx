@@ -96,6 +96,7 @@ function POSPage() {
   const [kiosko, setKiosko] = useState(false);
   const [escuchando, setEscuchando] = useState(false);
   const [ayudaOpen, setAyudaOpen] = useState(false);
+  const [procesandoVenta, setProcesandoVenta] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const recRef = useRef<any>(null);
 
@@ -353,51 +354,57 @@ function POSPage() {
     nombre_cliente?: string;
     pagos: { metodo: string; monto: number }[];
   }) => {
+    if (procesandoVenta) return;
     if (bloqueada && !isDemo) {
       toast.error("Licencia vencida — Llamar al creador Kevin MG Solutions");
       setCheckoutOpen(false);
       return;
     }
-    const metodoPrincipal = data.pagos.length > 1
-      ? "MIXTO"
-      : (data.pagos[0]?.metodo ?? "EFECTIVO");
-    const baseTicket = {
-      tipo: data.tipo_comprobante as TicketData["tipo"],
-      serie: data.serie,
-      fecha: new Date(new Intl.DateTimeFormat("en-US", { timeZone: "America/Lima", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).format(new Date())),
-      items: cart.items,
-      subtotal: cart.totales.subtotal,
-      igv: cart.totales.igv,
-      total: cart.totales.total,
-      metodoPago: metodoPrincipal.replace("_", " "),
-      documentoCliente: data.documento_cliente,
-      cliente: data.nombre_cliente,
-      descuento: cart.totales.descuentoAplicado,
-      bruto: cart.totales.bruto,
-      cajero:
-        (user?.user_metadata?.["nombre"] as string | undefined) ??
-        (user?.user_metadata?.["full_name"] as string | undefined) ??
-        user?.email ??
-        (isDemo ? "Demo" : undefined),
-      caja: cajaAbierta ? `#${cajaAbierta.numero}` : undefined,
-      turno: cajaAbierta?.turno ?? undefined,
-      descuentoMotivo: cart.descuentoInfo
-        ? cart.descuentoInfo.motivo === "Otro"
-          ? cart.descuentoInfo.motivoTexto
-          : cart.descuentoInfo.motivo
-        : undefined,
-    };
-    if (isDemo || !user) {
-      setCheckoutOpen(false);
-      const correlativo = Math.floor(Math.random() * 9000 + 1000);
-      setTicket({ ...baseTicket, correlativo });
-      cart.clear();
-      toast.success(
-        `Venta demo · ${data.tipo_comprobante} ${data.serie}-${correlativo}`,
-      );
-      return;
-    }
+
+    setProcesandoVenta(true);
     try {
+      const metodoPrincipal = data.pagos.length > 1
+        ? "MIXTO"
+        : (data.pagos[0]?.metodo ?? "EFECTIVO");
+      
+      const baseTicket = {
+        tipo: data.tipo_comprobante as TicketData["tipo"],
+        serie: data.serie,
+        fecha: new Date(new Intl.DateTimeFormat("en-US", { timeZone: "America/Lima", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).format(new Date())),
+        items: cart.items,
+        subtotal: cart.totales.subtotal,
+        igv: cart.totales.igv,
+        total: cart.totales.total,
+        metodoPago: metodoPrincipal.replace("_", " "),
+        documentoCliente: data.documento_cliente,
+        cliente: data.nombre_cliente,
+        descuento: cart.totales.descuentoAplicado,
+        bruto: cart.totales.bruto,
+        cajero:
+          (user?.user_metadata?.["nombre"] as string | undefined) ??
+          (user?.user_metadata?.["full_name"] as string | undefined) ??
+          user?.email ??
+          (isDemo ? "Demo" : undefined),
+        caja: cajaAbierta ? `#${cajaAbierta.numero}` : undefined,
+        turno: cajaAbierta?.turno ?? undefined,
+        descuentoMotivo: cart.descuentoInfo
+          ? cart.descuentoInfo.motivo === "Otro"
+            ? cart.descuentoInfo.motivoTexto
+            : cart.descuentoInfo.motivo
+          : undefined,
+      };
+
+      if (isDemo || !user) {
+        setCheckoutOpen(false);
+        const correlativo = Math.floor(Math.random() * 9000 + 1000);
+        setTicket({ ...baseTicket, correlativo });
+        cart.clear();
+        toast.success(
+          `Venta demo · ${data.tipo_comprobante} ${data.serie}-${correlativo}`,
+        );
+        return;
+      }
+
       const venta = await registrarVenta({
         items: cart.items,
         tipo_comprobante: data.tipo_comprobante as "BOLETA" | "FACTURA" | "TICKET",
@@ -426,6 +433,7 @@ function POSPage() {
           ? `Cliente: ${data.nombre_cliente}${data.documento_cliente ? ` · Doc: ${data.documento_cliente}` : ""}`
           : undefined,
       });
+
       setCheckoutOpen(false);
       setTicket({ ...baseTicket, correlativo: venta.correlativo });
       const recibido = data.pagos.reduce((s, p) => s + (p.monto || 0), 0);
@@ -437,6 +445,8 @@ function POSPage() {
       );
     } catch (e: any) {
       toast.error(e?.message ?? "Error al registrar la venta");
+    } finally {
+      setProcesandoVenta(false);
     }
   };
 
@@ -467,7 +477,15 @@ function POSPage() {
 
 
   return (
-    <div className="flex flex-col lg:flex-row h-full overflow-hidden bg-muted/30">
+    <div className={cn("flex flex-col lg:flex-row h-full overflow-hidden bg-muted/30 relative", procesandoVenta && "pointer-events-none opacity-80")}>
+      {procesandoVenta && (
+        <div className="absolute inset-0 z-[100] flex items-center justify-center bg-background/20 backdrop-blur-[2px]">
+          <div className="bg-card p-6 rounded-2xl shadow-2xl border-2 border-primary animate-pulse flex flex-col items-center gap-4">
+            <div className="h-10 w-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            <p className="text-xl font-black text-primary uppercase tracking-widest">Procesando Venta...</p>
+          </div>
+        </div>
+      )}
       {/* Columna productos */}
       <div className="flex-1 min-w-0 flex flex-col min-h-0">
         <div className="px-5 pt-4 pb-3 space-y-3">

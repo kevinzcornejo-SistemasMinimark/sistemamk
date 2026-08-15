@@ -18,6 +18,9 @@ export type RegistrarVentaInput = {
 };
 
 export async function registrarVenta(input: RegistrarVentaInput) {
+  if (!input.items || input.items.length === 0) {
+    throw new Error("El carrito está vacío");
+  }
   const metodo_pago =
     input.pagos.length > 1
       ? "MIXTO"
