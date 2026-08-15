@@ -607,7 +607,12 @@ function TicketsPage() {
     }
   };
 
+  const verVenta = (v: any) => {
+    reimprimir(v);
+  };
+
   return (
+
     <div className="p-6 space-y-4">
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
