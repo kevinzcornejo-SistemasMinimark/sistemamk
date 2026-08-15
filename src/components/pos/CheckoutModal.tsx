@@ -116,6 +116,7 @@ export function CheckoutModal({
   const [tipo, setTipo] = useState<"BOLETA" | "FACTURA" | "TICKET">("TICKET");
   const [doc, setDoc] = useState("");
   const [nombre, setNombre] = useState("");
+  const [confirmando, setConfirmando] = useState(false);
   const [pagos, setPagos] = useState<Pago[]>([
     { metodo: "EFECTIVO", monto: total },
   ]);
@@ -127,6 +128,7 @@ export function CheckoutModal({
       setDoc("");
       setNombre("");
       setTipo("TICKET");
+      setConfirmando(false);
     }
   }, [open, total]);
 
@@ -155,7 +157,8 @@ export function CheckoutModal({
     });
   };
 
-  const confirmar = () => {
+  const confirmar = async () => {
+    if (confirmando) return;
     if (totalPagado < total - 0.01) {
       toast.error(`Falta ${formatPEN(falta)}`);
       return;
@@ -164,13 +167,20 @@ export function CheckoutModal({
       toast.error("Ingresa el RUC del cliente (11 dígitos)");
       return;
     }
-    onConfirm({
-      tipo_comprobante: tipo,
-      serie,
-      documento_cliente: doc || undefined,
-      nombre_cliente: nombre.trim() || undefined,
-      pagos,
-    });
+
+    try {
+      setConfirmando(true);
+      await onConfirm({
+        tipo_comprobante: tipo,
+        serie,
+        documento_cliente: doc || undefined,
+        nombre_cliente: nombre.trim() || undefined,
+        pagos,
+      });
+    } catch (error) {
+      console.error("Error al confirmar venta:", error);
+      setConfirmando(false);
+    }
   };
 
   return (
