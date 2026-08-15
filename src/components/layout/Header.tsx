@@ -18,7 +18,7 @@ export function Header({
   onToggleSidebar: () => void;
   onOpenMobile: () => void;
 }) {
-  const { user, isDemo, role, signOut } = useAuth();
+  const { user, isDemo, role, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const biz = useBusinessInfo();
   const [online, setOnline] = useState(true);
@@ -85,8 +85,8 @@ export function Header({
 
         <NotificacionesPopover />
 
-        <div className="hidden md:block text-xs text-muted-foreground max-w-[160px] truncate">
-          {user?.email ?? (isDemo ? "Modo demo" : "")}
+        <div className="hidden md:block text-xs font-bold text-foreground max-w-[200px] truncate">
+          {profile?.nombre || user?.email?.split('@')[0] || (isDemo ? "Modo demo" : "")}
         </div>
         <Button
           variant="ghost"

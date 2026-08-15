@@ -49,6 +49,7 @@ interface AuthCtx {
   user: User | null;
   session: Session | null;
   role: AppRole | null;
+  profile: { nombre: string | null; correo: string | null } | null;
   permisos: string[];
   isAdmin: boolean;
   isAdminMaestro: boolean;
@@ -68,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
+  const [profile, setProfile] = useState<{ nombre: string | null; correo: string | null } | null>(null);
   const [permisos, setPermisos] = useState<string[]>([]);
   const [isDemo] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -75,13 +77,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchRoleAndPerms = useCallback(async (u: User) => {
     const esAdminMaestro = (u.email ?? "").toLowerCase() === ADMIN_MAESTRO_EMAIL;
     try {
-      const { data: r } = await supabase
-        .from("roles_usuario")
-        .select("rol")
-        .eq("usuario_id", u.id)
-        .limit(1)
-        .maybeSingle();
+      const [{ data: r }, { data: prof }] = await Promise.all([
+        supabase
+          .from("roles_usuario")
+          .select("rol")
+          .eq("usuario_id", u.id)
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from("perfiles")
+          .select("nombre, correo")
+          .eq("id", u.id)
+          .maybeSingle()
+      ]);
       setRole(((r?.rol as AppRole) ?? (esAdminMaestro ? "administrador" : "cajero")));
+      setProfile(prof || { nombre: u.email?.split('@')[0] || null, correo: u.email || null });
 
       const { data: p } = await supabase
         .from("permisos_usuario")
@@ -107,6 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTimeout(() => fetchRoleAndPerms(sess.user), 0);
       } else {
         setRole(null);
+        setProfile(null);
         setPermisos([]);
       }
     });
@@ -133,6 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     await supabase.auth.signOut();
     setRole(null);
+    setProfile(null);
     setPermisos([]);
   };
 
@@ -152,6 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         session,
         role,
+        profile,
         permisos,
         isAdmin,
         isAdminMaestro,
