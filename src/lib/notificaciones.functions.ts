@@ -172,13 +172,16 @@ export const getNotificacionesAlertas = createServerFn({ method: "GET" })
   });
 
 export const resolverNotificacion = createServerFn({ method: "POST" })
-  .inputValidator((data) => z.object({ id: z.string() }).parse(data))
+  .inputValidator((data) => z.object({ id: z.string(), motivo: z.string().optional() }).parse(data))
   .handler(async ({ data }) => {
     const client = supabase;
 
     const { error } = await client
       .from("notificaciones_gestion")
-      .upsert({ notificacion_id: data.id }, { onConflict: 'notificacion_id' });
+      .upsert({ 
+        notificacion_id: data.id,
+        motivo: data.motivo || 'Gestionado'
+      }, { onConflict: 'notificacion_id' });
 
     if (error) throw new Error(error.message);
     return { success: true };
