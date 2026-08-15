@@ -473,13 +473,24 @@ function POSPage() {
         <div className="px-5 pt-4 pb-3 space-y-3">
           {/* Toolbar superior */}
           <div className="flex items-center justify-between gap-3">
-            <Button
-              variant="outline"
-              className="h-11 px-4 border-2 border-amber-400/70 text-amber-600 hover:bg-amber-50 hover:text-amber-700 font-bold rounded-xl"
-            >
-              <Pause className="h-4 w-4 mr-2" />
-              Pausar Ticket
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                className="h-11 px-4 border-2 border-amber-400/70 text-amber-600 hover:bg-amber-50 hover:text-amber-700 font-bold rounded-xl"
+              >
+                <Pause className="h-4 w-4 mr-2" />
+                Pausar Ticket
+              </Button>
+
+              {kiosko && (
+                <div className="flex flex-col items-center bg-primary/10 px-4 py-1.5 rounded-xl border-2 border-primary/40 shadow-sm animate-in fade-in zoom-in duration-300">
+                  <span className="text-[9px] uppercase tracking-[0.2em] text-primary font-black leading-none mb-0.5 opacity-90">Vendedor Activo</span>
+                  <span className="text-lg font-black text-foreground leading-none tracking-tighter uppercase">
+                    {(user?.user_metadata?.["nombre"] as string | undefined) || user?.email?.split('@')[0] || (isDemo ? "Modo demo" : "")}
+                  </span>
+                </div>
+              )}
+            </div>
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
