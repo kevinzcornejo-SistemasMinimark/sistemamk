@@ -36,7 +36,7 @@ export function limitePorRol(role: string | null | undefined, isAdminMaestro: bo
       return 20;
     case "cajero":
     case "vendedor":
-      return 10;
+      return 30;
     default:
       return 10;
   }
