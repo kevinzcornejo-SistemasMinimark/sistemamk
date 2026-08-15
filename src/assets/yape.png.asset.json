@@ -1,11 +1,11 @@
 {
-  "asset_id": "469c3f75-1f9a-4b23-9ab4-66458b45d750",
-  "content_type": "image/png",
-  "created_at": "2026-06-27T02:44:55Z",
-  "original_filename": "yape.png",
+  "version": 1,
+  "asset_id": "1b91deac-691d-4e8f-8dd7-277fe092c0cd",
   "project_id": "1560a104-9be9-468a-91f9-a25699802ef0",
-  "r2_key": "a/v1/1560a104-9be9-468a-91f9-a25699802ef0/469c3f75-1f9a-4b23-9ab4-66458b45d750/yape.png",
-  "size": 43995,
-  "url": "/__l5e/assets-v1/469c3f75-1f9a-4b23-9ab4-66458b45d750/yape.png",
-  "version": 1
+  "url": "/__l5e/assets-v1/1b91deac-691d-4e8f-8dd7-277fe092c0cd/yape.png",
+  "r2_key": "a/v1/1560a104-9be9-468a-91f9-a25699802ef0/1b91deac-691d-4e8f-8dd7-277fe092c0cd/yape.png",
+  "original_filename": "yape.png",
+  "size": 6978,
+  "content_type": "image/png",
+  "created_at": "2026-08-15T13:45:41Z"
 }
