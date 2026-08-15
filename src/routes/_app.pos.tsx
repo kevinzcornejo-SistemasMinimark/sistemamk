@@ -477,7 +477,15 @@ function POSPage() {
 
 
   return (
-    <div className="flex flex-col lg:flex-row h-full overflow-hidden bg-muted/30">
+    <div className={cn("flex flex-col lg:flex-row h-full overflow-hidden bg-muted/30 relative", procesandoVenta && "pointer-events-none opacity-80")}>
+      {procesandoVenta && (
+        <div className="absolute inset-0 z-[100] flex items-center justify-center bg-background/20 backdrop-blur-[2px]">
+          <div className="bg-card p-6 rounded-2xl shadow-2xl border-2 border-primary animate-pulse flex flex-col items-center gap-4">
+            <div className="h-10 w-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            <p className="text-xl font-black text-primary uppercase tracking-widest">Procesando Venta...</p>
+          </div>
+        </div>
+      )}
       {/* Columna productos */}
       <div className="flex-1 min-w-0 flex flex-col min-h-0">
         <div className="px-5 pt-4 pb-3 space-y-3">
