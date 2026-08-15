@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Percent, FileSpreadsheet, RefreshCw, Filter } from "lucide-react";
+import { Percent, FileSpreadsheet, RefreshCw, Filter, Eye, Printer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPEN } from "@/lib/format";
 import { exportToCSV } from "@/lib/exporters";
@@ -384,7 +384,7 @@ function DescuentosReporte() {
                           }}
                           title="Reimprimir Ticket"
                         >
-                          <RefreshCw className="h-3.5 w-3.5" />
+                          <Printer className="h-3.5 w-3.5" />
                         </Button>
                       )}
                     </div>
