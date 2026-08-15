@@ -21,9 +21,6 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, X, Check } from "lucide-react";
 import { formatPEN } from "@/lib/format";
 import { toast } from "sonner";
-import yapeLogo from "@/assets/yape.png.asset.json";
-import plinLogo from "@/assets/plin.png.asset.json";
-
 // Logos de marca como SVG inline (sin dependencias externas)
 const EfectivoLogo = ({ active }: { active: boolean }) => (
   <svg viewBox="0 0 48 32" className="h-9 w-14" aria-hidden>
@@ -36,15 +33,30 @@ const EfectivoLogo = ({ active }: { active: boolean }) => (
 );
 
 const YapeLogo = ({ active }: { active: boolean }) => (
-  <div className={`rounded-lg overflow-hidden flex items-center justify-center ${active ? "bg-white p-0.5" : ""}`}>
-    <img src={yapeLogo.url} alt="Yape" className="h-11 w-11 object-contain" />
-  </div>
+  <svg viewBox="0 0 40 40" className="h-11 w-11" aria-hidden>
+    <circle cx="20" cy="20" r="20" fill={active ? "#ffffff" : "#6B2BD9"} />
+    <path
+      d="M20 8C13.37 8 8 13.37 8 20C8 26.63 13.37 32 20 32C26.63 32 32 26.63 32 20C32 13.37 26.63 8 20 8ZM25.5 24.5C25.5 25.05 25.05 25.5 24.5 25.5H15.5C14.95 25.5 14.5 25.05 14.5 24.5V15.5C14.5 14.95 14.95 14.5 15.5 14.5H24.5C25.05 14.5 25.5 14.95 25.5 15.5V24.5Z"
+      fill={active ? "#6B2BD9" : "#ffffff"}
+    />
+    <path
+      d="M20 17L23 23H17L20 17Z"
+      fill={active ? "#6B2BD9" : "#ffffff"}
+    />
+  </svg>
 );
 
 const PlinLogo = ({ active }: { active: boolean }) => (
-  <div className={`rounded-lg overflow-hidden flex items-center justify-center ${active ? "bg-white p-0.5" : ""}`}>
-    <img src={plinLogo.url} alt="Plin" className="h-11 w-11 object-contain" />
-  </div>
+  <svg viewBox="0 0 40 40" className="h-11 w-11" aria-hidden>
+    <rect width="40" height="40" rx="8" fill={active ? "#ffffff" : "#00B2A9"} />
+    <path
+      d="M10 20C10 14.48 14.48 10 20 10C25.52 10 30 14.48 30 20C30 25.52 25.52 30 20 30C14.48 30 10 25.52 10 20Z"
+      stroke={active ? "#00B2A9" : "#ffffff"}
+      strokeWidth="2.5"
+      fill="none"
+    />
+    <circle cx="20" cy="20" r="4" fill={active ? "#00B2A9" : "#ffffff"} />
+  </svg>
 );
 
 const VisaMcLogo = ({ active }: { active: boolean }) => (
