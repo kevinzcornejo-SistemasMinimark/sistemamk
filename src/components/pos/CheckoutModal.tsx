@@ -36,14 +36,22 @@ const EfectivoLogo = ({ active }: { active: boolean }) => (
 );
 
 const YapeLogo = ({ active }: { active: boolean }) => (
-  <div className={`rounded-lg overflow-hidden flex items-center justify-center w-full h-full ${active ? "bg-white p-0.5" : ""}`}>
-    <img src={yapeLogo.url} alt="Yape" className="h-14 w-14 object-contain" />
+  <div className="flex items-center justify-center w-full h-full p-1">
+    <img 
+      src={yapeLogo.url} 
+      alt="Yape" 
+      className={`h-full w-full object-contain ${active ? "brightness-100" : ""}`}
+    />
   </div>
 );
 
 const PlinLogo = ({ active }: { active: boolean }) => (
-  <div className={`rounded-lg overflow-hidden flex items-center justify-center w-full h-full ${active ? "bg-white p-0.5" : ""}`}>
-    <img src={plinLogo.url} alt="Plin" className="h-14 w-14 object-contain" />
+  <div className="flex items-center justify-center w-full h-full p-1">
+    <img 
+      src={plinLogo.url} 
+      alt="Plin" 
+      className={`h-full w-full object-contain ${active ? "brightness-100" : ""}`}
+    />
   </div>
 );
 
