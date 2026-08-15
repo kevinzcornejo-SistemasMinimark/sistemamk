@@ -486,7 +486,7 @@ function POSPage() {
                 <div className="flex flex-col items-center bg-primary/10 px-4 py-1.5 rounded-xl border-2 border-primary/40 shadow-sm animate-in fade-in zoom-in duration-300">
                   <span className="text-[9px] uppercase tracking-[0.2em] text-primary font-black leading-none mb-0.5 opacity-90">Vendedor Activo</span>
                   <span className="text-lg font-black text-foreground leading-none tracking-tighter uppercase">
-                    {profile?.nombre || user?.email?.split('@')[0] || (isDemo ? "Modo demo" : "")}
+                    {(user?.user_metadata?.["nombre"] as string | undefined) || user?.email?.split('@')[0] || (isDemo ? "Modo demo" : "")}
                   </span>
                 </div>
               )}
