@@ -360,48 +360,51 @@ function POSPage() {
       setCheckoutOpen(false);
       return;
     }
+
+    setProcesandoVenta(true);
     try {
-      setProcesandoVenta(true);
-    const metodoPrincipal = data.pagos.length > 1
-      ? "MIXTO"
-      : (data.pagos[0]?.metodo ?? "EFECTIVO");
-    const baseTicket = {
-      tipo: data.tipo_comprobante as TicketData["tipo"],
-      serie: data.serie,
-      fecha: new Date(new Intl.DateTimeFormat("en-US", { timeZone: "America/Lima", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).format(new Date())),
-      items: cart.items,
-      subtotal: cart.totales.subtotal,
-      igv: cart.totales.igv,
-      total: cart.totales.total,
-      metodoPago: metodoPrincipal.replace("_", " "),
-      documentoCliente: data.documento_cliente,
-      cliente: data.nombre_cliente,
-      descuento: cart.totales.descuentoAplicado,
-      bruto: cart.totales.bruto,
-      cajero:
-        (user?.user_metadata?.["nombre"] as string | undefined) ??
-        (user?.user_metadata?.["full_name"] as string | undefined) ??
-        user?.email ??
-        (isDemo ? "Demo" : undefined),
-      caja: cajaAbierta ? `#${cajaAbierta.numero}` : undefined,
-      turno: cajaAbierta?.turno ?? undefined,
-      descuentoMotivo: cart.descuentoInfo
-        ? cart.descuentoInfo.motivo === "Otro"
-          ? cart.descuentoInfo.motivoTexto
-          : cart.descuentoInfo.motivo
-        : undefined,
-    };
-    if (isDemo || !user) {
-      setCheckoutOpen(false);
-      const correlativo = Math.floor(Math.random() * 9000 + 1000);
-      setTicket({ ...baseTicket, correlativo });
-      cart.clear();
-      toast.success(
-        `Venta demo · ${data.tipo_comprobante} ${data.serie}-${correlativo}`,
-      );
-      return;
-    }
-    try {
+      const metodoPrincipal = data.pagos.length > 1
+        ? "MIXTO"
+        : (data.pagos[0]?.metodo ?? "EFECTIVO");
+      
+      const baseTicket = {
+        tipo: data.tipo_comprobante as TicketData["tipo"],
+        serie: data.serie,
+        fecha: new Date(new Intl.DateTimeFormat("en-US", { timeZone: "America/Lima", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).format(new Date())),
+        items: cart.items,
+        subtotal: cart.totales.subtotal,
+        igv: cart.totales.igv,
+        total: cart.totales.total,
+        metodoPago: metodoPrincipal.replace("_", " "),
+        documentoCliente: data.documento_cliente,
+        cliente: data.nombre_cliente,
+        descuento: cart.totales.descuentoAplicado,
+        bruto: cart.totales.bruto,
+        cajero:
+          (user?.user_metadata?.["nombre"] as string | undefined) ??
+          (user?.user_metadata?.["full_name"] as string | undefined) ??
+          user?.email ??
+          (isDemo ? "Demo" : undefined),
+        caja: cajaAbierta ? `#${cajaAbierta.numero}` : undefined,
+        turno: cajaAbierta?.turno ?? undefined,
+        descuentoMotivo: cart.descuentoInfo
+          ? cart.descuentoInfo.motivo === "Otro"
+            ? cart.descuentoInfo.motivoTexto
+            : cart.descuentoInfo.motivo
+          : undefined,
+      };
+
+      if (isDemo || !user) {
+        setCheckoutOpen(false);
+        const correlativo = Math.floor(Math.random() * 9000 + 1000);
+        setTicket({ ...baseTicket, correlativo });
+        cart.clear();
+        toast.success(
+          `Venta demo · ${data.tipo_comprobante} ${data.serie}-${correlativo}`,
+        );
+        return;
+      }
+
       const venta = await registrarVenta({
         items: cart.items,
         tipo_comprobante: data.tipo_comprobante as "BOLETA" | "FACTURA" | "TICKET",
@@ -430,6 +433,7 @@ function POSPage() {
           ? `Cliente: ${data.nombre_cliente}${data.documento_cliente ? ` · Doc: ${data.documento_cliente}` : ""}`
           : undefined,
       });
+
       setCheckoutOpen(false);
       setTicket({ ...baseTicket, correlativo: venta.correlativo });
       const recibido = data.pagos.reduce((s, p) => s + (p.monto || 0), 0);
