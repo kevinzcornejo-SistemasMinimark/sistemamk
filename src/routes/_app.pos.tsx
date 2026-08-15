@@ -507,8 +507,14 @@ function POSPage() {
               </Button>
             <Button
               variant="outline"
-              className="h-11 px-4 border-2 font-bold rounded-xl"
+              className={cn(
+                "h-11 px-4 border-2 font-bold rounded-xl transition-all",
+                kiosko 
+                  ? "bg-primary text-primary-foreground border-primary shadow-inner" 
+                  : "border-primary/30 text-primary hover:bg-primary/5"
+              )}
               onClick={() => setKiosko((k) => !k)}
+              title={kiosko ? "Salir de Modo Kiosko" : "Activar Modo Kiosko"}
             >
               {kiosko ? (
                 <>
