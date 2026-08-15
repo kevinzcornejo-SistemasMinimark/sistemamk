@@ -112,6 +112,9 @@ function ProductosPage() {
       setOpen(false);
       return;
     }
+    if (!p.nombre?.trim()) return toast.error("El nombre es obligatorio");
+    if (!p.categoria_id) return toast.error("La categoría es obligatoria");
+
     const pc = Number(p.precio_compra ?? 0);
     const pv = Number(p.precio_venta ?? 0);
     if (pv < pc) {
@@ -411,7 +414,7 @@ function ProductoModal({
           stock: 0,
           stock_minimo: 0,
           unidad: "UNIDAD",
-          afecto_igv: true,
+          afecto_igv: false,
           activo: true,
         },
       );
@@ -513,7 +516,7 @@ function ProductoModal({
             </div>
           </div>
           <div className="col-span-2">
-            <Label>Nombre</Label>
+            <Label>Nombre <span className="text-destructive">*</span></Label>
             <Input
               value={f.nombre ?? ""}
               onChange={(e) => set({ nombre: e.target.value })}
@@ -545,7 +548,7 @@ function ProductoModal({
             </Select>
           </div>
           <div>
-            <Label>Categoría</Label>
+            <Label>Categoría <span className="text-destructive">*</span></Label>
             <Select
               value={f.categoria_id ?? "none"}
               onValueChange={(v) =>
@@ -671,7 +674,10 @@ function ProductoModal({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={() => onSave(f)} disabled={!f.nombre?.trim() || procesando}>
+          <Button 
+            onClick={() => onSave(f)} 
+            disabled={!f.nombre?.trim() || !f.categoria_id || procesando}
+          >
             {procesando ? "Procesando foto…" : "Guardar"}
           </Button>
         </DialogFooter>
