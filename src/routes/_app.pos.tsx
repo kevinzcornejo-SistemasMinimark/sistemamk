@@ -96,6 +96,7 @@ function POSPage() {
   const [kiosko, setKiosko] = useState(false);
   const [escuchando, setEscuchando] = useState(false);
   const [ayudaOpen, setAyudaOpen] = useState(false);
+  const [procesandoVenta, setProcesandoVenta] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const recRef = useRef<any>(null);
 
