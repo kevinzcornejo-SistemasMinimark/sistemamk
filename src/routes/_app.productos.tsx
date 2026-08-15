@@ -674,7 +674,10 @@ function ProductoModal({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={() => onSave(f)} disabled={!f.nombre?.trim() || procesando}>
+          <Button 
+            onClick={() => onSave(f)} 
+            disabled={!f.nombre?.trim() || !f.categoria_id || procesando}
+          >
             {procesando ? "Procesando foto…" : "Guardar"}
           </Button>
         </DialogFooter>
