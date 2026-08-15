@@ -30,7 +30,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useBusinessInfo } from "@/hooks/useBusinessInfo";
 import { StorageWidget } from "./StorageWidget";
 import { LicenseWidget } from "./LicenseWidget";
-
+import { AlertasPanel } from "./AlertasPanel";
 
 type Item = {
   to: string;
