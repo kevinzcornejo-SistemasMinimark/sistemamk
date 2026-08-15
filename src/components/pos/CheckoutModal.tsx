@@ -143,7 +143,6 @@ export function CheckoutModal({
     setPagos((prev) => prev.map((p, idx) => (idx === i ? { ...p, ...patch } : p)));
 
   // Al cambiar de método: recalcula el monto para cubrir lo que falta
-  // (suma/resta automática). Efectivo permite vuelto, los demás se ajustan exacto.
   const cambiarMetodo = (i: number, nuevoMetodo: string) => {
     setPagos((prev) => {
       const otrosPagados = prev.reduce(
@@ -159,6 +158,18 @@ export function CheckoutModal({
 
   const confirmar = async () => {
     if (confirmando) return;
+
+    // Verificar si falta número de operación en métodos no-efectivo
+    const necesitaRef = pagos.some(
+      (p) => p.metodo !== "EFECTIVO" && !p.referencia?.trim()
+    );
+    if (necesitaRef) {
+      const ok = window.confirm(
+        "¿Deseas ingresar el número de operación? (Recomendado para Yape/Plin/Tarjeta)"
+      );
+      if (ok) return; // Se queda para que el usuario lo ponga
+    }
+
     if (totalPagado < total - 0.01) {
       toast.error(`Falta ${formatPEN(falta)}`);
       return;
@@ -167,6 +178,7 @@ export function CheckoutModal({
       toast.error("Ingresa el RUC del cliente (11 dígitos)");
       return;
     }
+
 
     try {
       setConfirmando(true);
@@ -388,9 +400,9 @@ export function CheckoutModal({
                     })}
                   </div>
 
-                  <div className="flex items-end gap-2">
-                    <div className="flex-1">
-                      <Label className="text-xs font-bold uppercase text-muted-foreground">Monto</Label>
+                  <div className="grid grid-cols-[1.2fr_1fr] gap-2 items-end">
+                    <div>
+                      <Label className="text-[10px] font-bold uppercase text-muted-foreground mb-1 block">Monto</Label>
                       <Input
                         type="number"
                         step="0.10"
@@ -402,19 +414,48 @@ export function CheckoutModal({
                         className="h-14 text-2xl font-extrabold tabular-nums text-right"
                       />
                     </div>
-                    {pagos.length > 1 && (
+                    {p.metodo !== "EFECTIVO" ? (
+                      <div>
+                        <Label className="text-[10px] font-bold uppercase text-muted-foreground mb-1 block">N° Operación</Label>
+                        <Input
+                          placeholder="Referencia"
+                          value={p.referencia || ""}
+                          onChange={(e) => updatePago(i, { referencia: e.target.value })}
+                          className="h-14 text-lg font-bold"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex justify-end">
+                        {pagos.length > 1 && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-14 w-14 text-destructive hover:bg-destructive/10"
+                            onClick={() =>
+                              setPagos((prev) => prev.filter((_, idx) => idx !== i))
+                            }
+                          >
+                            <X className="h-6 w-6" />
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {pagos.length > 1 && p.metodo !== "EFECTIVO" && (
+                    <div className="flex justify-end">
                       <Button
                         variant="ghost"
-                        size="icon"
-                        className="h-14 w-14 text-destructive hover:bg-destructive/10"
+                        size="sm"
+                        className="h-8 text-destructive hover:bg-destructive/10"
                         onClick={() =>
                           setPagos((prev) => prev.filter((_, idx) => idx !== i))
                         }
                       >
-                        <X className="h-6 w-6" />
+                        <X className="h-4 w-4 mr-1" /> Eliminar pago
                       </Button>
-                    )}
-                  </div>
+                    </div>
+                  )}
+
                 </div>
               ))}
             </div>
