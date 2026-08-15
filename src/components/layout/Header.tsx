@@ -85,9 +85,11 @@ export function Header({
 
         <NotificacionesPopover />
 
-        <div className="hidden md:block text-sm font-black text-foreground max-w-[250px] truncate bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
-          <span className="text-primary mr-1">Vendedor:</span>
-          {profile?.nombre || user?.email?.split('@')[0] || (isDemo ? "Modo demo" : "")}
+        <div className="hidden md:flex flex-col items-end mr-2 bg-primary/5 px-4 py-1.5 rounded-lg border border-primary/20 shadow-sm">
+          <span className="text-[10px] uppercase tracking-widest text-primary/60 font-black leading-none mb-0.5">Vendedor Activo</span>
+          <span className="text-base font-black text-foreground leading-none tracking-tight">
+            {profile?.nombre || user?.email?.split('@')[0] || (isDemo ? "Modo demo" : "")}
+          </span>
         </div>
         <Button
           variant="ghost"
