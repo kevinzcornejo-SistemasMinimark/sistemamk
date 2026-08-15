@@ -79,10 +79,24 @@ function DescuentosReporte() {
         // Luego obtenemos los items por separado para evitar errores de relación en el caché de PostgREST
         const { data: items, error: iError } = await supabase
           .from("ventas_items")
-          .select("*, productos(*)")
+          .select("cantidad, precio_unitario, descuento, producto_id")
           .eq("venta_id", vid);
 
         if (iError) throw iError;
+
+        // Resolvemos los productos uno por uno para máxima compatibilidad
+        const itemsWithProducts = await Promise.all((items ?? []).map(async (item: any) => {
+          const { data: prod } = await supabase
+            .from("productos")
+            .select("*")
+            .eq("id", item.producto_id)
+            .single();
+          
+          return {
+            ...item,
+            productos: prod
+          };
+        }));
 
         // Buscamos el nombre del cajero por separado para evitar errores de relación en el caché
         let nombreCajero = "";
@@ -100,7 +114,7 @@ function DescuentosReporte() {
           serie: v.serie,
           correlativo: v.correlativo,
           fecha: new Date(v.creada_en),
-          items: (items ?? []).map((i: any) => ({
+          items: itemsWithProducts.map((i: any) => ({
             producto: i.productos,
             cantidad: i.cantidad,
             precio: i.precio_unitario,
