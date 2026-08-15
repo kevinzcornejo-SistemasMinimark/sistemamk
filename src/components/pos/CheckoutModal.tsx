@@ -36,23 +36,32 @@ const EfectivoLogo = ({ active }: { active: boolean }) => (
 );
 
 const YapeLogo = ({ active }: { active: boolean }) => (
-  <div className="flex items-center justify-center w-full h-full p-1">
-    <img 
-      src={yapeLogo.url} 
-      alt="Yape" 
-      className={`h-full w-full object-contain ${active ? "brightness-100" : ""}`}
-    />
-  </div>
+  <svg viewBox="0 0 100 100" className="h-12 w-12" aria-hidden>
+    {/* Fondo redondeado morado de Yape */}
+    <rect width="100" height="100" rx="25" fill={active ? "#ffffff" : "#742284"} />
+    {/* Círculo turquesa con "S/" */}
+    <circle cx="50" cy="35" r="18" fill="#00D2B5" />
+    <text x="50" y="40" textAnchor="middle" fontSize="12" fontWeight="bold" fill="white" fontFamily="sans-serif">S/</text>
+    {/* Texto "yape" estilizado simplificado */}
+    <text x="50" y="75" textAnchor="middle" fontSize="28" fontWeight="900" fill={active ? "#742284" : "white"} fontFamily="cursive, sans-serif">yape</text>
+  </svg>
 );
 
 const PlinLogo = ({ active }: { active: boolean }) => (
-  <div className="flex items-center justify-center w-full h-full p-1">
-    <img 
-      src={plinLogo.url} 
-      alt="Plin" 
-      className={`h-full w-full object-contain ${active ? "brightness-100" : ""}`}
-    />
-  </div>
+  <svg viewBox="0 0 100 100" className="h-12 w-12" aria-hidden>
+    {/* Círculo degradado cian/azul de Plin */}
+    <defs>
+      <linearGradient id="plinGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#00E5E5" />
+        <stop offset="100%" stopColor="#0080FF" />
+      </linearGradient>
+    </defs>
+    <circle cx="50" cy="50" r="48" fill={active ? "white" : "url(#plinGradient)"} />
+    {/* Texto "plin" */}
+    <text x="50" y="62" textAnchor="middle" fontSize="32" fontWeight="900" fill={active ? "#0080FF" : "white"} fontFamily="sans-serif">plin</text>
+    {/* Punto rosado característico */}
+    <circle cx="68" cy="40" r="5" fill="#FF4081" />
+  </svg>
 );
 
 const VisaMcLogo = ({ active }: { active: boolean }) => (
