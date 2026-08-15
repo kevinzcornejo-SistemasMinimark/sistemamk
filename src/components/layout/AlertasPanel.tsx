@@ -207,14 +207,19 @@ export function AlertasPanel({ open, onClose }: AlertasPanelProps) {
                         </div>
                       )}
                     </div>
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
-                      className="h-7 px-2 text-[10px] font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-                      onClick={() => handleResolve(alert.id)}
-                    >
-                      GESTIONAR
-                    </Button>
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        className="h-7 px-2 text-[10px] font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                        onClick={() => {
+                          const id = alert.id.split("-")[1];
+                          // Redirigir a detalle (si es stock, es producto; si es vencimiento, lote)
+                          // Aquí simplemente navegamos al producto por ahora
+                          window.location.href = `/detalle-producto/${id}`;
+                        }}
+                      >
+                        VER DETALLE
+                      </Button>
                   </div>
                 </div>
               ))
