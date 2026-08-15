@@ -9,13 +9,19 @@ import {
   RefreshCcw,
   AlertCircle,
   History,
-  TrendingUp
+  TrendingUp,
+  Settings,
+  Search,
+  Building2,
+  MapPin,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { getNotificacionesAlertas, resolverNotificacion } from "@/lib/notificaciones.functions";
+import { getNotificacionesAlertas, resolverNotificacion, saveAlertConfig } from "@/lib/notificaciones.functions";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { 
@@ -27,7 +33,8 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { formatPEN } from "@/lib/format";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface AlertasPanelProps {
   open: boolean;
@@ -37,7 +44,24 @@ interface AlertasPanelProps {
 export function AlertasPanel({ open, onClose }: AlertasPanelProps) {
   const [alerts, setAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState<"todos" | "vencimiento" | "stock">("todos");
+  const [filterType, setFilterType] = useState<"todos" | "vencimiento" | "stock">("todos");
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [showConfig, setShowConfig] = useState(false);
+  
+  // Advanced filters state
+  const [catId, setCatId] = useState<string>("all");
+  const [provId, setProvId] = useState<string>("all");
+  const [ubicacion, setUbicacion] = useState("");
+  const [diasFiltro, setDiasFiltro] = useState<string>("");
+
+  // Config state
+  const [config, setConfig] = useState({ dias_advertencia: 30, dias_critico: 7 });
+  const [savingConfig, setSavingConfig] = useState(false);
+
+  // Catalog data
+  const [categories, setCategories] = useState<any[]>([]);
+  const [providers, setProviders] = useState<any[]>([]);
+
   const [selectedAlert, setSelectedAlert] = useState<any>(null);
   const [details, setDetails] = useState<any>(null);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
@@ -45,6 +69,20 @@ export function AlertasPanel({ open, onClose }: AlertasPanelProps) {
   
   const getAlerts = useServerFn(getNotificacionesAlertas);
   const markResolved = useServerFn(resolverNotificacion);
+  const updateConfig = useServerFn(saveAlertConfig);
+
+  const loadCatalog = async () => {
+    try {
+      const [{ data: cats }, { data: provs }] = await Promise.all([
+        supabase.from("categorias").select("id, nombre").order("nombre"),
+        supabase.from("proveedores").select("id, nombre").order("nombre")
+      ]);
+      setCategories(cats || []);
+      setProviders(provs || []);
+    } catch (err) {
+      console.error("Error loading catalog for filters:", err);
+    }
+  };
 
   const loadDetails = async (alert: any) => {
     const id = alert.id.split("-")[1];
@@ -75,8 +113,15 @@ export function AlertasPanel({ open, onClose }: AlertasPanelProps) {
   const load = async () => {
     setLoading(true);
     try {
-      const res = await getAlerts();
+      const params: any = {};
+      if (catId !== "all") params.categoriaId = catId;
+      if (provId !== "all") params.proveedorId = provId;
+      if (ubicacion.trim()) params.ubicacion = ubicacion.trim();
+      if (diasFiltro) params.diasVencimiento = parseInt(diasFiltro);
+
+      const res = await getAlerts({ data: params });
       setAlerts(res.alerts || []);
+      if (res.config) setConfig(res.config);
     } catch (error: any) {
       console.error("Error al cargar alertas:", error);
       toast.error("No se pudieron cargar las alertas");
@@ -88,8 +133,23 @@ export function AlertasPanel({ open, onClose }: AlertasPanelProps) {
   useEffect(() => {
     if (open) {
       load();
+      loadCatalog();
     }
-  }, [open]);
+  }, [open, catId, provId, diasFiltro]);
+
+  const handleSaveConfig = async () => {
+    setSavingConfig(true);
+    try {
+      await updateConfig({ data: config });
+      toast.success("Configuración guardada correctamente");
+      setShowConfig(false);
+      load();
+    } catch (err: any) {
+      toast.error("Error al guardar configuración: " + err.message);
+    } finally {
+      setSavingConfig(false);
+    }
+  };
 
   const handleResolve = async () => {
     if (!resolvingId) return;
@@ -105,8 +165,8 @@ export function AlertasPanel({ open, onClose }: AlertasPanelProps) {
   };
 
   const filteredAlerts = alerts.filter(a => {
-    if (filter === "todos") return true;
-    return a.tipo === filter;
+    if (filterType === "todos") return true;
+    return a.tipo === filterType;
   });
 
   return (
@@ -122,7 +182,7 @@ export function AlertasPanel({ open, onClose }: AlertasPanelProps) {
       {/* Panel */}
       <aside
         className={cn(
-          "fixed top-0 right-0 h-full w-full max-w-[400px] bg-background border-l shadow-2xl z-[70] transform transition-transform duration-300 ease-in-out flex flex-col",
+          "fixed top-0 right-0 h-full w-full max-w-[420px] bg-background border-l shadow-2xl z-[70] transform transition-transform duration-300 ease-in-out flex flex-col",
           open ? "translate-x-0" : "translate-x-full"
         )}
       >
@@ -139,46 +199,144 @@ export function AlertasPanel({ open, onClose }: AlertasPanelProps) {
               </p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full">
-            <X className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" onClick={() => setShowConfig(true)} className="rounded-full h-8 w-8">
+              <Settings className="h-4 w-4 text-muted-foreground" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full h-8 w-8">
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
 
-        {/* Filtros */}
+        {/* Filtros de Tipo */}
         <div className="p-3 border-b flex items-center gap-2 overflow-x-auto no-scrollbar">
           <Button 
-            variant={filter === "todos" ? "default" : "outline"} 
+            variant={filterType === "todos" ? "default" : "outline"} 
             size="sm" 
-            className="h-8 rounded-full text-xs"
-            onClick={() => setFilter("todos")}
+            className="h-8 rounded-full text-xs shrink-0"
+            onClick={() => setFilterType("todos")}
           >
             <Filter className="h-3 w-3 mr-1" /> Todos
           </Button>
           <Button 
-            variant={filter === "vencimiento" ? "default" : "outline"} 
+            variant={filterType === "vencimiento" ? "default" : "outline"} 
             size="sm" 
-            className="h-8 rounded-full text-xs"
-            onClick={() => setFilter("vencimiento")}
+            className="h-8 rounded-full text-xs shrink-0"
+            onClick={() => setFilterType("vencimiento")}
           >
             <CalendarClock className="h-3 w-3 mr-1" /> Vencimiento
           </Button>
           <Button 
-            variant={filter === "stock" ? "default" : "outline"} 
+            variant={filterType === "stock" ? "default" : "outline"} 
             size="sm" 
-            className="h-8 rounded-full text-xs"
-            onClick={() => setFilter("stock")}
+            className="h-8 rounded-full text-xs shrink-0"
+            onClick={() => setFilterType("stock")}
           >
             <Package className="h-3 w-3 mr-1" /> Stock Mínimo
           </Button>
           <Button 
             variant="ghost" 
             size="icon" 
-            className="h-8 w-8 rounded-full ml-auto"
+            className="h-8 w-8 rounded-full ml-auto shrink-0"
             onClick={load}
             disabled={loading}
           >
             <RefreshCcw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
           </Button>
+        </div>
+
+        {/* Filtros Avanzados Toggle */}
+        <div className="px-4 py-2 border-b bg-muted/10">
+          <button 
+            className="flex items-center justify-between w-full text-[11px] font-bold text-muted-foreground uppercase hover:text-foreground transition-colors"
+            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+          >
+            <div className="flex items-center gap-2">
+              <Filter className="h-3 w-3" />
+              Filtros Avanzados
+              {(catId !== "all" || provId !== "all" || ubicacion.trim() || diasFiltro) && (
+                <Badge className="h-4 px-1.5 text-[8px] bg-emerald-500">Activo</Badge>
+              )}
+            </div>
+            {showAdvancedFilters ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+          </button>
+          
+          {showAdvancedFilters && (
+            <div className="mt-3 space-y-3 pb-2 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="text-[9px] font-bold uppercase text-muted-foreground ml-1">Categoría</label>
+                  <Select value={catId} onValueChange={setCatId}>
+                    <SelectTrigger className="h-8 text-xs bg-background">
+                      <SelectValue placeholder="Todas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas</SelectItem>
+                      {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.nombre}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[9px] font-bold uppercase text-muted-foreground ml-1">Proveedor</label>
+                  <Select value={provId} onValueChange={setProvId}>
+                    <SelectTrigger className="h-8 text-xs bg-background">
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      {providers.map(p => <SelectItem key={p.id} value={p.id}>{p.nombre}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="text-[9px] font-bold uppercase text-muted-foreground ml-1">Ubicación</label>
+                  <div className="relative">
+                    <MapPin className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                    <Input 
+                      value={ubicacion} 
+                      onChange={(e) => setUbicacion(e.target.value)}
+                      onBlur={load}
+                      placeholder="Almacén A..." 
+                      className="h-8 pl-7 text-xs bg-background"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[9px] font-bold uppercase text-muted-foreground ml-1">Vence en (días)</label>
+                  <div className="relative">
+                    <CalendarClock className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                    <Input 
+                      type="number"
+                      value={diasFiltro} 
+                      onChange={(e) => setDiasFiltro(e.target.value)}
+                      placeholder="Ej. 15" 
+                      className="h-8 pl-7 text-xs bg-background"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {(catId !== "all" || provId !== "all" || ubicacion.trim() || diasFiltro) && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="w-full h-7 text-[10px] font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+                  onClick={() => {
+                    setCatId("all");
+                    setProvId("all");
+                    setUbicacion("");
+                    setDiasFiltro("");
+                  }}
+                >
+                  LIMPIAR FILTROS
+                </Button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Content */}
@@ -195,14 +353,14 @@ export function AlertasPanel({ open, onClose }: AlertasPanelProps) {
                   <CheckCircle2 className="h-6 w-6 opacity-40" />
                 </div>
                 <h3 className="font-semibold text-foreground">Todo en orden</h3>
-                <p className="text-sm px-10">No hay alertas críticas que requieran atención inmediata.</p>
+                <p className="text-sm px-10">No hay alertas críticas que coincidan con los filtros.</p>
               </div>
             ) : (
               filteredAlerts.map((alert) => (
                 <div 
                   key={alert.id}
                   className={cn(
-                    "p-3 rounded-xl border-l-4 transition-all hover:shadow-md border bg-card",
+                    "p-3 rounded-xl border-l-4 transition-all hover:shadow-md border bg-card group",
                     alert.urgenciaLabel === "Crítico" || alert.urgenciaLabel === "Vencido"
                       ? "border-l-rose-500 shadow-rose-500/5"
                       : "border-l-amber-500 shadow-amber-500/5"
@@ -233,6 +391,13 @@ export function AlertasPanel({ open, onClose }: AlertasPanelProps) {
                   <h4 className="font-bold text-sm leading-tight mb-1 text-foreground">
                     {alert.mensaje}
                   </h4>
+
+                  {alert.ubicacion && (
+                    <div className="text-[10px] text-muted-foreground flex items-center gap-1 mb-2">
+                      <MapPin className="h-2.5 w-2.5" />
+                      {alert.ubicacion}
+                    </div>
+                  )}
                   
                   <div className="flex items-center justify-between mt-3 gap-2">
                     <div className="flex items-center gap-2">
@@ -252,6 +417,7 @@ export function AlertasPanel({ open, onClose }: AlertasPanelProps) {
                         </div>
                       )}
                     </div>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button 
                         size="sm" 
                         variant="ghost" 
@@ -261,7 +427,7 @@ export function AlertasPanel({ open, onClose }: AlertasPanelProps) {
                           loadDetails(alert);
                         }}
                       >
-                        VER DETALLE
+                        DETALLE
                       </Button>
                       <Button 
                         size="sm" 
@@ -274,6 +440,7 @@ export function AlertasPanel({ open, onClose }: AlertasPanelProps) {
                       >
                         RESOLVER
                       </Button>
+                    </div>
                   </div>
                 </div>
               ))
@@ -299,7 +466,63 @@ export function AlertasPanel({ open, onClose }: AlertasPanelProps) {
         </div>
       </aside>
 
-      {/* Modal Detalle */}
+      {/* Modal Configuración */}
+      <Dialog open={showConfig} onOpenChange={setShowConfig}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5 text-primary" />
+              Configuración de Alertas
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <p className="text-xs text-muted-foreground">
+              Define los rangos de días para las alertas de vencimiento. Esta configuración se guarda para tu usuario.
+            </p>
+            
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <Label htmlFor="dias-adv" className="text-sm font-bold">Días para Alerta Amarilla (Advertencia)</Label>
+                <div className="flex items-center gap-3">
+                  <Input 
+                    id="dias-adv"
+                    type="number"
+                    value={config.dias_advertencia}
+                    onChange={(e) => setConfig(prev => ({ ...prev, dias_advertencia: parseInt(e.target.value) || 0 }))}
+                    className="h-10"
+                  />
+                  <Badge className="bg-amber-100 text-amber-700 border-amber-300">DÍAS</Badge>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="dias-crit" className="text-sm font-bold">Días para Alerta Roja (Crítica)</Label>
+                <div className="flex items-center gap-3">
+                  <Input 
+                    id="dias-crit"
+                    type="number"
+                    value={config.dias_critico}
+                    onChange={(e) => setConfig(prev => ({ ...prev, dias_critico: parseInt(e.target.value) || 0 }))}
+                    className="h-10"
+                  />
+                  <Badge className="bg-rose-100 text-rose-700 border-rose-300">DÍAS</Badge>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowConfig(false)}>Cancelar</Button>
+            <Button onClick={handleSaveConfig} disabled={savingConfig}>
+              {savingConfig ? <RefreshCcw className="h-4 w-4 animate-spin mr-2" /> : null}
+              Guardar Cambios
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Detalle (Existente) */}
       <Dialog open={!!selectedAlert} onOpenChange={(open) => !open && setSelectedAlert(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -315,10 +538,19 @@ export function AlertasPanel({ open, onClose }: AlertasPanelProps) {
                 <div>
                   <label className="text-[10px] uppercase font-bold text-muted-foreground">Producto</label>
                   <p className="font-bold">{details.prod.nombre}</p>
+                  {details.prod.categorias?.nombre && (
+                    <Badge variant="outline" className="mt-1 text-[9px]">{details.prod.categorias.nombre}</Badge>
+                  )}
                 </div>
                 <div>
                   <label className="text-[10px] uppercase font-bold text-muted-foreground">Stock Actual</label>
                   <p className="font-bold">{details.prod.stock} {details.prod.unidad}</p>
+                  {details.prod.ubicacion && (
+                    <div className="text-[10px] text-muted-foreground flex items-center gap-1 mt-1">
+                      <MapPin className="h-2.5 w-2.5" />
+                      {details.prod.ubicacion}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -374,7 +606,7 @@ export function AlertasPanel({ open, onClose }: AlertasPanelProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Modal Resolver */}
+      {/* Modal Resolver (Existente) */}
       <Dialog open={!!resolvingId} onOpenChange={(open) => !open && setResolvingId(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
