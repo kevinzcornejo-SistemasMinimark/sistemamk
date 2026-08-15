@@ -298,7 +298,6 @@ export function AlertasPanel({ open, onClose }: AlertasPanelProps) {
           </Button>
         </div>
       </aside>
-      </aside>
 
       {/* Modal Detalle */}
       <Dialog open={!!selectedAlert} onOpenChange={(open) => !open && setSelectedAlert(null)}>
