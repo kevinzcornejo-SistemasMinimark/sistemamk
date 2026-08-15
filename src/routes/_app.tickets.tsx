@@ -567,6 +567,12 @@ function TicketsPage() {
         cantidad: Number(d.cantidad),
         descuento: Number(d.descuento ?? 0),
       }));
+      // Obtener pagos para mostrar el número de operación
+      const { data: pagosData } = await supabase
+        .from("venta_pagos")
+        .select("metodo, monto, referencia")
+        .eq("venta_id", v.id);
+
       // Intentar obtener el detalle del descuento desde la auditoría
       const { data: aud } = await supabase
         .from("descuentos_auditoria")
@@ -596,6 +602,7 @@ function TicketsPage() {
         bruto: bruto,
         descuentoMotivo: aud?.motivo || undefined,
         metodoPago: v.metodo_pago,
+        pagos: pagosData || undefined,
         cliente: v.clientes?.razon_social ?? v.clientes?.nombres ?? undefined,
         cajero: cajerosMap[v.cajero_id || ""] || undefined,
       });
