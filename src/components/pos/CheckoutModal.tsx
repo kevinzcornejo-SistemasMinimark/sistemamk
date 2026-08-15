@@ -431,13 +431,13 @@ export function CheckoutModal({
           </Button>
           <Button
             onClick={confirmar}
-            disabled={!completo}
+            disabled={!completo || confirmando}
             className={`h-16 px-8 text-xl font-extrabold flex-1 shadow-lg transition ${
               completo ? "bg-emerald-500 hover:bg-emerald-600 text-white" : ""
             }`}
           >
             <Check className="h-6 w-6 mr-2" />
-            {completo ? `CONFIRMAR ${formatPEN(total)}` : `Falta ${formatPEN(falta)}`}
+            {confirmando ? "PROCESANDO..." : completo ? `CONFIRMAR ${formatPEN(total)}` : `Falta ${formatPEN(falta)}`}
           </Button>
         </DialogFooter>
       </DialogContent>
