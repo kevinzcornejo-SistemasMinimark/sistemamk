@@ -607,7 +607,12 @@ function TicketsPage() {
     }
   };
 
+  const verVenta = (v: any) => {
+    reimprimir(v);
+  };
+
   return (
+
     <div className="p-6 space-y-4">
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -802,16 +807,31 @@ function TicketsPage() {
                 <td className="px-4 py-2 text-right tabular-nums text-rose-600 font-medium">{Number(v.descuento || 0) > 0 ? `-${formatPEN(v.descuento)}` : "—"}</td>
                 <td className="px-4 py-2 text-right font-bold tabular-nums">{formatPEN(v.total)}</td>
                 <td className="px-4 py-2 text-center">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => reimprimir(v)}
-                    disabled={reprintingId === v.id}
-                    className="h-8 font-semibold"
-                  >
-                    <Printer className="h-3.5 w-3.5 mr-1.5 text-emerald-600" />
-                    {reprintingId === v.id ? "Cargando…" : "Vista previa"}
-                  </Button>
+                  <div className="flex items-center justify-center gap-1.5">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => reimprimir(v)}
+                      disabled={reprintingId === v.id}
+                      className="h-8 font-semibold"
+                      title="Vista previa e impresión térmica"
+                    >
+                      <Printer className="h-3.5 w-3.5 mr-1.5 text-emerald-600" />
+                      {reprintingId === v.id ? "Cargando…" : "Ticket"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => verVenta(v)}
+                      className="h-8 font-semibold"
+                      title="Ver detalle del ticket"
+                    >
+                      <FileText className="h-3.5 w-3.5 mr-1.5 text-blue-600" />
+                      Ver
+                    </Button>
+                  </div>
+
+
                 </td>
               </tr>
             ))}

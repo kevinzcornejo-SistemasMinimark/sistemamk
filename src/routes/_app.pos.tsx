@@ -435,7 +435,9 @@ function POSPage() {
       });
 
       setCheckoutOpen(false);
-      setTicket({ ...baseTicket, correlativo: venta.correlativo });
+      const ticketData = { ...baseTicket, correlativo: venta.correlativo };
+      setTicket(ticketData);
+
       const recibido = data.pagos.reduce((s, p) => s + (p.monto || 0), 0);
       broadcastPagado(cart.totales.total, Math.max(0, recibido - cart.totales.total));
       cart.clear();
