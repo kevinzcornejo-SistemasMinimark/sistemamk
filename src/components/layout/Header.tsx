@@ -123,9 +123,9 @@ function NotificacionesPopover() {
     staleTime: 0, // Siempre considerar obsoletos para forzar refresco
   });
 
-  const alerts = Array.isArray(data) ? data : (data?.alerts || []);
-  const stats = (!Array.isArray(data) && data?.stats) ? (data.stats as any) : null;
-  const debugMsg = !Array.isArray(data) ? data?.debug : null;
+  const alerts = data?.alerts || [];
+  const stats = (data as any)?.stats || null;
+  const debugMsg = (data as any)?.debug || null;
 
   const mutation = useMutation({
     mutationFn: (id: string) => markResolved({ data: { id } }),
