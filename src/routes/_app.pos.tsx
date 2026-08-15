@@ -472,7 +472,7 @@ function POSPage() {
       <div className="flex-1 min-w-0 flex flex-col min-h-0">
         <div className="px-5 pt-4 pb-3 space-y-3">
           {/* Toolbar superior */}
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3 relative">
             <div className="flex items-center gap-3">
               <Button
                 variant="outline"
@@ -481,16 +481,16 @@ function POSPage() {
                 <Pause className="h-4 w-4 mr-2" />
                 Pausar Ticket
               </Button>
-
-              {kiosko && (
-                <div className="flex flex-col items-center bg-primary/10 px-4 py-1.5 rounded-xl border-2 border-primary/40 shadow-sm animate-in fade-in zoom-in duration-300">
-                  <span className="text-[9px] uppercase tracking-[0.2em] text-primary font-black leading-none mb-0.5 opacity-90">Vendedor Activo</span>
-                  <span className="text-lg font-black text-foreground leading-none tracking-tighter uppercase">
-                    {(user?.user_metadata?.["nombre"] as string | undefined) || user?.email?.split('@')[0] || (isDemo ? "Modo demo" : "")}
-                  </span>
-                </div>
-              )}
             </div>
+
+            {kiosko && (
+              <div className="hidden lg:flex flex-col items-center absolute left-1/2 -translate-x-1/2 bg-primary/10 px-6 py-1.5 rounded-xl border-2 border-primary/40 shadow-sm animate-in fade-in zoom-in duration-300 z-10">
+                <span className="text-[9px] uppercase tracking-[0.2em] text-primary font-black leading-none mb-0.5 opacity-90">Vendedor Activo</span>
+                <span className="text-lg font-black text-foreground leading-none tracking-tighter uppercase">
+                  {(user?.user_metadata?.["nombre"] as string | undefined) || user?.email?.split('@')[0] || (isDemo ? "Modo demo" : "")}
+                </span>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
