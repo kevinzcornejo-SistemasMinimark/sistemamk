@@ -376,6 +376,7 @@ function POSPage() {
         igv: cart.totales.igv,
         total: cart.totales.total,
         metodoPago: metodoPrincipal.replace("_", " "),
+        pagos: data.pagos,
         documentoCliente: data.documento_cliente,
         cliente: data.nombre_cliente,
         descuento: cart.totales.descuentoAplicado,

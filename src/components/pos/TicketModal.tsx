@@ -17,6 +17,7 @@ export interface TicketData {
   igv: number;
   total: number;
   metodoPago: string;
+  pagos?: { metodo: string; monto: number; referencia?: string }[];
   cliente?: string;
   documentoCliente?: string;
   cajero?: string;
@@ -146,6 +147,15 @@ export function TicketModal({
             <div>CLIENTE : {ticket.cliente ?? "Cliente Genérico"}</div>
             {ticket.documentoCliente && <div>DOC : {ticket.documentoCliente}</div>}
             <div>PAGO  : {ticket.metodoPago}</div>
+            {ticket.pagos?.some(p => p.referencia) && (
+              <div className="mt-1">
+                {ticket.pagos.map((p, idx) => p.referencia ? (
+                  <div key={idx} className="text-[11px]">
+                    N° OP ({p.metodo}): {p.referencia}
+                  </div>
+                ) : null)}
+              </div>
+            )}
             <hr className="my-2 border-t border-dashed border-black" />
             <table className="w-full">
               <thead>
