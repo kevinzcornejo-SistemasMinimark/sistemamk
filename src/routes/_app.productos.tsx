@@ -548,7 +548,7 @@ function ProductoModal({
             </Select>
           </div>
           <div>
-            <Label>Categoría</Label>
+            <Label>Categoría <span className="text-destructive">*</span></Label>
             <Select
               value={f.categoria_id ?? "none"}
               onValueChange={(v) =>
