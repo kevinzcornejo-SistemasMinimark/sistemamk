@@ -824,12 +824,13 @@ function TicketsPage() {
                       variant="outline"
                       onClick={() => verVenta(v)}
                       className="h-8 font-semibold"
-                      title="Ver detalle y reporte PDF/Excel"
+                      title="Ver detalle del ticket"
                     >
                       <FileText className="h-3.5 w-3.5 mr-1.5 text-blue-600" />
-                      Detalle
+                      Ver
                     </Button>
                   </div>
+
 
                 </td>
               </tr>
