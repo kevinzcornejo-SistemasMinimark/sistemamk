@@ -73,9 +73,8 @@ function UsuariosPage() {
   const [nEmail, setNEmail] = useState("");
   const [nPass, setNPass] = useState("");
   const [nNombre, setNNombre] = useState("");
-  const [nRol, setNRol] = useState<AppRole>("cajero");
+  const [nRol, setNRol] = useState<AppRole>("vendedor");
   const [nModulos, setNModulos] = useState<string[]>([
-    "dashboard",
     "pos",
     "productos",
   ]);
@@ -158,8 +157,8 @@ function UsuariosPage() {
     setNEmail("");
     setNPass("");
     setNNombre("");
-    setNRol("cajero");
-    setNModulos(["dashboard", "pos", "productos"]);
+    setNRol("vendedor");
+    setNModulos(["pos", "productos"]);
   };
 
   const crearUsuario = async () => {
@@ -309,7 +308,7 @@ function UsuariosPage() {
             <UserCog className="h-6 w-6 text-primary" /> Usuarios y permisos
           </h1>
           <p className="text-muted-foreground">
-            Crea cuentas para los vendedores (<b>Carlos, Sonia, Carmen, Luisa, Soledad</b>). Asegúrate de desactivar "Confirm Email" en Supabase Auth.
+            Crea cuentas para los vendedores (<b>Carlos, Sonia, Carmen, Luisa, Soledad</b>). Usa correos ficticios como <b>nombre@lacoop.com</b> y asegúrate de desactivar "Confirm Email" en Supabase Auth.
           </p>
         </div>
         <div className="flex gap-2">
@@ -423,8 +422,16 @@ function UsuariosPage() {
               <Input
                 type="email"
                 value={nEmail}
-                onChange={(e) => setNEmail(e.target.value)}
-                placeholder="usuario@correo.com"
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setNEmail(val);
+                  // Si el nombre está vacío, sugerir uno basado en el correo
+                  if (!nNombre && val.includes("@")) {
+                    const sugerencia = val.split("@")[0];
+                    setNNombre(sugerencia.charAt(0).toUpperCase() + sugerencia.slice(1));
+                  }
+                }}
+                placeholder="vendedor@lacoop.com"
               />
             </div>
             <div className="space-y-2">
