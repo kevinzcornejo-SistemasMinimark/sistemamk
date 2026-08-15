@@ -94,6 +94,8 @@ function DescuentosReporte() {
             .maybeSingle();
           if (p?.nombre) nombreCajero = p.nombre;
         }
+
+        const ticketData = {
           tipo: v.tipo_comprobante as any,
           serie: v.serie,
           correlativo: v.correlativo,
