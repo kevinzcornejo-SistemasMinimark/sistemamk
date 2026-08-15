@@ -36,6 +36,7 @@ import { Route as AppCategoriasRouteImport } from './routes/_app.categorias'
 import { Route as AppCajaRouteImport } from './routes/_app.caja'
 import { Route as AppAjustesRouteImport } from './routes/_app.ajustes'
 import { Route as ApiPublicDebugNotificationsRouteImport } from './routes/api/public/debug-notifications'
+import { Route as AppDetalleProductoIdRouteImport } from './routes/_app.detalle-producto.$id'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -172,6 +173,11 @@ const ApiPublicDebugNotificationsRoute =
     path: '/api/public/debug-notifications',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AppDetalleProductoIdRoute = AppDetalleProductoIdRouteImport.update({
+  id: '/detalle-producto/$id',
+  path: '/detalle-producto/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -199,6 +205,7 @@ export interface FileRoutesByFullPath {
   '/reportes2': typeof AppReportes2Route
   '/tickets': typeof AppTicketsRoute
   '/usuarios': typeof AppUsuariosRoute
+  '/detalle-producto/$id': typeof AppDetalleProductoIdRoute
   '/api/public/debug-notifications': typeof ApiPublicDebugNotificationsRoute
 }
 export interface FileRoutesByTo {
@@ -227,6 +234,7 @@ export interface FileRoutesByTo {
   '/reportes2': typeof AppReportes2Route
   '/tickets': typeof AppTicketsRoute
   '/usuarios': typeof AppUsuariosRoute
+  '/detalle-producto/$id': typeof AppDetalleProductoIdRoute
   '/api/public/debug-notifications': typeof ApiPublicDebugNotificationsRoute
 }
 export interface FileRoutesById {
@@ -257,6 +265,7 @@ export interface FileRoutesById {
   '/_app/reportes2': typeof AppReportes2Route
   '/_app/tickets': typeof AppTicketsRoute
   '/_app/usuarios': typeof AppUsuariosRoute
+  '/_app/detalle-producto/$id': typeof AppDetalleProductoIdRoute
   '/api/public/debug-notifications': typeof ApiPublicDebugNotificationsRoute
 }
 export interface FileRouteTypes {
@@ -287,6 +296,7 @@ export interface FileRouteTypes {
     | '/reportes2'
     | '/tickets'
     | '/usuarios'
+    | '/detalle-producto/$id'
     | '/api/public/debug-notifications'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -315,6 +325,7 @@ export interface FileRouteTypes {
     | '/reportes2'
     | '/tickets'
     | '/usuarios'
+    | '/detalle-producto/$id'
     | '/api/public/debug-notifications'
   id:
     | '__root__'
@@ -344,6 +355,7 @@ export interface FileRouteTypes {
     | '/_app/reportes2'
     | '/_app/tickets'
     | '/_app/usuarios'
+    | '/_app/detalle-producto/$id'
     | '/api/public/debug-notifications'
   fileRoutesById: FileRoutesById
 }
@@ -545,6 +557,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicDebugNotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/detalle-producto/$id': {
+      id: '/_app/detalle-producto/$id'
+      path: '/detalle-producto/$id'
+      fullPath: '/detalle-producto/$id'
+      preLoaderRoute: typeof AppDetalleProductoIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -572,6 +591,7 @@ interface AppRouteChildren {
   AppReportes2Route: typeof AppReportes2Route
   AppTicketsRoute: typeof AppTicketsRoute
   AppUsuariosRoute: typeof AppUsuariosRoute
+  AppDetalleProductoIdRoute: typeof AppDetalleProductoIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -598,6 +618,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppReportes2Route: AppReportes2Route,
   AppTicketsRoute: AppTicketsRoute,
   AppUsuariosRoute: AppUsuariosRoute,
+  AppDetalleProductoIdRoute: AppDetalleProductoIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
