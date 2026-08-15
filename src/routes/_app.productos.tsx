@@ -516,7 +516,7 @@ function ProductoModal({
             </div>
           </div>
           <div className="col-span-2">
-            <Label>Nombre</Label>
+            <Label>Nombre <span className="text-destructive">*</span></Label>
             <Input
               value={f.nombre ?? ""}
               onChange={(e) => set({ nombre: e.target.value })}
