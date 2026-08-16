@@ -83,7 +83,7 @@ export const Route = createFileRoute("/_app/pos")({
 function POSPage() {
   const cart = usePOSCart();
   const { productos: allProductos, categorias, refresh } = useCatalog();
-  const { user, isDemo, role, isAdminMaestro } = useAuth();
+  const { user, profile, isDemo, role, isAdminMaestro } = useAuth();
   const { bloqueada, estado } = useLicencia();
   const { caja: cajaAbierta, loading: cajaLoading } = useCajaAbierta(user?.id);
   const [combos, setCombos] = useState<ComboRow[]>([]);
@@ -382,9 +382,10 @@ function POSPage() {
         descuento: cart.totales.descuentoAplicado,
         bruto: cart.totales.bruto,
         cajero:
+          profile?.nombre ??
           (user?.user_metadata?.["nombre"] as string | undefined) ??
           (user?.user_metadata?.["full_name"] as string | undefined) ??
-          user?.email ??
+          (user?.email?.split("@")[0]) ??
           (isDemo ? "Demo" : undefined),
         caja: cajaAbierta ? `#${cajaAbierta.numero}` : undefined,
         turno: cajaAbierta?.turno ?? undefined,
