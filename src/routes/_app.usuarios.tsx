@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseSignup } from "@/integrations/supabase/signupClient";
+import { updateUserPassword } from "@/lib/usuarios.functions";
 import {
   useAuth,
   MODULOS,
@@ -37,6 +38,7 @@ import {
   type AppRole,
 } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
 
 export const Route = createFileRoute("/_app/usuarios")({
   head: () => ({ meta: [{ title: "Usuarios — POS Minimarket" }] }),
@@ -81,8 +83,11 @@ function UsuariosPage() {
   const [saving, setSaving] = useState(false);
 
   // Formulario editar
+  const [eNombre, setENombre] = useState("");
   const [eRol, setERol] = useState<AppRole>("cajero");
   const [eModulos, setEModulos] = useState<string[]>([]);
+  const [ePass, setEPass] = useState("");
+  const [verPass, setVerPass] = useState(false);
 
   const puedeGestionar = isAdmin;
 
@@ -229,8 +234,11 @@ function UsuariosPage() {
 
 
   const abrirEditar = (r: UsuarioRow) => {
+    setENombre(r.nombre || "");
     setERol((r.rol as AppRole) ?? "cajero");
     setEModulos(r.permisos ?? []);
+    setEPass("");
+    setVerPass(false);
     setOpenEdit(r);
   };
 
@@ -242,6 +250,19 @@ function UsuariosPage() {
     }
     setSaving(true);
     try {
+      // 1. Actualizar Perfil (Nombre)
+      await supabase
+        .from("perfiles")
+        .update({ nombre: eNombre })
+        .eq("id", openEdit.usuario_id);
+
+      // 2. Actualizar Password (si se ingresó algo)
+      if (ePass.trim()) {
+        if (ePass.length < 6) throw new Error("La nueva contraseña debe tener al menos 6 caracteres");
+        await updateUserPassword({ usuario_id: openEdit.usuario_id, password: ePass });
+      }
+
+      // 3. Roles
       await supabase
         .from("roles_usuario")
         .delete()
@@ -250,6 +271,7 @@ function UsuariosPage() {
         .from("roles_usuario")
         .insert({ usuario_id: openEdit.usuario_id, rol: eRol });
 
+      // 4. Permisos
       await supabase
         .from("permisos_usuario")
         .delete()
@@ -517,21 +539,54 @@ function UsuariosPage() {
             <DialogTitle>Editar accesos — {openEdit?.correo}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2 max-w-xs">
-              <Label>Rol</Label>
-              <Select value={eRol} onValueChange={(v) => setERol(v as AppRole)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {ROLES.map((r) => (
-                    <SelectItem key={r} value={r}>
-                      {r}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Nombre completo</Label>
+                <Input value={eNombre} onChange={(e) => setENombre(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Rol</Label>
+                <Select value={eRol} onValueChange={(v) => setERol(v as AppRole)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ROLES.map((r) => (
+                      <SelectItem key={r} value={r}>
+                        {r}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+
+            <div className="p-3 border rounded-md bg-muted/20 space-y-2">
+              <Label className="text-primary font-bold flex items-center gap-2">
+                <Lock className="h-4 w-4" /> Cambiar Contraseña (Opcional)
+              </Label>
+              <div className="relative">
+                <Input
+                  type={verPass ? "text" : "password"}
+                  placeholder="Nueva contraseña (dejar vacío para no cambiar)"
+                  value={ePass}
+                  onChange={(e) => setEPass(e.target.value)}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={() => setVerPass(!verPass)}
+                >
+                  {verPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                Si el usuario olvidó su contraseña, puedes establecer una nueva aquí.
+              </p>
+            </div>
+
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Módulos con acceso</Label>
@@ -554,7 +609,7 @@ function UsuariosPage() {
                   </Button>
                 </div>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-64 overflow-auto p-2 border rounded-md">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-48 overflow-auto p-2 border rounded-md">
                 {MODULOS.map((m) => (
                   <label key={m.key} className="flex items-center gap-2 text-sm">
                     <Checkbox
