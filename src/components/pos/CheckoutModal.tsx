@@ -117,6 +117,7 @@ export function CheckoutModal({
   const [doc, setDoc] = useState("");
   const [nombre, setNombre] = useState("");
   const [confirmando, setConfirmando] = useState(false);
+  const [showRefAlert, setShowRefAlert] = useState(false);
   const [pagos, setPagos] = useState<Pago[]>([
     { metodo: "EFECTIVO", monto: total },
   ]);
@@ -129,6 +130,7 @@ export function CheckoutModal({
       setNombre("");
       setTipo("TICKET");
       setConfirmando(false);
+      setShowRefAlert(false);
     }
   }, [open, total]);
 
@@ -164,10 +166,8 @@ export function CheckoutModal({
       (p) => p.metodo !== "EFECTIVO" && !p.referencia?.trim()
     );
     if (necesitaRef) {
-      const ok = window.confirm(
-        "¿Deseas ingresar el número de operación? (Recomendado para Yape/Plin/Tarjeta)"
-      );
-      if (ok) return; // Se queda para que el usuario lo ponga
+      setShowRefAlert(true);
+      return;
     }
 
     if (totalPagado < total - 0.01) {
