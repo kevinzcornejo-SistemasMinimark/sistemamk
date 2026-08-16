@@ -137,40 +137,70 @@ function NotificacionesPage() {
         </Tabs>
       </header>
       
-      {/* 🔴 Sección Alertas Críticas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <AlertCard 
-          title="Stock Crítico" 
-          value={stats.critico.length} 
-          subtitle="Productos por debajo del mínimo" 
-          icon={BadgeAlert} 
-          color="text-red-600" 
-          bg="bg-red-50" 
-        />
-        <AlertCard 
-          title="Agotados" 
-          value={stats.agotados.length} 
-          subtitle="Stock en cero absoluto" 
-          icon={Package} 
-          color="text-neutral-900" 
-          bg="bg-neutral-100" 
-        />
-        <AlertCard 
-          title="Vencidos" 
-          value={stats.vencidos.length} 
-          subtitle="Lotes que ya expiraron" 
-          icon={Skull} 
-          color="text-rose-600" 
-          bg="bg-rose-50" 
-        />
-        <AlertCard 
-          title="Sin Movimiento" 
-          value={stats.sinMovimiento.length} 
-          subtitle="No se venden en este periodo" 
-          icon={History} 
-          color="text-amber-600" 
-          bg="bg-amber-50" 
-        />
+      {/* 📦 Tablas de Inventario Crítico - Movido arriba para visibilidad */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <Card className="p-5 xl:col-span-1 border-none shadow-sm ring-1 ring-border bg-red-50/30 ring-red-100">
+          <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-red-700">
+            <BadgeAlert className="h-6 w-6 text-red-600 animate-pulse" /> Stock Crítico
+          </h3>
+          <div className="space-y-2">
+            {stats.critico.length === 0 ? (
+              <div className="py-8 text-center text-muted-foreground text-sm">No hay productos en nivel crítico</div>
+            ) : (
+              stats.critico.slice(0, 8).map((p, i) => (
+                <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/80 border border-red-100 shadow-sm hover:scale-[1.02] transition-transform">
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-bold truncate text-neutral-800">{p.nombre}</span>
+                    <span className="text-[10px] text-muted-foreground uppercase font-semibold">{p.categorias?.nombre || 'General'}</span>
+                  </div>
+                  <div className="text-right flex flex-col items-end">
+                    <span className="text-sm font-black text-red-600">{p.stock} {p.unidad}</span>
+                    <span className="text-[9px] text-red-400 font-bold uppercase">Mín: {p.stock_minimo}</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </Card>
+
+        <Card className="p-5 xl:col-span-1 border-none shadow-sm ring-1 ring-border">
+          <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-emerald-500" /> Sobrestock
+          </h3>
+          <div className="space-y-2">
+            {stats.sobrestock.slice(0, 8).map((p, i) => (
+              <div key={i} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                <div className="flex flex-col min-w-0">
+                  <span className="text-sm font-medium truncate">{p.nombre}</span>
+                  <span className="text-[10px] text-muted-foreground uppercase">{p.categorias?.nombre || 'General'}</span>
+                </div>
+                <div className="text-right flex flex-col items-end">
+                  <span className="text-xs font-bold text-emerald-600">{p.stock} {p.unidad}</span>
+                  <span className="text-[9px] text-muted-foreground">Capacidad excedida</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card className="p-5 xl:col-span-1 border-none shadow-sm ring-1 ring-border">
+          <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+            <History className="h-5 w-5 text-amber-500" /> Sin Movimiento
+          </h3>
+          <div className="space-y-2">
+            {stats.sinMovimiento.slice(0, 8).map((p, i) => (
+              <div key={i} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                <div className="flex flex-col min-w-0">
+                  <span className="text-sm font-medium truncate">{p.nombre}</span>
+                  <span className="text-[10px] text-muted-foreground">Stock actual: {p.stock}</span>
+                </div>
+                <div className="text-right">
+                  <Badge variant="outline" className="text-[10px]">Rotación Baja</Badge>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -245,66 +275,40 @@ function NotificacionesPage() {
         </Card>
       </div>
 
-      {/* 📦 Tablas de Inventario Crítico */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <Card className="p-5 xl:col-span-1 border-none shadow-sm ring-1 ring-border">
-          <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-            <BadgeAlert className="h-5 w-5 text-red-600" /> Stock Crítico
-          </h3>
-          <div className="space-y-2">
-            {stats.critico.slice(0, 8).map((p, i) => (
-              <div key={i} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                <div className="flex flex-col min-w-0">
-                  <span className="text-sm font-medium truncate">{p.nombre}</span>
-                  <span className="text-[10px] text-muted-foreground uppercase">{p.categorias?.nombre || 'General'}</span>
-                </div>
-                <div className="text-right flex flex-col items-end">
-                  <span className="text-xs font-bold text-red-600">{p.stock} {p.unidad}</span>
-                  <span className="text-[9px] text-muted-foreground">Mín: {p.stock_minimo}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        <Card className="p-5 xl:col-span-1 border-none shadow-sm ring-1 ring-border">
-          <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-emerald-500" /> Sobrestock
-          </h3>
-          <div className="space-y-2">
-            {stats.sobrestock.slice(0, 8).map((p, i) => (
-              <div key={i} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                <div className="flex flex-col min-w-0">
-                  <span className="text-sm font-medium truncate">{p.nombre}</span>
-                  <span className="text-[10px] text-muted-foreground uppercase">{p.categorias?.nombre || 'General'}</span>
-                </div>
-                <div className="text-right flex flex-col items-end">
-                  <span className="text-xs font-bold text-emerald-600">{p.stock} {p.unidad}</span>
-                  <span className="text-[9px] text-muted-foreground">Capacidad excedida</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        <Card className="p-5 xl:col-span-1 border-none shadow-sm ring-1 ring-border">
-          <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-            <History className="h-5 w-5 text-amber-500" /> Sin Movimiento
-          </h3>
-          <div className="space-y-2">
-            {stats.sinMovimiento.slice(0, 8).map((p, i) => (
-              <div key={i} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                <div className="flex flex-col min-w-0">
-                  <span className="text-sm font-medium truncate">{p.nombre}</span>
-                  <span className="text-[10px] text-muted-foreground">Stock actual: {p.stock}</span>
-                </div>
-                <div className="text-right">
-                  <Badge variant="outline" className="text-[10px]">Rotación Baja</Badge>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
+      {/* Tarjetas de Resumen Secundarias */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <AlertCard 
+          title="Stock Crítico" 
+          value={stats.critico.length} 
+          subtitle="Productos por debajo del mínimo" 
+          icon={BadgeAlert} 
+          color="text-red-600" 
+          bg="bg-red-50" 
+        />
+        <AlertCard 
+          title="Agotados" 
+          value={stats.agotados.length} 
+          subtitle="Stock en cero absoluto" 
+          icon={Package} 
+          color="text-neutral-900" 
+          bg="bg-neutral-100" 
+        />
+        <AlertCard 
+          title="Vencidos" 
+          value={stats.vencidos.length} 
+          subtitle="Lotes que ya expiraron" 
+          icon={Skull} 
+          color="text-rose-600" 
+          bg="bg-rose-50" 
+        />
+        <AlertCard 
+          title="Sin Movimiento" 
+          value={stats.sinMovimiento.length} 
+          subtitle="No se venden en este periodo" 
+          icon={History} 
+          color="text-amber-600" 
+          bg="bg-amber-50" 
+        />
       </div>
     </div>
   );
