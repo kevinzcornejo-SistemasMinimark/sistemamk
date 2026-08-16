@@ -495,15 +495,20 @@ function TicketsPage() {
       const mi = String(fecha.getMinutes()).padStart(2, "0");
       const ticket = `#${String(v.correlativo).replace(/^0+/, "") || "0"}`;
       const pago = (METODO_LABEL[v.metodo_pago] ?? v.metodo_pago ?? "");
-      const oper = v.operacion ? (v.operacion.length > 7 ? v.operacion.slice(-7) : v.operacion) : "";
-      return (
-        pad(ticket, 7) +
-        pad(`${dd}/${mm}`, 6) +
-        pad(pago, 9) +
-        pad(oper, 8) +
-        padR(fmt(Number(v.total)), 10)
-      );
-    }).join("\n");
+      const oper = v.operacion ? ` OP: ${v.operacion}` : "";
+      const total = fmt(Number(v.total));
+
+      return `
+<div class="ticket-row">
+  <div class="row-top">
+    <span class="ticket-id">${ticket}</span>
+    <span class="ticket-total">${total}</span>
+  </div>
+  <div class="row-bottom">
+    ${dd}/${mm} ${hh}:${mi} - ${pago}${oper}
+  </div>
+</div>`;
+    }).join("");
 
     const totalDesglose = desglose.map(([m, d]) => {
       const label = `${METODO_LABEL[m] ?? m} (${d.count})`;
