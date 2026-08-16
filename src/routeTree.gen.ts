@@ -19,6 +19,7 @@ import { Route as AppReportesRouteImport } from './routes/_app.reportes'
 import { Route as AppProveedoresRouteImport } from './routes/_app.proveedores'
 import { Route as AppProductosRouteImport } from './routes/_app.productos'
 import { Route as AppPosRouteImport } from './routes/_app.pos'
+import { Route as AppNotificacionesRouteImport } from './routes/_app.notificaciones'
 import { Route as AppLotesRouteImport } from './routes/_app.lotes'
 import { Route as AppKardexRouteImport } from './routes/_app.kardex'
 import { Route as AppInventarioRouteImport } from './routes/_app.inventario'
@@ -85,6 +86,11 @@ const AppProductosRoute = AppProductosRouteImport.update({
 const AppPosRoute = AppPosRouteImport.update({
   id: '/pos',
   path: '/pos',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNotificacionesRoute = AppNotificacionesRouteImport.update({
+  id: '/notificaciones',
+  path: '/notificaciones',
   getParentRoute: () => AppRoute,
 } as any)
 const AppLotesRoute = AppLotesRouteImport.update({
@@ -198,6 +204,7 @@ export interface FileRoutesByFullPath {
   '/inventario': typeof AppInventarioRoute
   '/kardex': typeof AppKardexRoute
   '/lotes': typeof AppLotesRoute
+  '/notificaciones': typeof AppNotificacionesRoute
   '/pos': typeof AppPosRoute
   '/productos': typeof AppProductosRoute
   '/proveedores': typeof AppProveedoresRoute
@@ -227,6 +234,7 @@ export interface FileRoutesByTo {
   '/inventario': typeof AppInventarioRoute
   '/kardex': typeof AppKardexRoute
   '/lotes': typeof AppLotesRoute
+  '/notificaciones': typeof AppNotificacionesRoute
   '/pos': typeof AppPosRoute
   '/productos': typeof AppProductosRoute
   '/proveedores': typeof AppProveedoresRoute
@@ -258,6 +266,7 @@ export interface FileRoutesById {
   '/_app/inventario': typeof AppInventarioRoute
   '/_app/kardex': typeof AppKardexRoute
   '/_app/lotes': typeof AppLotesRoute
+  '/_app/notificaciones': typeof AppNotificacionesRoute
   '/_app/pos': typeof AppPosRoute
   '/_app/productos': typeof AppProductosRoute
   '/_app/proveedores': typeof AppProveedoresRoute
@@ -289,6 +298,7 @@ export interface FileRouteTypes {
     | '/inventario'
     | '/kardex'
     | '/lotes'
+    | '/notificaciones'
     | '/pos'
     | '/productos'
     | '/proveedores'
@@ -318,6 +328,7 @@ export interface FileRouteTypes {
     | '/inventario'
     | '/kardex'
     | '/lotes'
+    | '/notificaciones'
     | '/pos'
     | '/productos'
     | '/proveedores'
@@ -348,6 +359,7 @@ export interface FileRouteTypes {
     | '/_app/inventario'
     | '/_app/kardex'
     | '/_app/lotes'
+    | '/_app/notificaciones'
     | '/_app/pos'
     | '/_app/productos'
     | '/_app/proveedores'
@@ -436,6 +448,13 @@ declare module '@tanstack/react-router' {
       path: '/pos'
       fullPath: '/pos'
       preLoaderRoute: typeof AppPosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/notificaciones': {
+      id: '/_app/notificaciones'
+      path: '/notificaciones'
+      fullPath: '/notificaciones'
+      preLoaderRoute: typeof AppNotificacionesRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/lotes': {
@@ -584,6 +603,7 @@ interface AppRouteChildren {
   AppInventarioRoute: typeof AppInventarioRoute
   AppKardexRoute: typeof AppKardexRoute
   AppLotesRoute: typeof AppLotesRoute
+  AppNotificacionesRoute: typeof AppNotificacionesRoute
   AppPosRoute: typeof AppPosRoute
   AppProductosRoute: typeof AppProductosRoute
   AppProveedoresRoute: typeof AppProveedoresRoute
@@ -611,6 +631,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppInventarioRoute: AppInventarioRoute,
   AppKardexRoute: AppKardexRoute,
   AppLotesRoute: AppLotesRoute,
+  AppNotificacionesRoute: AppNotificacionesRoute,
   AppPosRoute: AppPosRoute,
   AppProductosRoute: AppProductosRoute,
   AppProveedoresRoute: AppProveedoresRoute,

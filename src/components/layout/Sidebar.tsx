@@ -24,6 +24,7 @@ import {
   Boxes,
   Percent,
   AlertTriangle,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -65,6 +66,7 @@ const sections: Section[] = [
       { to: "/lotes", key: "lotes", label: "Lotes", icon: CalendarClock },
       { to: "/kardex", key: "kardex", label: "Kardex", icon: ClipboardList },
       { to: "/etiquetas", key: "etiquetas", label: "Etiquetas", icon: Printer },
+      { to: "/notificaciones", key: "notificaciones", label: "Notificación", icon: Bell },
     ],
   },
   {
