@@ -513,9 +513,13 @@ function TicketsPage() {
     const totalDesglose = desglose.map(([m, d]) => {
       const label = `${METODO_LABEL[m] ?? m} (${d.count})`;
       const pct = totalPeriodo > 0 ? (d.total / totalPeriodo) * 100 : 0;
-      const right = `${fmt(d.total)} ${pct.toFixed(1)}%`;
-      return pad(label, 21) + padR(right, 19);
-    }).join("\n");
+      const right = `${fmt(d.total)} (${pct.toFixed(1)}%)`;
+      return `
+<div class="metodo-row">
+  <span class="metodo-label">${label}</span>
+  <span class="metodo-value">${right}</span>
+</div>`;
+    }).join("");
 
     const sep = "-".repeat(40);
     const titulo = `REPORTE DE TICKETS`;
