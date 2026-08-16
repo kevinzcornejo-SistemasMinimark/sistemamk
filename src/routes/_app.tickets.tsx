@@ -537,7 +537,7 @@ function TicketsPage() {
   pre { font-family: inherit; font-size: 15px; font-weight: 700; line-height: 1.2; margin: 0; white-space: pre; }
   .total-box { border:2px solid #000; padding:8px 0; margin:10px 0; text-align:center; font-weight:900; font-size:18px; }
   .small { font-size: 13px; font-weight: 700; }
-  h3 { font-size: 16px; font-weight: 900; margin: 10px 0 5px; }
+  h3 { font-size: 17px; font-weight: 900; margin: 12px 0 6px; border-bottom: 1px solid #000; padding-bottom: 2px; }
   
   /* Estilos para el nuevo listado vertical */
   .ticket-row { border-bottom: 1px dashed #000; padding: 4px 0; }
@@ -545,6 +545,11 @@ function TicketsPage() {
   .ticket-id { font-size: 17px; font-weight: 900; }
   .ticket-total { font-size: 17px; font-weight: 900; }
   .row-bottom { font-size: 14px; font-weight: 700; color: #333; }
+
+  /* Detalle por método de pago */
+  .metodo-row { display: flex; justify-content: space-between; padding: 2px 0; font-size: 15px; }
+  .metodo-label { font-weight: 700; }
+  .metodo-value { font-weight: 900; }
 </style></head><body>
   <div class="center">
     ${biz.ticketLogo ? `<img class="marca" src="${esc(biz.ticketLogo)}" alt="logo" />` : ""}
@@ -554,13 +559,13 @@ function TicketsPage() {
     <div style="font-size:17px;font-weight:900;margin-top:5px;border-top:1px solid #000;padding-top:3px">${titulo}</div>
     <div class="small">${subt}</div>
   </div>
-  <pre>${sep}</pre>
+  <pre style="margin-top:5px">${sep}</pre>
   ${filas}
   <div class="total-box">TOTAL: ${fmt(totalPeriodo)} (${filtered.length} tickets)</div>
   <pre>${sep}</pre>
   <h3>DETALLE POR MÉTODO DE PAGO:</h3>
-  <pre>${totalDesglose}</pre>
-  <pre>${sep}</pre>
+  ${totalDesglose}
+  <pre style="margin-top:5px">${sep}</pre>
   <div class="center small">Generado: ${new Date().toLocaleString("es-PE")}</div>
   <script>window.onload=()=>{setTimeout(()=>{window.print();setTimeout(()=>window.close(),400);},300);}</script>
 </body></html>`;
