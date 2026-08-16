@@ -34,7 +34,6 @@ import { Route as AppClientesRouteImport } from './routes/_app.clientes'
 import { Route as AppClienteDisplayRouteImport } from './routes/_app.cliente-display'
 import { Route as AppCategoriasRouteImport } from './routes/_app.categorias'
 import { Route as AppCajaRouteImport } from './routes/_app.caja'
-import { Route as AppAlertasRouteImport } from './routes/_app.alertas'
 import { Route as AppAjustesRouteImport } from './routes/_app.ajustes'
 import { Route as ApiPublicDebugNotificationsRouteImport } from './routes/api/public/debug-notifications'
 import { Route as AppDetalleProductoIdRouteImport } from './routes/_app.detalle-producto.$id'
@@ -163,11 +162,6 @@ const AppCajaRoute = AppCajaRouteImport.update({
   path: '/caja',
   getParentRoute: () => AppRoute,
 } as any)
-const AppAlertasRoute = AppAlertasRouteImport.update({
-  id: '/alertas',
-  path: '/alertas',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppAjustesRoute = AppAjustesRouteImport.update({
   id: '/ajustes',
   path: '/ajustes',
@@ -189,7 +183,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/ajustes': typeof AppAjustesRoute
-  '/alertas': typeof AppAlertasRoute
   '/caja': typeof AppCajaRoute
   '/categorias': typeof AppCategoriasRoute
   '/cliente-display': typeof AppClienteDisplayRoute
@@ -219,7 +212,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/ajustes': typeof AppAjustesRoute
-  '/alertas': typeof AppAlertasRoute
   '/caja': typeof AppCajaRoute
   '/categorias': typeof AppCategoriasRoute
   '/cliente-display': typeof AppClienteDisplayRoute
@@ -251,7 +243,6 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/_app/ajustes': typeof AppAjustesRoute
-  '/_app/alertas': typeof AppAlertasRoute
   '/_app/caja': typeof AppCajaRoute
   '/_app/categorias': typeof AppCategoriasRoute
   '/_app/cliente-display': typeof AppClienteDisplayRoute
@@ -283,7 +274,6 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/ajustes'
-    | '/alertas'
     | '/caja'
     | '/categorias'
     | '/cliente-display'
@@ -313,7 +303,6 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/ajustes'
-    | '/alertas'
     | '/caja'
     | '/categorias'
     | '/cliente-display'
@@ -344,7 +333,6 @@ export interface FileRouteTypes {
     | '/_app'
     | '/login'
     | '/_app/ajustes'
-    | '/_app/alertas'
     | '/_app/caja'
     | '/_app/categorias'
     | '/_app/cliente-display'
@@ -555,13 +543,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCajaRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/alertas': {
-      id: '/_app/alertas'
-      path: '/alertas'
-      fullPath: '/alertas'
-      preLoaderRoute: typeof AppAlertasRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/ajustes': {
       id: '/_app/ajustes'
       path: '/ajustes'
@@ -588,7 +569,6 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppAjustesRoute: typeof AppAjustesRoute
-  AppAlertasRoute: typeof AppAlertasRoute
   AppCajaRoute: typeof AppCajaRoute
   AppCategoriasRoute: typeof AppCategoriasRoute
   AppClienteDisplayRoute: typeof AppClienteDisplayRoute
@@ -616,7 +596,6 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppAjustesRoute: AppAjustesRoute,
-  AppAlertasRoute: AppAlertasRoute,
   AppCajaRoute: AppCajaRoute,
   AppCategoriasRoute: AppCategoriasRoute,
   AppClienteDisplayRoute: AppClienteDisplayRoute,

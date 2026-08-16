@@ -78,7 +78,6 @@ function UsuariosPage() {
   const [nRol, setNRol] = useState<AppRole>("vendedor");
   const [nModulos, setNModulos] = useState<string[]>([
     "pos",
-    "alertas",
     "productos",
   ]);
   const [saving, setSaving] = useState(false);
@@ -164,7 +163,7 @@ function UsuariosPage() {
     setNPass("");
     setNNombre("");
     setNRol("vendedor");
-    setNModulos(["pos", "alertas", "productos"]);
+    setNModulos(["pos", "productos"]);
   };
 
   const crearUsuario = async () => {
