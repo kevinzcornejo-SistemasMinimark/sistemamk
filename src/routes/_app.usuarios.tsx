@@ -244,7 +244,7 @@ function UsuariosPage() {
 
   const guardarEditar = async () => {
     if (!openEdit) return;
-    if (openEdit.correo?.toLowerCase() === ADMIN_MAESTRO_EMAIL) {
+    if (openEdit.correo?.toLowerCase() === ADMIN_MAESTRO_EMAIL && !esAdminMaestroLogin) {
       toast.error("No se puede modificar al administrador maestro");
       return;
     }
