@@ -164,7 +164,7 @@ function UsuariosPage() {
     setNPass("");
     setNNombre("");
     setNRol("vendedor");
-    setNModulos(["pos", "productos"]);
+    setNModulos(["pos", "alertas", "productos"]);
   };
 
   const crearUsuario = async () => {
