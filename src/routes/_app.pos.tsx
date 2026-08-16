@@ -382,10 +382,10 @@ function POSPage() {
         descuento: cart.totales.descuentoAplicado,
         bruto: cart.totales.bruto,
         cajero:
-          profile?.nombre ??
-          (user?.user_metadata?.["nombre"] as string | undefined) ??
-          (user?.user_metadata?.["full_name"] as string | undefined) ??
-          (user?.email?.split("@")[0]) ??
+          profile?.nombre ||
+          (user?.user_metadata?.["nombre"] as string | undefined) ||
+          (user?.user_metadata?.["full_name"] as string | undefined) ||
+          (user?.email?.split("@")[0]) ||
           (isDemo ? "Demo" : undefined),
         caja: cajaAbierta ? `#${cajaAbierta.numero}` : undefined,
         turno: cajaAbierta?.turno ?? undefined,

@@ -90,7 +90,7 @@ export function Header({
             {document.documentElement.classList.contains("kiosk") ? "MODO KIOSKO ACTIVO" : "Vendedor Activo"}
           </span>
           <span className="text-2xl font-black text-foreground leading-none tracking-tighter drop-shadow-md uppercase">
-            {profile?.nombre || user?.email?.split('@')[0] || (isDemo ? "Modo demo" : "")}
+            {profile?.nombre || user?.user_metadata?.["nombre"] || user?.user_metadata?.["full_name"] || user?.email?.split('@')[0] || (isDemo ? "Modo demo" : "")}
           </span>
         </div>
         <Button
