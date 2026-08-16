@@ -23,6 +23,7 @@ export const ADMIN_MAESTRO_EMAIL = "kevincoorporativa@gmail.com";
 export const MODULOS: { key: string; label: string }[] = [
   { key: "dashboard", label: "Dashboard" },
   { key: "pos", label: "Punto de Venta" },
+  { key: "alertas", label: "Alertas" },
   { key: "productos", label: "Productos" },
   { key: "categorias", label: "Categorías" },
   { key: "combos", label: "Combos" },

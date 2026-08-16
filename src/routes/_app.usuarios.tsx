@@ -78,6 +78,7 @@ function UsuariosPage() {
   const [nRol, setNRol] = useState<AppRole>("vendedor");
   const [nModulos, setNModulos] = useState<string[]>([
     "pos",
+    "alertas",
     "productos",
   ]);
   const [saving, setSaving] = useState(false);
