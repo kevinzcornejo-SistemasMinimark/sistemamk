@@ -83,7 +83,7 @@ export function Header({
           {role ?? "—"}
         </Badge>
 
-        <NotificacionesPopover />
+        {/* NotificacionesPopover removed per user request */}
 
         <div className="hidden lg:flex flex-col items-center absolute left-1/2 -translate-x-1/2 bg-primary/10 px-8 py-2 rounded-2xl border-2 border-primary/40 shadow-lg min-w-[240px]">
           <span className="text-[10px] uppercase tracking-[0.2em] text-primary font-black leading-none mb-1 opacity-90">
