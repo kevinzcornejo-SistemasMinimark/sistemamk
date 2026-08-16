@@ -117,6 +117,7 @@ export function CheckoutModal({
   const [doc, setDoc] = useState("");
   const [nombre, setNombre] = useState("");
   const [confirmando, setConfirmando] = useState(false);
+  const [showRefAlert, setShowRefAlert] = useState(false);
   const [pagos, setPagos] = useState<Pago[]>([
     { metodo: "EFECTIVO", monto: total },
   ]);
@@ -129,6 +130,7 @@ export function CheckoutModal({
       setNombre("");
       setTipo("TICKET");
       setConfirmando(false);
+      setShowRefAlert(false);
     }
   }, [open, total]);
 
@@ -164,10 +166,8 @@ export function CheckoutModal({
       (p) => p.metodo !== "EFECTIVO" && !p.referencia?.trim()
     );
     if (necesitaRef) {
-      const ok = window.confirm(
-        "¿Deseas ingresar el número de operación? (Recomendado para Yape/Plin/Tarjeta)"
-      );
-      if (ok) return; // Se queda para que el usuario lo ponga
+      setShowRefAlert(true);
+      return;
     }
 
     if (totalPagado < total - 0.01) {
@@ -195,8 +195,34 @@ export function CheckoutModal({
     }
   };
 
+  const confirmarSinRef = async () => {
+    setShowRefAlert(false);
+    if (totalPagado < total - 0.01) {
+      toast.error(`Falta ${formatPEN(falta)}`);
+      return;
+    }
+    if (tipo === "FACTURA" && (!doc || doc.length !== 11)) {
+      toast.error("Ingresa el RUC del cliente (11 dígitos)");
+      return;
+    }
+    try {
+      setConfirmando(true);
+      await onConfirm({
+        tipo_comprobante: tipo,
+        serie,
+        documento_cliente: doc || undefined,
+        nombre_cliente: nombre.trim() || undefined,
+        pagos,
+      });
+    } catch (error) {
+      console.error("Error al confirmar venta:", error);
+      setConfirmando(false);
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl p-0 gap-0 overflow-hidden">
         {/* HEADER GRANDE con total */}
         <div
@@ -482,6 +508,44 @@ export function CheckoutModal({
           </Button>
         </DialogFooter>
       </DialogContent>
-    </Dialog>
+      </Dialog>
+
+      {/* Alerta llamativa para el número de operación */}
+      <Dialog open={showRefAlert} onOpenChange={setShowRefAlert}>
+        <DialogContent className="max-w-md p-0 overflow-hidden border-none shadow-2xl">
+          <div className="bg-gradient-to-b from-amber-500 to-amber-600 p-8 text-white text-center">
+            <div className="mx-auto w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-6 animate-bounce">
+              <Plus className="h-10 w-10 text-white" strokeWidth={3} />
+            </div>
+            <h2 className="text-3xl font-black mb-3 leading-tight tracking-tight uppercase">
+              ¡ATENCIÓN!
+            </h2>
+            <p className="text-lg font-bold opacity-90 leading-relaxed px-4">
+              ¿Deseas ingresar el <span className="underline decoration-2 underline-offset-4">N° de Operación</span> ahora?
+            </p>
+            <div className="mt-4 py-2 px-4 bg-black/10 rounded-lg text-sm font-medium inline-block">
+              Recomendado para: Yape, Plin y Tarjetas
+            </div>
+          </div>
+          
+          <div className="p-6 bg-card space-y-4">
+            <Button
+              className="w-full h-16 text-xl font-black bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1 transition-all"
+              onClick={() => setShowRefAlert(false)}
+            >
+              SÍ, LO PONDRÉ AHORA
+            </Button>
+            
+            <Button
+              variant="ghost"
+              className="w-full h-12 text-muted-foreground font-bold hover:text-destructive transition-colors"
+              onClick={confirmarSinRef}
+            >
+              No, continuar sin número
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
