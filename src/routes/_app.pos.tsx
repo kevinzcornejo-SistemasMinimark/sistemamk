@@ -384,7 +384,7 @@ function POSPage() {
         cajero:
           (user?.user_metadata?.["nombre"] as string | undefined) ??
           (user?.user_metadata?.["full_name"] as string | undefined) ??
-          user?.email ??
+          (user?.email?.split("@")[0]) ??
           (isDemo ? "Demo" : undefined),
         caja: cajaAbierta ? `#${cajaAbierta.numero}` : undefined,
         turno: cajaAbierta?.turno ?? undefined,
