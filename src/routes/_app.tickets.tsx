@@ -495,15 +495,20 @@ function TicketsPage() {
       const mi = String(fecha.getMinutes()).padStart(2, "0");
       const ticket = `#${String(v.correlativo).replace(/^0+/, "") || "0"}`;
       const pago = (METODO_LABEL[v.metodo_pago] ?? v.metodo_pago ?? "");
-      const oper = v.operacion ? (v.operacion.length > 7 ? v.operacion.slice(-7) : v.operacion) : "";
-      return (
-        pad(ticket, 7) +
-        pad(`${dd}/${mm}`, 6) +
-        pad(pago, 9) +
-        pad(oper, 8) +
-        padR(fmt(Number(v.total)), 10)
-      );
-    }).join("\n");
+      const oper = v.operacion ? ` OP: ${v.operacion}` : "";
+      const total = fmt(Number(v.total));
+
+      return `
+<div class="ticket-row">
+  <div class="row-top">
+    <span class="ticket-id">${ticket}</span>
+    <span class="ticket-total">${total}</span>
+  </div>
+  <div class="row-bottom">
+    ${dd}/${mm} ${hh}:${mi} - ${pago}${oper}
+  </div>
+</div>`;
+    }).join("");
 
     const totalDesglose = desglose.map(([m, d]) => {
       const label = `${METODO_LABEL[m] ?? m} (${d.count})`;
@@ -521,28 +526,32 @@ function TicketsPage() {
     const html = `<!doctype html><html><head><meta charset="utf-8"><title>Reporte de tickets</title>
 <style>
   @page { size: 80mm auto; margin: 3mm; }
-  body { font-family: 'Courier New', monospace; font-size: 13px; font-weight: 700; color:#000; margin:0; -webkit-font-smoothing: none; }
+  body { font-family: 'Courier New', monospace; font-size: 15px; font-weight: 700; color:#000; margin:0; -webkit-font-smoothing: none; }
   .center { text-align:center; }
-  .logo { font-size: 19px; font-weight: 900; letter-spacing: 1px; }
-  img.marca { max-height: 110px; max-width: 100%; filter: contrast(1.6) grayscale(1); margin-bottom: 4px; }
-  pre { font-family: inherit; font-size: 13px; font-weight: 700; line-height: 1.3; margin: 0; white-space: pre; }
-  .total-box { border:2px solid #000; padding:5px 0; margin:7px 0; text-align:center; font-weight:900; font-size:16px; }
-  .small { font-size: 12px; font-weight: 700; }
-  h3 { font-size: 14px; font-weight: 900; margin: 7px 0 3px; }
+  .logo { font-size: 20px; font-weight: 900; letter-spacing: 1px; }
+  img.marca { max-height: 120px; max-width: 100%; filter: contrast(1.6) grayscale(1); margin-bottom: 6px; }
+  pre { font-family: inherit; font-size: 15px; font-weight: 700; line-height: 1.2; margin: 0; white-space: pre; }
+  .total-box { border:2px solid #000; padding:8px 0; margin:10px 0; text-align:center; font-weight:900; font-size:18px; }
+  .small { font-size: 13px; font-weight: 700; }
+  h3 { font-size: 16px; font-weight: 900; margin: 10px 0 5px; }
+  
+  /* Estilos para el nuevo listado vertical */
+  .ticket-row { border-bottom: 1px dashed #000; padding: 4px 0; }
+  .row-top { display: flex; justify-content: space-between; align-items: baseline; }
+  .ticket-id { font-size: 17px; font-weight: 900; }
+  .ticket-total { font-size: 17px; font-weight: 900; }
+  .row-bottom { font-size: 14px; font-weight: 700; color: #333; }
 </style></head><body>
   <div class="center">
     ${biz.ticketLogo ? `<img class="marca" src="${esc(biz.ticketLogo)}" alt="logo" />` : ""}
     <div class="logo">${esc(biz.nombre.toUpperCase())}</div>
     ${biz.ruc ? `<div class="small">R.U.C. ${esc(biz.ruc)}</div>` : ""}
     ${biz.direccion ? `<div class="small">${esc(biz.direccion)}</div>` : ""}
-    <div style="font-size:15px;font-weight:900;margin-top:3px">${titulo}</div>
+    <div style="font-size:17px;font-weight:900;margin-top:5px;border-top:1px solid #000;padding-top:3px">${titulo}</div>
     <div class="small">${subt}</div>
   </div>
   <pre>${sep}</pre>
-  <pre>${pad("TICKET", 7)}${pad("FECHA", 6)}${pad("PAGO", 9)}${pad("OP.", 8)}${padR("TOTAL", 10)}</pre>
-  <pre>${sep}</pre>
-  <pre>${filas}</pre>
-  <pre>${sep}</pre>
+  ${filas}
   <div class="total-box">TOTAL: ${fmt(totalPeriodo)} (${filtered.length} tickets)</div>
   <pre>${sep}</pre>
   <h3>DETALLE POR MÉTODO DE PAGO:</h3>
