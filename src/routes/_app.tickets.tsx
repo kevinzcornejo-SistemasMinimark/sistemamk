@@ -372,6 +372,7 @@ function TicketsPage() {
         ticket, fecha, hora, cliente,
         v.tipo_comprobante || "—",
         METODO_LABEL[v.metodo_pago] ?? v.metodo_pago ?? "—",
+        v.operacion || "—",
         `S/ ${Number(v.total).toFixed(2)}`,
         usuario,
       ];
@@ -379,13 +380,13 @@ function TicketsPage() {
 
     autoTable(doc, {
       startY: 28,
-      head: [["Ticket", "Fecha", "Hora", "Cliente", "Tipo", "Método Pago", "Total", "Usuario"]],
+      head: [["Ticket", "Fecha", "Hora", "Cliente", "Tipo", "Método", "Operación", "Total", "Usuario"]],
       body,
-      styles: { fontSize: 9, cellPadding: 2.5 },
+      styles: { fontSize: 8, cellPadding: 2 },
       headStyles: { fillColor: [234, 91, 31], textColor: 255, fontStyle: "bold" },
       alternateRowStyles: { fillColor: [243, 244, 246] },
-      columnStyles: { 6: { halign: "right", fontStyle: "bold" } },
-      foot: [["", "", "", "", "", "TOTAL", `S/ ${totalPeriodo.toFixed(2)}`, ""]],
+      columnStyles: { 7: { halign: "right", fontStyle: "bold" } },
+      foot: [["", "", "", "", "", "", "TOTAL", `S/ ${totalPeriodo.toFixed(2)}`, ""]],
       footStyles: { fillColor: [16, 185, 129], textColor: 255, fontStyle: "bold", halign: "right" },
       margin: { left: 10, right: 10 },
     });
