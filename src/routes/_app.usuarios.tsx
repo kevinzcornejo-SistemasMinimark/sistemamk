@@ -308,6 +308,8 @@ function UsuariosPage() {
     }
   };
 
+  const esAdminMaestroLogin = (user?.email ?? "").toLowerCase() === ADMIN_MAESTRO_EMAIL;
+
   if (!puedeGestionar) {
     return (
       <div className="p-6">
