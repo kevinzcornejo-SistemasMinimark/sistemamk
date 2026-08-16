@@ -104,6 +104,8 @@ type Venta = {
   creada_en: string;
   cajero_id: string | null;
   clientes: { razon_social: string | null; nombres: string | null } | null;
+  operacion?: string;
+  pagos_data?: any[];
 };
 
 type RangoPreset = "hoy" | "ayer" | "semana" | "mes" | "rango";
@@ -182,12 +184,39 @@ function TicketsPage() {
       .select("id,correlativo,serie,tipo_comprobante,total,subtotal,igv,descuento,metodo_pago,estado,creada_en,cajero_id,clientes(razon_social,nombres)")
       .order("creada_en", { ascending: false })
       .limit(5000);
+    
     if (from) qy = qy.gte("creada_en", from.toISOString());
     if (to) qy = qy.lte("creada_en", to.toISOString());
+    
     const { data, error } = await qy;
     if (error) toast.error(error.message);
-    const ventas = (data ?? []) as any[];
-    setRows(ventas as any);
+    
+    let ventas = (data ?? []) as any[];
+    
+    // Obtener referencias de pago para estas ventas
+    const ventaIds = ventas.map(v => v.id);
+    if (ventaIds.length > 0) {
+      const { data: pagos } = await supabase
+        .from("venta_pagos")
+        .select("venta_id, referencia, metodo")
+        .in("venta_id", ventaIds);
+      
+      const pagosMap: Record<string, { refs: string[], all: any[] }> = {};
+      (pagos ?? []).forEach(p => {
+        if (!pagosMap[p.venta_id]) pagosMap[p.venta_id] = { refs: [], all: [] };
+        if (p.referencia) pagosMap[p.venta_id].refs.push(p.referencia);
+        pagosMap[p.venta_id].all.push(p);
+      });
+
+      ventas = ventas.map(v => ({
+        ...v,
+        operacion: pagosMap[v.id]?.refs.join(", ") || "",
+        pagos_data: pagosMap[v.id]?.all || []
+      }));
+    }
+
+    setRows(ventas);
+
     // Resolver nombres de cajeros desde perfiles
     const ids = Array.from(new Set(ventas.map((v) => v.cajero_id).filter(Boolean))) as string[];
     if (ids.length) {
@@ -294,21 +323,22 @@ function TicketsPage() {
       Cliente: v.clientes?.razon_social ?? v.clientes?.nombres ?? "",
       Metodo: METODO_LABEL[v.metodo_pago] ?? v.metodo_pago,
       Estado: v.estado,
+      Operacion: v.operacion || "",
       Fecha: new Date(v.creada_en).toLocaleString("es-PE"),
       Total: Number(v.total),
     }));
     const ws = XLSX.utils.json_to_sheet(data);
-    ws["!cols"] = [{ wch: 22 }, { wch: 10 }, { wch: 28 }, { wch: 12 }, { wch: 11 }, { wch: 22 }, { wch: 12 }];
+    ws["!cols"] = [{ wch: 22 }, { wch: 10 }, { wch: 28 }, { wch: 12 }, { wch: 11 }, { wch: 15 }, { wch: 22 }, { wch: 12 }];
     // Formato moneda para Total
     const range = XLSX.utils.decode_range(ws["!ref"]!);
     for (let r = 1; r <= range.e.r; r++) {
-      const cell = ws[XLSX.utils.encode_cell({ r, c: 6 })];
+      const cell = ws[XLSX.utils.encode_cell({ r, c: 7 })];
       if (cell) cell.z = '"S/" #,##0.00';
     }
     // Fila total
     const totalRow = range.e.r + 2;
-    XLSX.utils.sheet_add_aoa(ws, [["", "", "", "", "", "TOTAL", totalPeriodo]], { origin: { r: totalRow, c: 0 } });
-    const totalCell = ws[XLSX.utils.encode_cell({ r: totalRow, c: 6 })];
+    XLSX.utils.sheet_add_aoa(ws, [["", "", "", "", "", "", "TOTAL", totalPeriodo]], { origin: { r: totalRow, c: 0 } });
+    const totalCell = ws[XLSX.utils.encode_cell({ r: totalRow, c: 7 })];
     if (totalCell) totalCell.z = '"S/" #,##0.00';
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Tickets");
@@ -342,6 +372,7 @@ function TicketsPage() {
         ticket, fecha, hora, cliente,
         v.tipo_comprobante || "—",
         METODO_LABEL[v.metodo_pago] ?? v.metodo_pago ?? "—",
+        v.operacion || "—",
         `S/ ${Number(v.total).toFixed(2)}`,
         usuario,
       ];
@@ -349,13 +380,13 @@ function TicketsPage() {
 
     autoTable(doc, {
       startY: 28,
-      head: [["Ticket", "Fecha", "Hora", "Cliente", "Tipo", "Método Pago", "Total", "Usuario"]],
+      head: [["Ticket", "Fecha", "Hora", "Cliente", "Tipo", "Método", "Operación", "Total", "Usuario"]],
       body,
-      styles: { fontSize: 9, cellPadding: 2.5 },
+      styles: { fontSize: 8, cellPadding: 2 },
       headStyles: { fillColor: [234, 91, 31], textColor: 255, fontStyle: "bold" },
       alternateRowStyles: { fillColor: [243, 244, 246] },
-      columnStyles: { 6: { halign: "right", fontStyle: "bold" } },
-      foot: [["", "", "", "", "", "TOTAL", `S/ ${totalPeriodo.toFixed(2)}`, ""]],
+      columnStyles: { 7: { halign: "right", fontStyle: "bold" } },
+      foot: [["", "", "", "", "", "", "TOTAL", `S/ ${totalPeriodo.toFixed(2)}`, ""]],
       footStyles: { fillColor: [16, 185, 129], textColor: 255, fontStyle: "bold", halign: "right" },
       margin: { left: 10, right: 10 },
     });
@@ -464,11 +495,12 @@ function TicketsPage() {
       const mi = String(fecha.getMinutes()).padStart(2, "0");
       const ticket = `#${String(v.correlativo).replace(/^0+/, "") || "0"}`;
       const pago = (METODO_LABEL[v.metodo_pago] ?? v.metodo_pago ?? "");
+      const oper = v.operacion ? (v.operacion.length > 7 ? v.operacion.slice(-7) : v.operacion) : "";
       return (
         pad(ticket, 7) +
         pad(`${dd}/${mm}`, 6) +
-        pad(`${hh}:${mi}`, 6) +
-        pad(pago, 11) +
+        pad(pago, 9) +
+        pad(oper, 8) +
         padR(fmt(Number(v.total)), 10)
       );
     }).join("\n");
@@ -507,7 +539,7 @@ function TicketsPage() {
     <div class="small">${subt}</div>
   </div>
   <pre>${sep}</pre>
-  <pre>${pad("TICKET", 7)}${pad("FECHA", 6)}${pad("HORA", 6)}${pad("PAGO", 11)}${padR("TOTAL", 10)}</pre>
+  <pre>${pad("TICKET", 7)}${pad("FECHA", 6)}${pad("PAGO", 9)}${pad("OP.", 8)}${padR("TOTAL", 10)}</pre>
   <pre>${sep}</pre>
   <pre>${filas}</pre>
   <pre>${sep}</pre>
@@ -791,11 +823,11 @@ function TicketsPage() {
       <Card className="overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs uppercase">
-            <tr><th className="px-4 py-2">Comprobante</th><th className="px-4 py-2">Tipo</th><th className="px-4 py-2">Cliente</th><th className="px-4 py-2">Método</th><th className="px-4 py-2">Estado</th><th className="px-4 py-2 text-right">Descuento</th><th className="px-4 py-2 text-right">Total</th><th className="px-4 py-2 text-center">Acciones</th></tr>
+            <tr><th className="px-4 py-2">Comprobante</th><th className="px-4 py-2">Tipo</th><th className="px-4 py-2">Cliente</th><th className="px-4 py-2">Método</th><th className="px-4 py-2">Operación</th><th className="px-4 py-2">Estado</th><th className="px-4 py-2 text-right">Descuento</th><th className="px-4 py-2 text-right">Total</th><th className="px-4 py-2 text-center">Acciones</th></tr>
           </thead>
           <tbody>
-            {loading ? <tr><td colSpan={8} className="p-6 text-center text-muted-foreground">Cargando…</td></tr>
-            : filtered.length === 0 ? <tr><td colSpan={8} className="p-6 text-center text-muted-foreground">Sin ventas</td></tr>
+            {loading ? <tr><td colSpan={9} className="p-6 text-center text-muted-foreground">Cargando…</td></tr>
+            : filtered.length === 0 ? <tr><td colSpan={9} className="p-6 text-center text-muted-foreground">Sin ventas</td></tr>
             : filtered.map((v) => (
               <tr key={v.id} className="border-t">
                 <td className="px-4 py-2 font-mono text-xs">
@@ -810,6 +842,15 @@ function TicketsPage() {
                 <td className="px-4 py-2"><Badge variant="secondary">{v.tipo_comprobante}</Badge></td>
                 <td className="px-4 py-2">{v.clientes?.razon_social ?? v.clientes?.nombres ?? "—"}</td>
                 <td className="px-4 py-2"><MetodoPill metodo={v.metodo_pago} /></td>
+                <td className="px-4 py-2 whitespace-nowrap">
+                  {v.operacion ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-100">
+                      {v.operacion}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground/40">—</span>
+                  )}
+                </td>
                 <td className="px-4 py-2"><Badge variant={v.estado === "PAGADA" ? "default" : v.estado === "ANULADA" ? "destructive" : "secondary"}>{v.estado}</Badge></td>
                 <td className="px-4 py-2 text-right tabular-nums text-rose-600 font-medium">{Number(v.descuento || 0) > 0 ? `-${formatPEN(v.descuento)}` : "—"}</td>
                 <td className="px-4 py-2 text-right font-bold tabular-nums">{formatPEN(v.total)}</td>
