@@ -82,6 +82,11 @@ function DescuentosReporte() {
           .select("cantidad, precio_unitario, descuento, producto_id")
           .eq("venta_id", vid);
 
+        const { data: pagos, error: pError } = await supabase
+          .from("venta_pagos")
+          .select("metodo, monto, referencia")
+          .eq("venta_id", vid);
+
         if (iError) throw iError;
 
         // Resolvemos los productos uno por uno para máxima compatibilidad
@@ -124,6 +129,7 @@ function DescuentosReporte() {
           igv: v.igv,
           total: v.total,
           metodoPago: v.metodo_pago,
+          pagos: pagos || [],
           cliente: v.clientes?.razon_social || v.clientes?.nombres,
           documentoCliente: v.clientes?.numero_documento,
           cajero: nombreCajero,
