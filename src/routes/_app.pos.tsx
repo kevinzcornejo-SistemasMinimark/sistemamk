@@ -83,7 +83,7 @@ export const Route = createFileRoute("/_app/pos")({
 function POSPage() {
   const cart = usePOSCart();
   const { productos: allProductos, categorias, refresh } = useCatalog();
-  const { user, isDemo, role, isAdminMaestro } = useAuth();
+  const { user, profile, isDemo, role, isAdminMaestro } = useAuth();
   const { bloqueada, estado } = useLicencia();
   const { caja: cajaAbierta, loading: cajaLoading } = useCajaAbierta(user?.id);
   const [combos, setCombos] = useState<ComboRow[]>([]);
