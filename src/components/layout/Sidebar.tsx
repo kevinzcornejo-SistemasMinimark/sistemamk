@@ -51,6 +51,7 @@ const sections: Section[] = [
     color: "text-primary",
     items: [
       { to: "/dashboard", key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { to: "/alertas", key: "alertas", label: "Alertas", icon: AlertTriangle },
       { to: "/pos", key: "pos", label: "Punto de Venta", icon: ShoppingCart },
     ],
   },
