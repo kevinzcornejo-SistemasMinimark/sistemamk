@@ -245,25 +245,29 @@ function NotificacionesPage() {
         </Card>
       </div>
 
-      {/* 📦 Tablas de Inventario Crítico */}
+      {/* 📦 Tablas de Inventario Crítico - Movido arriba para visibilidad */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <Card className="p-5 xl:col-span-1 border-none shadow-sm ring-1 ring-border">
-          <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-            <BadgeAlert className="h-5 w-5 text-red-600" /> Stock Crítico
+        <Card className="p-5 xl:col-span-1 border-none shadow-sm ring-1 ring-border bg-red-50/30 ring-red-100">
+          <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-red-700">
+            <BadgeAlert className="h-6 w-6 text-red-600 animate-pulse" /> Stock Crítico
           </h3>
           <div className="space-y-2">
-            {stats.critico.slice(0, 8).map((p, i) => (
-              <div key={i} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                <div className="flex flex-col min-w-0">
-                  <span className="text-sm font-medium truncate">{p.nombre}</span>
-                  <span className="text-[10px] text-muted-foreground uppercase">{p.categorias?.nombre || 'General'}</span>
+            {stats.critico.length === 0 ? (
+              <div className="py-8 text-center text-muted-foreground text-sm">No hay productos en nivel crítico</div>
+            ) : (
+              stats.critico.slice(0, 8).map((p, i) => (
+                <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/80 border border-red-100 shadow-sm hover:scale-[1.02] transition-transform">
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-bold truncate text-neutral-800">{p.nombre}</span>
+                    <span className="text-[10px] text-muted-foreground uppercase font-semibold">{p.categorias?.nombre || 'General'}</span>
+                  </div>
+                  <div className="text-right flex flex-col items-end">
+                    <span className="text-sm font-black text-red-600">{p.stock} {p.unidad}</span>
+                    <span className="text-[9px] text-red-400 font-bold uppercase">Mín: {p.stock_minimo}</span>
+                  </div>
                 </div>
-                <div className="text-right flex flex-col items-end">
-                  <span className="text-xs font-bold text-red-600">{p.stock} {p.unidad}</span>
-                  <span className="text-[9px] text-muted-foreground">Mín: {p.stock_minimo}</span>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </Card>
 
