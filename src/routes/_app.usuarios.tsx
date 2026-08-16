@@ -293,7 +293,7 @@ function UsuariosPage() {
   };
 
   const quitarAcceso = async (r: UsuarioRow) => {
-    if (r.correo?.toLowerCase() === ADMIN_MAESTRO_EMAIL) {
+    if (r.correo?.toLowerCase() === ADMIN_MAESTRO_EMAIL && !esAdminMaestroLogin) {
       toast.error("No se puede quitar acceso al administrador maestro");
       return;
     }
