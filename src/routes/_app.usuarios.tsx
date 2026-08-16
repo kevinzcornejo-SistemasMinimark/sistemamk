@@ -259,7 +259,7 @@ function UsuariosPage() {
       // 2. Actualizar Password (si se ingresó algo)
       if (ePass.trim()) {
         if (ePass.length < 6) throw new Error("La nueva contraseña debe tener al menos 6 caracteres");
-        await updateUserPassword({ usuario_id: openEdit.usuario_id, password: ePass });
+        await updateUserPassword({ data: { usuario_id: openEdit.usuario_id, password: ePass } });
       }
 
       // 3. Roles
