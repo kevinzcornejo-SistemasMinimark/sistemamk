@@ -9,7 +9,7 @@ export const getSupabaseAdmin = () => {
   const serviceRoleKey = process.env.SB_SERVICE_ROLE_KEY;
 
   if (!url || !serviceRoleKey) {
-    throw new Error("Faltan variables de entorno SUPABASE_SERVICE_ROLE_KEY o VITE_SUPABASE_URL");
+    throw new Error("Faltan variables de entorno SB_SERVICE_ROLE_KEY o VITE_SUPABASE_URL");
   }
 
   return createClient(url, serviceRoleKey, {
