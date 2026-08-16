@@ -207,7 +207,7 @@ function AlertasPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
         <StatCard title="Stock Crítico" count={inventoryStats.critico.length} icon={ShieldAlert} color="red" />
         <StatCard title="Stock Bajo" count={inventoryStats.bajo.length} icon={AlertTriangle} color="orange" />
         <StatCard title="Agotados" count={inventoryStats.agotados.length} icon={Ban} color="slate" />
@@ -217,7 +217,6 @@ function AlertasPage() {
         <StatCard title="Vencidos" count={inventoryStats.vencidos.length} icon={Ban} color="rose" />
         <StatCard title="Por Reponer" count={inventoryStats.porReponer.length} icon={ShoppingCart} color="emerald" />
         <StatCard title="Alertas Pendientes" count={alertasPendientes} icon={AlertTriangle} color="yellow" />
-        <StatCard title="Ventas" count={formatPEN(performanceStats.totalVentas)} icon={TrendingUp} color="indigo" isCurrency />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
@@ -236,10 +235,12 @@ function AlertasPage() {
         </Card>
 
         {/* Detalle de Inventario */}
-        <Card className="p-5 space-y-4">
+        <Card className="p-5 space-y-4 border-t-4 border-t-red-500 shadow-lg shadow-red-500/5">
           <div className="flex items-center gap-2 border-b pb-2">
-            <Layers className="h-5 w-5 text-primary" />
-            <h2 className="font-bold uppercase tracking-tight">Inventario Crítico</h2>
+            <Layers className="h-6 w-6 text-red-500 animate-pulse" />
+            <h2 className="text-xl font-black uppercase tracking-tighter text-red-600">
+              Inventario Crítico
+            </h2>
           </div>
 
           <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
