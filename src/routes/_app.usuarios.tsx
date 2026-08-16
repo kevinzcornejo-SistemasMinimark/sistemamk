@@ -409,7 +409,7 @@ function UsuariosPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          disabled={esMaestro}
+                          disabled={esMaestro && !esAdminMaestroLogin}
                           onClick={() => abrirEditar(r)}
                           title="Editar"
                         >
