@@ -1,29 +1,36 @@
-# Plan de Implementación: Módulo de Gestión de Créditos y Cuentas por Cobrar
+# Plan de Implementación: Dashboard de Alertas
 
-Este plan describe la creación de un nuevo módulo para gestionar las ventas al crédito, permitiendo realizar un seguimiento de las deudas de los clientes y registrar abonos.
+Crear un nuevo módulo de **Dashboard de Alertas** para el monitoreo integral de stock, vencimientos y rendimiento de ventas.
 
-## Cambios sugeridos
+## 1. Estructura de Datos (Frontend)
+- **Ruta:** `src/routes/_app.alertas.tsx`.
+- **Estado Local:** Manejo de filtros (hoy, 7d, 30d, mes, año, personalizado) y datos cargados desde Supabase.
+- **Consultas (Supabase):**
+  - `productos`: Para stock crítico, bajo, agotado y sobrestock.
+  - `lotes`: Para vencimientos y próximos a vencer.
+  - `ventas` y `venta_items`: Para rendimiento (más/menos vendidos, facturación, tendencias).
+  - `notificaciones_gestion`: Para alertas pendientes.
 
-### Backend (Base de Datos)
-- Crear la tabla `creditos` para almacenar las deudas asociadas a una venta.
-- Crear la tabla `creditos_abonos` para registrar los pagos parciales o totales realizados por los clientes.
-- Configurar Row Level Security (RLS) y permisos para que los roles autorizados puedan gestionar los créditos.
+## 2. Componentes de UI
+- **Tarjetas de KPI:** 10 tarjetas con colores e iconos específicos (rojo para crítico/vencido, naranja para bajo/próximo, etc.).
+- **Sección de Rendimiento:**
+  - Tabla/Lista Top 10 más vendidos.
+  - Lista de productos con mayor facturación.
+  - Indicadores de tendencia (Aumento/Descenso) comparando periodos.
+- **Sección de Inventario y Vencimientos:**
+  - Tablas detalladas filtrables para cada estado de stock.
+- **Filtros Temporales:** Selector de rango de fechas con integración en las consultas.
 
-### Frontend (Interfaz de Usuario)
-- **Nueva Ruta:** Crear `src/routes/_app.creditos.tsx` para la gestión de deudas.
-- **Componentes:**
-    - Tabla de créditos pendientes con filtros por cliente y estado.
-    - Modal para registrar abonos.
-    - Vista detallada del historial de pagos por crédito.
-    - Exportación de reportes (Excel/PDF) de deudas vigentes.
-- **Sidebar:** Agregar el acceso al módulo de "Créditos" en la sección de "Caja" o "Clientes".
-- **POS Integration:** (Opcional en esta fase) Permitir seleccionar "Crédito" como método de pago en el Punto de Venta.
+## 3. Integración en Navegación
+- **Sidebar:** Añadir "Alertas" en la sección "Principal" después del Dashboard actual.
+- **Icono:** `BellRing` o `AlertTriangle`.
 
-## Detalles técnicos
-- **Tabla `creditos`:** `id`, `venta_id`, `cliente_id`, `monto_total`, `monto_pagado`, `estado` (PENDIENTE, PAGADO), `fecha_vencimiento`.
-- **Tabla `creditos_abonos`:** `id`, `credito_id`, `monto`, `fecha`, `metodo_pago`, `nota`.
-- **Hooks/Functions:** Crear funciones para calcular el saldo pendiente y actualizar el estado del crédito automáticamente al completar el pago.
-- **Permisos:** El módulo estará disponible para roles con acceso administrativo o de caja.
+## 4. Detalles Técnicos
+- Utilizar `recharts` para visualizaciones rápidas si es necesario (tendencias).
+- Optimizar consultas para evitar sobrecarga (usar `useMemo` para cálculos pesados).
+- Respetar el esquema de colores del proyecto (Tailwind v4).
 
-## Por qué este módulo
-La gestión de créditos es una de las funcionalidades más solicitadas en minimarkets y negocios minoristas para fidelizar clientes ("fiado") manteniendo un control estricto del flujo de caja.
+## 5. Verificación
+- Confirmar que los datos coinciden con el inventario actual.
+- Validar el funcionamiento de los filtros de fecha.
+- Probar la responsividad en móviles y escritorio.
