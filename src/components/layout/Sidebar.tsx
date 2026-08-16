@@ -24,6 +24,7 @@ import {
   Boxes,
   Percent,
   AlertTriangle,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
