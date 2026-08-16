@@ -1,24 +1,34 @@
-# Plan - Fix Yape/Plin Payment Logos
+---
+title: Gestión de Usuarios y Cambio de Contraseña
+description: Implementar la funcionalidad de cambio de nombre y restablecimiento de contraseña para usuarios desde el panel de administración.
+type: feature
+---
 
-The user reports that Yape and Plin payment method icons are not appearing in the POS checkout. The current implementation uses external assets that might be failing or missing. I will replace these with high-quality inline SVG versions of the Yape and Plin logos to ensure they always render correctly without external dependencies.
+## Objetivo
+Permitir que el administrador pueda editar el nombre de los usuarios y restablecer sus contraseñas en caso de olvido, directamente desde la interfaz de "Usuarios y permisos".
 
-## User Review Required
-> [!IMPORTANT]
-> I am switching to inline SVG logos for Yape and Plin. This ensures they load instantly and work even if external asset URLs change or fail.
+## Cambios propuestos
 
-## Proposed Changes
+### Frontend (`src/routes/_app.usuarios.tsx`)
+1.  **Estado para el nombre en edición:** Añadir un estado local `eNombre` para manejar el nombre del usuario en el modal de edición.
+2.  **Estado para la nueva contraseña:** Añadir estados `ePass` y `mostrarPass` para permitir el cambio de contraseña.
+3.  **Interfaz de usuario del modal de edición:**
+    *   Incluir un campo de texto para editar el **Nombre**.
+    *   Incluir una sección de **Cambio de Contraseña** (opcional) con un botón para mostrar/ocultar el campo.
+4.  **Lógica de guardado (`guardarEditar`):**
+    *   Actualizar la tabla `perfiles` con el nuevo nombre.
+    *   Llamar a una nueva función de servidor para actualizar la contraseña en Supabase Auth si se proporciona una.
 
-### POS Components
-#### [src/components/pos/CheckoutModal.tsx]
-- Remove the imports for `yapeLogo` and `plinLogo` from JSON assets.
-- Replace the `YapeLogo` component with a high-fidelity SVG representation of the Yape logo.
-- Replace the `PlinLogo` component with a high-fidelity SVG representation of the Plin logo.
-- Adjust the styling to ensure these SVGs fit correctly within the checkout grid.
+### Backend (Server Function)
+1.  **Crear `src/lib/usuarios.functions.ts`:**
+    *   Implementar `updateUserPassword` usando `createServerFn`.
+    *   Utilizar `supabaseAdmin` para realizar la actualización administrativa de la contraseña sin requerir la sesión del usuario.
+    *   **Seguridad:** Validar que el solicitante tenga rol de 'administrador'.
 
-## Verification Plan
-1. **Automated Check**: Run a Playwright script to:
-   - Navigate to the POS page (`/pos`).
-   - Add a product to the cart.
-   - Click "Cobrar" to open the `CheckoutModal`.
-   - Verify that the Yape and Plin buttons are visible and take screenshots.
-2. **Visual Check**: Inspect the screenshots to ensure the logos look professional and consistent with the other payment methods (Efectivo, Visa/MC).
+### Configuración de Supabase (`supabaseAdmin`)
+1.  **Crear `src/integrations/supabase/admin.ts`:**
+    *   Configurar un cliente de Supabase usando la `SERVICE_ROLE_KEY` (necesaria para `auth.admin`).
+
+## Consideraciones de Seguridad
+*   Solo los usuarios con el rol `administrador` o el `ADMIN_MAESTRO_EMAIL` podrán realizar estas acciones.
+*   El `SERVICE_ROLE_KEY` debe estar configurado en las variables de entorno del servidor.
