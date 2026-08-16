@@ -151,7 +151,11 @@ function DescuentosReporte() {
         .from("descuentos_auditoria")
         .select(`
           id, creado_en, tipo, aplicado_a, valor, monto_descuento, motivo, motivo_texto, autorizado_por, usuario_id, venta_id, producto_id,
-          ventas:venta_id (serie, correlativo)
+          ventas:venta_id (
+            serie, 
+            correlativo,
+            venta_pagos (metodo, referencia)
+          )
         `)
         .gte("creado_en", d1)
         .lte("creado_en", d2)
@@ -162,11 +166,16 @@ function DescuentosReporte() {
       const { data, error } = await q;
       if (error) throw error;
       
-      const out: any[] = (data ?? []).map((r: any) => ({
-        ...r,
-        // Supabase returns an object for the single relation
-        ticket: r.ventas ? `${r.ventas.serie}-${String(r.ventas.correlativo ?? "").padStart(8, "0")}` : null
-      }));
+      const out: any[] = (data ?? []).map((r: any) => {
+        const pagos = r.ventas?.venta_pagos || [];
+        const operacion = pagos.find((p: any) => p.referencia)?.referencia;
+        
+        return {
+          ...r,
+          operacion,
+          ticket: r.ventas ? `${r.ventas.serie}-${String(r.ventas.correlativo ?? "").padStart(8, "0")}` : null
+        };
+      });
 
       // Respaldo mejorado: encontrar ventas con descuento que no tengan registro en auditoría
       if (motivo === "__all__") {
@@ -335,6 +344,7 @@ function DescuentosReporte() {
                 <th className="px-3 py-2 font-bold">Valor</th>
                 <th className="px-3 py-2 font-bold text-right">Descuento</th>
                 <th className="px-3 py-2 font-bold">Motivo</th>
+                <th className="px-3 py-2 font-bold text-center">Operación</th>
                 <th className="px-3 py-2 font-bold">Autorizador</th>
                 <th className="px-3 py-2 font-bold">Ticket</th>
               </tr>
@@ -367,6 +377,15 @@ function DescuentosReporte() {
                     <span className="font-semibold text-slate-700">
                       {r.motivo === "Otro" ? r.motivo_texto : r.motivo}
                     </span>
+                  </td>
+                  <td className="px-3 py-2 text-center">
+                    {r.operacion ? (
+                      <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-[10px] font-black border border-blue-100 uppercase">
+                        {r.operacion}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
                   </td>
                   <td className="px-3 py-2 text-xs text-muted-foreground font-medium">{r.autorizado_por ?? "—"}</td>
                   <td className="px-3 py-2 text-xs font-mono">
