@@ -6,10 +6,10 @@ import { createClient } from "@supabase/supabase-js";
  */
 export const getSupabaseAdmin = () => {
   const url = process.env.VITE_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const serviceRoleKey = process.env.SB_SERVICE_ROLE_KEY;
 
   if (!url || !serviceRoleKey) {
-    throw new Error("Faltan variables de entorno SUPABASE_SERVICE_ROLE_KEY o VITE_SUPABASE_URL");
+    throw new Error("Faltan variables de entorno SB_SERVICE_ROLE_KEY o VITE_SUPABASE_URL");
   }
 
   return createClient(url, serviceRoleKey, {
