@@ -268,6 +268,7 @@ function TicketsPage() {
       if (to && d > to) return false;
       if (tipo !== "TODOS" && r.tipo_comprobante !== tipo) return false;
       if (metodo !== "TODOS" && r.metodo_pago !== metodo) return false;
+      if (vendedorId !== "TODOS" && r.cajero_id !== vendedorId) return false;
       if (estado !== "TODOS" && r.estado !== estado) return false;
       if (k) {
         const haystack = `${r.serie}-${r.correlativo} ${r.tipo_comprobante} ${r.clientes?.razon_social ?? ""} ${r.clientes?.nombres ?? ""}`.toLowerCase();
