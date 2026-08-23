@@ -729,7 +729,7 @@ function TicketsPage() {
               </div>
             </div>
           )}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 pt-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 pt-1">
             <select value={tipo} onChange={(e) => setTipo(e.target.value)} className="h-9 px-3 rounded-md border bg-card text-sm font-semibold">
               <option value="TODOS">Todos los tipos</option>
               {tiposUnicos.map((t) => <option key={t} value={t}>{t}</option>)}
