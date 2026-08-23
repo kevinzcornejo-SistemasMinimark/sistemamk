@@ -138,6 +138,7 @@ function TicketsPage() {
   const [hasta, setHasta] = useState("");
   const [tipo, setTipo] = useState<string>("TODOS");
   const [metodo, setMetodo] = useState<string>("TODOS");
+  const [vendedorId, setVendedorId] = useState<string>("TODOS");
   const [estado, setEstado] = useState<string>("TODOS");
   const [reprintOpen, setReprintOpen] = useState(false);
   const [reprintData, setReprintData] = useState<TicketData | null>(null);
@@ -267,6 +268,7 @@ function TicketsPage() {
       if (to && d > to) return false;
       if (tipo !== "TODOS" && r.tipo_comprobante !== tipo) return false;
       if (metodo !== "TODOS" && r.metodo_pago !== metodo) return false;
+      if (vendedorId !== "TODOS" && r.cajero_id !== vendedorId) return false;
       if (estado !== "TODOS" && r.estado !== estado) return false;
       if (k) {
         const haystack = `${r.serie}-${r.correlativo} ${r.tipo_comprobante} ${r.clientes?.razon_social ?? ""} ${r.clientes?.nombres ?? ""}`.toLowerCase();
@@ -586,7 +588,7 @@ function TicketsPage() {
   };
 
   const limpiarFiltros = () => {
-    setQ(""); setTipo("TODOS"); setMetodo("TODOS"); setEstado("TODOS");
+    setQ(""); setTipo("TODOS"); setMetodo("TODOS"); setVendedorId("TODOS"); setEstado("TODOS");
     setPreset("hoy"); setDesde(""); setHasta("");
   };
 
@@ -727,14 +729,20 @@ function TicketsPage() {
               </div>
             </div>
           )}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 pt-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 pt-1">
             <select value={tipo} onChange={(e) => setTipo(e.target.value)} className="h-9 px-3 rounded-md border bg-card text-sm font-semibold">
               <option value="TODOS">Todos los tipos</option>
               {tiposUnicos.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
             <select value={metodo} onChange={(e) => setMetodo(e.target.value)} className="h-9 px-3 rounded-md border bg-card text-sm font-semibold">
               <option value="TODOS">Todos los métodos</option>
-              {metodosUnicos.map((m) => <option key={m} value={m}>{m}</option>)}
+              {metodosUnicos.map((m) => <option key={m} value={m}>{METODO_LABEL[m] ?? m}</option>)}
+            </select>
+            <select value={vendedorId} onChange={(e) => setVendedorId(e.target.value)} className="h-9 px-3 rounded-md border bg-card text-sm font-semibold">
+              <option value="TODOS">Todos los vendedores</option>
+              {Object.entries(cajerosMap).map(([id, name]) => (
+                <option key={id} value={id}>{name}</option>
+              ))}
             </select>
             <select value={estado} onChange={(e) => setEstado(e.target.value)} className="h-9 px-3 rounded-md border bg-card text-sm font-semibold">
               <option value="TODOS">Todos los estados</option>
