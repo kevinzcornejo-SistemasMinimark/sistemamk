@@ -47,10 +47,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          Error en la aplicación
+          Esta página no se cargó
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Ha ocurrido un error inesperado. Puedes intentar actualizar la página o volver al inicio.
+          Se produjo un error por nuestra parte. Puedes intentar actualizar la página o volver a la pantalla de inicio.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
@@ -58,7 +58,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
               router.invalidate();
               reset();
             }}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="inline-flex items-center justify-center rounded-md bg-[#8B5CF6] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#7C3AED]"
           >
             Intentar otra vez
           </button>
@@ -66,7 +66,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             href="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
-            Ir al inicio
+            Ir a casa
           </a>
         </div>
       </div>
