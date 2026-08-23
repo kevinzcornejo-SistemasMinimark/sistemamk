@@ -588,7 +588,7 @@ function TicketsPage() {
   };
 
   const limpiarFiltros = () => {
-    setQ(""); setTipo("TODOS"); setMetodo("TODOS"); setEstado("TODOS");
+    setQ(""); setTipo("TODOS"); setMetodo("TODOS"); setVendedorId("TODOS"); setEstado("TODOS");
     setPreset("hoy"); setDesde(""); setHasta("");
   };
 
