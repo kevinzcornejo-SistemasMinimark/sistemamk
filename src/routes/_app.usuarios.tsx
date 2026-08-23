@@ -332,7 +332,7 @@ function UsuariosPage() {
             <UserCog className="h-6 w-6 text-primary" /> Usuarios y permisos
           </h1>
           <p className="text-muted-foreground">
-            Crea cuentas para los vendedores (<b>Carlos, Sonia, Carmen, Luisa, Soledad</b>). Usa correos ficticios como <b>nombre@lacoop.com</b> y asegúrate de desactivar "Confirm Email" en Supabase Auth.
+            Gestión de cuentas y accesos para el personal de la empresa.
           </p>
         </div>
         <div className="flex gap-2">
