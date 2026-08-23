@@ -736,7 +736,13 @@ function TicketsPage() {
             </select>
             <select value={metodo} onChange={(e) => setMetodo(e.target.value)} className="h-9 px-3 rounded-md border bg-card text-sm font-semibold">
               <option value="TODOS">Todos los métodos</option>
-              {metodosUnicos.map((m) => <option key={m} value={m}>{m}</option>)}
+              {metodosUnicos.map((m) => <option key={m} value={m}>{METODO_LABEL[m] ?? m}</option>)}
+            </select>
+            <select value={vendedorId} onChange={(e) => setVendedorId(e.target.value)} className="h-9 px-3 rounded-md border bg-card text-sm font-semibold">
+              <option value="TODOS">Todos los vendedores</option>
+              {Object.entries(cajerosMap).map(([id, name]) => (
+                <option key={id} value={id}>{name}</option>
+              ))}
             </select>
             <select value={estado} onChange={(e) => setEstado(e.target.value)} className="h-9 px-3 rounded-md border bg-card text-sm font-semibold">
               <option value="TODOS">Todos los estados</option>
