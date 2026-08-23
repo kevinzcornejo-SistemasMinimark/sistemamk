@@ -138,6 +138,7 @@ function TicketsPage() {
   const [hasta, setHasta] = useState("");
   const [tipo, setTipo] = useState<string>("TODOS");
   const [metodo, setMetodo] = useState<string>("TODOS");
+  const [vendedorId, setVendedorId] = useState<string>("TODOS");
   const [estado, setEstado] = useState<string>("TODOS");
   const [reprintOpen, setReprintOpen] = useState(false);
   const [reprintData, setReprintData] = useState<TicketData | null>(null);
