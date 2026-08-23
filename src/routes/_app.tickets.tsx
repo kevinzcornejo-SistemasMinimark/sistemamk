@@ -859,6 +859,15 @@ function TicketsPage() {
                 </td>
                 <td className="px-4 py-2"><Badge variant="secondary">{v.tipo_comprobante}</Badge></td>
                 <td className="px-4 py-2">{v.clientes?.razon_social ?? v.clientes?.nombres ?? "—"}</td>
+                <td className="px-4 py-2 font-medium">
+                  {v.cajero_id ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200 uppercase">
+                      {cajerosMap[v.cajero_id] ?? "—"}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground/40">—</span>
+                  )}
+                </td>
                 <td className="px-4 py-2"><MetodoPill metodo={v.metodo_pago} /></td>
                 <td className="px-4 py-2 whitespace-nowrap">
                   {v.operacion ? (
