@@ -841,7 +841,7 @@ function TicketsPage() {
       <Card className="overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs uppercase">
-            <tr><th className="px-4 py-2">Comprobante</th><th className="px-4 py-2">Tipo</th><th className="px-4 py-2">Cliente</th><th className="px-4 py-2">Método</th><th className="px-4 py-2">Operación</th><th className="px-4 py-2">Estado</th><th className="px-4 py-2 text-right">Descuento</th><th className="px-4 py-2 text-right">Total</th><th className="px-4 py-2 text-center">Acciones</th></tr>
+            <tr><th className="px-4 py-2">Comprobante</th><th className="px-4 py-2">Tipo</th><th className="px-4 py-2">Cliente</th><th className="px-4 py-2">Vendedor</th><th className="px-4 py-2">Método</th><th className="px-4 py-2">Operación</th><th className="px-4 py-2">Estado</th><th className="px-4 py-2 text-right">Descuento</th><th className="px-4 py-2 text-right">Total</th><th className="px-4 py-2 text-center">Acciones</th></tr>
           </thead>
           <tbody>
             {loading ? <tr><td colSpan={9} className="p-6 text-center text-muted-foreground">Cargando…</td></tr>
