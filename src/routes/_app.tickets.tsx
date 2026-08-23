@@ -683,7 +683,7 @@ function TicketsPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" className="h-10 font-semibold" onClick={imprimirUltimo}><Printer className="h-4 w-4 mr-2" /> IMP-Ticket</Button>
-          <Button variant="outline" className="h-10 font-semibold" onClick={imprimirReporte}><Printer className="h-4 w-4 mr-2 text-purple-600" /> Reporte 80mm</Button>
+          <Button variant="outline" className="h-10 font-semibold" onClick={previsualizarReporte}><Printer className="h-4 w-4 mr-2 text-purple-600" /> Reporte 80mm</Button>
           <Button variant="outline" className="h-10 font-semibold" onClick={exportarExcel}><FileSpreadsheet className="h-4 w-4 mr-2 text-emerald-600" /> Excel</Button>
           <Button variant="outline" className="h-10 font-semibold" onClick={exportarPDF}><FileText className="h-4 w-4 mr-2 text-rose-600" /> PDF</Button>
           <Button variant="outline" className="h-10 font-semibold" onClick={cargar}><RefreshCw className="h-4 w-4 mr-2 text-blue-600" /> Actualizar</Button>
