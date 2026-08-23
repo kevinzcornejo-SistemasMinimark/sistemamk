@@ -506,6 +506,7 @@ function TicketsPage() {
   </div>
   <div class="row-bottom">
     ${dd}/${mm} ${hh}:${mi} - ${pago}${oper}
+    <div style="font-size:12px;margin-top:2px;color:#555">VEND: ${esc(v.cajero_id ? (cajerosMap[v.cajero_id] ?? '—') : '—')}</div>
   </div>
 </div>`;
     }).join("");
