@@ -53,6 +53,7 @@ const sections: Section[] = [
     items: [
       { to: "/dashboard", key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
       { to: "/pos", key: "pos", label: "Punto de Venta", icon: ShoppingCart },
+      { to: "/notificaciones", key: "notificaciones", label: "Notificación", icon: Bell },
     ],
   },
   {
@@ -66,7 +67,6 @@ const sections: Section[] = [
       { to: "/lotes", key: "lotes", label: "Lotes", icon: CalendarClock },
       { to: "/kardex", key: "kardex", label: "Kardex", icon: ClipboardList },
       { to: "/etiquetas", key: "etiquetas", label: "Etiquetas", icon: Printer },
-      { to: "/notificaciones", key: "notificaciones", label: "Notificación", icon: Bell },
     ],
   },
   {
