@@ -512,7 +512,7 @@ function UsuariosPage() {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-64 overflow-auto p-2 border rounded-md">
               {MODULOS.map((m) => (
-                <label key={m.key} className="flex items-center gap-2 text-sm">
+                <label key={m.key} className="flex items-center gap-2 text-sm cursor-pointer">
                   <Checkbox
                     checked={nModulos.includes(m.key)}
                     onCheckedChange={() => setNModulos((l) => toggle(l, m.key))}
@@ -613,7 +613,7 @@ function UsuariosPage() {
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-48 overflow-auto p-2 border rounded-md">
                 {MODULOS.map((m) => (
-                  <label key={m.key} className="flex items-center gap-2 text-sm">
+                  <label key={m.key} className="flex items-center gap-2 text-sm cursor-pointer">
                     <Checkbox
                       checked={eModulos.includes(m.key)}
                       onCheckedChange={() => setEModulos((l) => toggle(l, m.key))}

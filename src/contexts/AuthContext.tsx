@@ -42,6 +42,7 @@ export const MODULOS: { key: string; label: string }[] = [
   { key: "usuarios", label: "Usuarios" },
   { key: "ajustes", label: "Ajustes" },
   { key: "configuracion", label: "Configuración" },
+  { key: "notificaciones", label: "Notificaciones" },
   { key: "guia", label: "Guía" },
 ];
 
