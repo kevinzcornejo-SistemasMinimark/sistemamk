@@ -487,7 +487,8 @@ function TicketsPage() {
 
     const fmt = (n: number) => `S/${n.toFixed(2)}`;
     const pad = (s: string, n: number) => (s.length >= n ? s.slice(0, n) : s + " ".repeat(n - s.length));
-    const padR = (s: string, n: number) => (s.length >= n ? s.slice(-n) : " ".repeat(n - s.length) + s);
+    const esc = (s: string) =>
+      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
     const filas = filtered.map((v) => {
       const fecha = new Date(v.creada_en);
