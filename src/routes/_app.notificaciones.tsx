@@ -137,18 +137,18 @@ function NotificacionesPage() {
         </Tabs>
       </header>
       
-      {/* 📦 Tablas de Inventario Crítico - Movido arriba para visibilidad */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <Card className="p-5 xl:col-span-1 border-none shadow-sm ring-1 ring-border bg-red-50/30 ring-red-100">
+      {/* 📦 Tablas de Inventario Crítico y Vencimientos - Secciones Prioritarias */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <Card className="p-5 border-none shadow-sm ring-1 ring-border bg-red-50/30 ring-red-100">
           <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-red-700">
             <BadgeAlert className="h-6 w-6 text-red-600 animate-pulse" /> Stock Crítico
           </h3>
-          <div className="space-y-2">
+          <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
             {stats.critico.length === 0 ? (
               <div className="py-8 text-center text-muted-foreground text-sm">No hay productos en nivel crítico</div>
             ) : (
-              stats.critico.slice(0, 8).map((p, i) => (
-                <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/80 border border-red-100 shadow-sm hover:scale-[1.02] transition-transform">
+              stats.critico.map((p, i) => (
+                <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/80 border border-red-100 shadow-sm hover:scale-[1.01] transition-transform">
                   <div className="flex flex-col min-w-0">
                     <span className="text-sm font-bold truncate text-neutral-800">{p.nombre}</span>
                     <span className="text-[10px] text-muted-foreground uppercase font-semibold">{p.categorias?.nombre || 'General'}</span>
@@ -163,42 +163,38 @@ function NotificacionesPage() {
           </div>
         </Card>
 
-        <Card className="p-5 xl:col-span-1 border-none shadow-sm ring-1 ring-border">
-          <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-emerald-500" /> Sobrestock
-          </h3>
-          <div className="space-y-2">
-            {stats.sobrestock.slice(0, 8).map((p, i) => (
-              <div key={i} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                <div className="flex flex-col min-w-0">
-                  <span className="text-sm font-medium truncate">{p.nombre}</span>
-                  <span className="text-[10px] text-muted-foreground uppercase">{p.categorias?.nombre || 'General'}</span>
-                </div>
-                <div className="text-right flex flex-col items-end">
-                  <span className="text-xs font-bold text-emerald-600">{p.stock} {p.unidad}</span>
-                  <span className="text-[9px] text-muted-foreground">Capacidad excedida</span>
-                </div>
-              </div>
-            ))}
+        <Card className="p-5 border-none shadow-sm ring-1 ring-border bg-sky-50/30 ring-sky-100">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-lg flex items-center gap-2 text-sky-800">
+              <CalendarClock className="h-6 w-6 text-sky-600" /> Resumen de Vencimientos
+            </h3>
+            <Badge variant="outline" className="bg-white/50 border-sky-200 text-sky-700 font-bold">FEFO Activo</Badge>
           </div>
-        </Card>
-
-        <Card className="p-5 xl:col-span-1 border-none shadow-sm ring-1 ring-border">
-          <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-            <History className="h-5 w-5 text-amber-500" /> Sin Movimiento
-          </h3>
-          <div className="space-y-2">
-            {stats.sinMovimiento.slice(0, 8).map((p, i) => (
-              <div key={i} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                <div className="flex flex-col min-w-0">
-                  <span className="text-sm font-medium truncate">{p.nombre}</span>
-                  <span className="text-[10px] text-muted-foreground">Stock actual: {p.stock}</span>
+          <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+            {stats.vencidos.map((l, i) => (
+              <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-rose-50 border border-rose-100 shadow-sm">
+                <div className="flex flex-col">
+                  <span className="font-bold text-rose-900 text-sm">{l.productos?.nombre}</span>
+                  <span className="text-[10px] text-rose-700 font-medium uppercase">Lote: {l.numero_lote} · Venció: {l.fecha_vencimiento}</span>
                 </div>
-                <div className="text-right">
-                  <Badge variant="outline" className="text-[10px]">Rotación Baja</Badge>
-                </div>
+                <Badge variant="destructive" className="font-bold text-[10px]">VENCIDO</Badge>
               </div>
             ))}
+            {stats.proximosVencer.map((l, i) => (
+              <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/80 border border-sky-100 shadow-sm">
+                <div className="flex flex-col">
+                  <span className="font-bold text-sky-900 text-sm">{l.productos?.nombre}</span>
+                  <span className="text-[10px] text-sky-700 font-medium uppercase">Lote: {l.numero_lote} · Vence: {l.fecha_vencimiento}</span>
+                </div>
+                <Badge className="bg-sky-500 hover:bg-sky-600 font-bold text-[10px]">PRÓXIMO</Badge>
+              </div>
+            ))}
+            {stats.vencidos.length === 0 && stats.proximosVencer.length === 0 && (
+              <div className="py-20 flex flex-col items-center justify-center text-muted-foreground">
+                <AlertCircle className="h-10 w-10 mb-2 opacity-20" />
+                <p className="text-sm">No hay alertas de vencimiento pendientes</p>
+              </div>
+            )}
           </div>
         </Card>
       </div>
@@ -210,9 +206,9 @@ function NotificacionesPage() {
         <StatusMiniCard title="Por Reponer" value={stats.reponer} icon={ShoppingBag} color="text-indigo-500" />
       </div>
 
-      {/* 📈 Análisis de Ventas */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="p-6 border-none shadow-sm ring-1 ring-border">
+      {/* 📈 Análisis de Ventas y Otros Indicadores */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="p-6 lg:col-span-2 border-none shadow-sm ring-1 ring-border">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-xl font-bold">Top 10 Más Vendidos</h2>
@@ -238,41 +234,45 @@ function NotificacionesPage() {
           </div>
         </Card>
 
-        <Card className="p-6 border-none shadow-sm ring-1 ring-border">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl font-bold">Resumen de Vencimientos</h2>
-              <p className="text-sm text-muted-foreground">Lotes activos según fecha de expiración</p>
+        <div className="space-y-6">
+          <Card className="p-5 border-none shadow-sm ring-1 ring-border">
+            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-emerald-500" /> Sobrestock
+            </h3>
+            <div className="space-y-2">
+              {stats.sobrestock.slice(0, 5).map((p, i) => (
+                <div key={i} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-medium truncate">{p.nombre}</span>
+                    <span className="text-[10px] text-muted-foreground uppercase">{p.categorias?.nombre || 'General'}</span>
+                  </div>
+                  <div className="text-right flex flex-col items-end">
+                    <span className="text-xs font-bold text-emerald-600">{p.stock} {p.unidad}</span>
+                  </div>
+                </div>
+              ))}
             </div>
-            <CalendarClock className="h-6 w-6 text-sky-500" />
-          </div>
-          <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
-            {stats.vencidos.map((l, i) => (
-              <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-rose-50 border border-rose-100">
-                <div className="flex flex-col">
-                  <span className="font-bold text-rose-900">{l.productos?.nombre}</span>
-                  <span className="text-xs text-rose-700">Lote: {l.numero_lote} · Venció: {l.fecha_vencimiento}</span>
+          </Card>
+
+          <Card className="p-5 border-none shadow-sm ring-1 ring-border">
+            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+              <History className="h-5 w-5 text-amber-500" /> Sin Movimiento
+            </h3>
+            <div className="space-y-2">
+              {stats.sinMovimiento.slice(0, 5).map((p, i) => (
+                <div key={i} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-medium truncate">{p.nombre}</span>
+                    <span className="text-[10px] text-muted-foreground">Stock actual: {p.stock}</span>
+                  </div>
+                  <div className="text-right">
+                    <Badge variant="outline" className="text-[10px]">Rotación Baja</Badge>
+                  </div>
                 </div>
-                <Badge variant="destructive" className="font-bold">VENCIDO</Badge>
-              </div>
-            ))}
-            {stats.proximosVencer.map((l, i) => (
-              <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-sky-50 border border-sky-100">
-                <div className="flex flex-col">
-                  <span className="font-bold text-sky-900">{l.productos?.nombre}</span>
-                  <span className="text-xs text-sky-700">Lote: {l.numero_lote} · Vence: {l.fecha_vencimiento}</span>
-                </div>
-                <Badge className="bg-sky-500 hover:bg-sky-600 font-bold">PRÓXIMO</Badge>
-              </div>
-            ))}
-            {stats.vencidos.length === 0 && stats.proximosVencer.length === 0 && (
-              <div className="h-full flex flex-col items-center justify-center py-20 text-muted-foreground">
-                <AlertCircle className="h-12 w-12 mb-2 opacity-20" />
-                <p>No hay alertas de vencimiento pendientes</p>
-              </div>
-            )}
-          </div>
-        </Card>
+              ))}
+            </div>
+          </Card>
+        </div>
       </div>
 
       {/* Tarjetas de Resumen Secundarias */}
