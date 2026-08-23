@@ -506,6 +506,7 @@ function TicketsPage() {
   </div>
   <div class="row-bottom">
     ${dd}/${mm} ${hh}:${mi} - ${pago}${oper}
+    <div style="font-size:12px;margin-top:2px;color:#555">VEND: ${esc(v.cajero_id ? (cajerosMap[v.cajero_id] ?? '—') : '—')}</div>
   </div>
 </div>`;
     }).join("");
@@ -841,7 +842,7 @@ function TicketsPage() {
       <Card className="overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs uppercase">
-            <tr><th className="px-4 py-2">Comprobante</th><th className="px-4 py-2">Tipo</th><th className="px-4 py-2">Cliente</th><th className="px-4 py-2">Método</th><th className="px-4 py-2">Operación</th><th className="px-4 py-2">Estado</th><th className="px-4 py-2 text-right">Descuento</th><th className="px-4 py-2 text-right">Total</th><th className="px-4 py-2 text-center">Acciones</th></tr>
+            <tr><th className="px-4 py-2">Comprobante</th><th className="px-4 py-2">Tipo</th><th className="px-4 py-2">Cliente</th><th className="px-4 py-2">Vendedor</th><th className="px-4 py-2">Método</th><th className="px-4 py-2">Operación</th><th className="px-4 py-2">Estado</th><th className="px-4 py-2 text-right">Descuento</th><th className="px-4 py-2 text-right">Total</th><th className="px-4 py-2 text-center">Acciones</th></tr>
           </thead>
           <tbody>
             {loading ? <tr><td colSpan={9} className="p-6 text-center text-muted-foreground">Cargando…</td></tr>
@@ -859,6 +860,15 @@ function TicketsPage() {
                 </td>
                 <td className="px-4 py-2"><Badge variant="secondary">{v.tipo_comprobante}</Badge></td>
                 <td className="px-4 py-2">{v.clientes?.razon_social ?? v.clientes?.nombres ?? "—"}</td>
+                <td className="px-4 py-2 font-medium">
+                  {v.cajero_id ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200 uppercase">
+                      {cajerosMap[v.cajero_id] ?? "—"}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground/40">—</span>
+                  )}
+                </td>
                 <td className="px-4 py-2"><MetodoPill metodo={v.metodo_pago} /></td>
                 <td className="px-4 py-2 whitespace-nowrap">
                   {v.operacion ? (
