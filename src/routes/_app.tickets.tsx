@@ -282,7 +282,7 @@ function TicketsPage() {
       return sortDir === "asc" ? ta - tb : tb - ta;
     });
     return out;
-  }, [rows, q, from, to, tipo, metodo, estado, sortDir]);
+  }, [rows, q, from, to, tipo, metodo, vendedorId, estado, sortDir]);
 
   const totalPeriodo = useMemo(
     () => filtered.reduce((s, r) => s + Number(r.total || 0), 0),
