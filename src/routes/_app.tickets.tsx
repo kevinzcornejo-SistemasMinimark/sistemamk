@@ -595,24 +595,25 @@ function TicketsPage() {
     try {
       setReprintingId(v.id);
       const { data: det, error } = await supabase
-        .from("ventas_items")
-        .select("cantidad,precio_unitario,descuento,total,producto_id")
+        .from("venta_items")
+        .select("cantidad,precio_unitario,descuento,total,producto_id,nombre")
         .eq("venta_id", v.id);
       if (error) throw error;
 
       // Resolvemos productos de forma independiente para evitar errores de relación
       const detWithProducts = await Promise.all((det ?? []).map(async (d: any) => {
+        if (!d.producto_id) return { ...d, productos: null };
         const { data: prod } = await supabase
           .from("productos")
           .select("id,nombre,precio_venta,afecto_igv")
           .eq("id", d.producto_id)
-          .single();
+          .maybeSingle();
         return { ...d, productos: prod };
       }));
       const items = (detWithProducts ?? []).map((d: any) => ({
         producto: {
-          id: d.productos?.id ?? d.producto_id,
-          nombre: d.productos?.nombre ?? "Producto",
+          id: d.productos?.id ?? d.producto_id ?? `item-${d.nombre}`,
+          nombre: d.productos?.nombre ?? d.nombre ?? "Producto",
           precio_venta: Number(d.precio_unitario),
           igv: d.productos?.afecto_igv ?? true,
         } as any,
