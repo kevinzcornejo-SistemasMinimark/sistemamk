@@ -78,7 +78,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1" },
       { title: "POS Minimarket — Sistema de Punto de Venta" },
       { name: "description", content: "Sistema POS completo para minimarket en Perú: ventas, inventario, caja y reportes." },
       { property: "og:title", content: "POS Minimarket" },
